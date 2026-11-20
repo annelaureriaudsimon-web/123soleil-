@@ -1,0 +1,151 @@
+# Monde 1 — « La cour de récré »
+
+Huit niveaux courts. Chacun repose sur **une seule idée forte**, avec une vraie menace dans les dix premières secondes. Le boss arrive au bout.
+
+Le décor : une piste rouge au milieu d'une cour en bitume, avec des marelles à la craie, des bancs, des paniers de basket, des plots, des ballons et des arbres. Les autres enfants de la classe courent avec toi.
+
+Mécaniques utilisées, et rien d'autre :
+- maintenir / lâcher ;
+- mots pièges ;
+- hésitations ;
+- bégaiement ;
+- chant express ;
+- rivaux.
+
+## Les rivaux
+
+Leurs réglages sont dans `js/game/rivals.js`. Les noms et les tenues sont dans `levels/world1.js`.
+
+| Personnalité | Emoji | Comportement | Enfants |
+|---|---|---|---|
+| Le Prudent | 🐢 | Lâche dès « SO » (et une fois sur deux dès « 3 »), repart en retard, s'arrête sur les mots pièges. Il perd du temps. | Léo, Zoé, Tom, Lila |
+| Le Fonceur | ⚡ | Vitesse ×1,14 à ×1,18. Attend « SOLEIL ! » et lâche même un peu en retard. Il repart pendant les longs « SOOOO… » et se fait souvent griller. | Hugo, Max, Nino |
+| Le Régulier | 🎯 | Lâche presque toujours à « SO », réagit vite (0,21 s) et se fait rarement avoir. C'est l'adversaire le plus dur à battre. | Inès, Jade, Sam |
+
+Tous ont un temps de réaction variable. Ils marquent parfois un petit arrêt sans raison et peuvent tomber dans les mots pièges. Leurs décisions passent par la graine de l'essai.
+
+Quand un rival est grillé :
+- il devient tout noir, fume et dit « Nooon ! » ;
+- il tombe ou trépigne ;
+- il repart du début du niveau ;
+- le soleil rigole (« HA HA ! »).
+
+## Les niveaux
+
+Les « taux visés » sont les objectifs fixés avant le réglage. Les taux obtenus sont dans `docs/LEVELS.md`.
+
+### 1. Premiers pas 👟
+- **Idée :** le tutoriel intégré, sans écran de règles.
+- **Apprend :** maintenir pour courir, lâcher avant « SOLEIL ! », repartir quand il se remet de dos, et lire le mot avant de lâcher.
+- **Menace (moins de 10 s) :**
+  - 1er « SOLEIL ! » vers 3,9 s, avec un demi-tour exceptionnellement lent (1 s) ;
+  - au 2e cycle (vers 9 s), un mot piège forcé, avec la bannière « PIÈGE ! Il n'a pas dit SOLEIL 😏 ».
+- **Indications à l'écran :**
+  - « MAINTIENS pour courir 👆 » reste affiché tant qu'on n'a pas maintenu ;
+  - « LÂCHE ! » au premier « SO » ;
+  - « Il se remet de dos : REPARS ! » ;
+  - « Touche le soleil ! » à 15 m de l'arrivée.
+- **★★ :** Arrive dans le top 2.
+- **★★★ :** Ne tombe dans aucun piège.
+- **Rivaux :** Léo 🐢 et Zoé 🐢.
+- **Taux visés :** débutant 40 à 70 %, moyen environ 100 %, expert 100 %.
+
+### 2. Les hésitations 😶
+- **Idée :** le soleil fait durer le « SOOOO… ».
+- **Apprend :** ne pas repartir tant qu'on n'a pas lu le mot, et ne pas lâcher trop tôt pour rien.
+- **Menace :**
+  - cycle 1 : un « SOOOO… » de 1,4 s ;
+  - cycle 3 : un « SOOOO… » de 1,9 s qui finit sur un mot piège.
+- **Indication :** bannière « HÉSITATION… Attends de lire le mot ! ».
+- **★★ :** Arrive dans le top 2.
+- **★★★ :** Finis en moins de 30 s. Pour y arriver, il faut garder sa course pendant les hésitations.
+- **Rivaux :** Hugo ⚡ (il craque pendant les hésitations et se fait griller : c'est la leçon en direct) et Lila 🐢.
+- **Taux visés :** débutant environ 60 %, moyen environ 100 %.
+
+### 3. La pluie de pièges 🥫
+- **Idée :** SOLDES, SOUPE, SOFA, SODA, SOURIS… Il y a un mot piège dans 80 % des chants, et souvent deux.
+- **Apprend :** lire le mot entier. Lâcher à chaque « SO » fait perdre beaucoup de temps.
+- **Menace :** dès le cycle 1, un double piège.
+- **★★ :** Évite 3 pièges sans t'arrêter.
+- **★★★ :** Ne tombe dans aucun piège.
+- **Rivaux :** Jade 🎯, Tom 🐢 et Zoé 🐢.
+- **Taux visés :** débutant environ 35 %, moyen environ 90 %.
+
+### 4. Le Fonceur ⚡
+- **Idée :** Max court beaucoup plus vite que toi, mais il prend des risques.
+- **Apprend :** la régularité bat la vitesse. Les OUF (s'arrêter au dernier moment) font gagner des mètres.
+- **Menace :**
+  - 1er « SOLEIL ! » vers 6 s ;
+  - Max part devant dès le départ.
+- **Indication :** « Bats Max ! ⚡ ».
+- **★★ :** Bats Max.
+- **★★★ :** Finis en moins de 32 s.
+- **Rivaux :** Max ⚡ (vitesse ×1,18) et Léo 🐢.
+- **Taux visés :** débutant environ 10 %, moyen environ 90 %. On veut battre Max une fois sur deux à deux sur trois.
+
+### 5. Le bégaiement 🥴
+- **Idée :** « 1… 2… 2… 3… ». Après avoir bégayé, le soleil accélère : le reste du chant va ×1,6 plus vite.
+- **Apprend :** ne pas compter le rythme, mais réagir à ce qui est dit.
+- **Menace :** bégaiement forcé au cycle 1. Le « SO » arrive alors plus tôt que prévu (vers 4,9 s).
+- **Indication :** bannière « BÉGAIEMENT ! ».
+- **★★ :** Arrive dans le top 2.
+- **★★★ :** Fais un combo OUF ×2.
+- **Rivaux :** Inès 🎯, Tom 🐢 et Nino ⚡.
+- **Taux visés :** débutant environ 5 %, moyen environ 75 %.
+
+### 6. Le chant express 🚀
+- **Idée :** tout va deux fois plus vite, et le demi-tour est un peu plus rapide.
+- **Apprend :** être prêt et lâcher dès « SO », sans attendre.
+- **Menace :** chant express forcé au cycle 1 : le 1er « SOLEIL ! » tombe vers 3,5 s.
+- **Indication :** bannière « CHANT EXPRESS ! 🚀 ».
+- **★★ :** Fais 2 OUF.
+- **★★★ :** Arrive 1er.
+- **Rivaux :** Sam 🎯, Hugo ⚡ et Lila 🐢.
+- **Taux visés :** moyen environ 60 %.
+
+### 7. La grande course 🏃
+- **Idée :** 5 rivaux à la fois, et le soleil mélange tout : pièges, hésitations, bégaiements et express.
+- **Apprend :** garder la tête froide dans la foule. Les places changent sans arrêt.
+- **Menace :** 1er « SOLEIL ! » vers 8 s, avec un demi-tour plus court (0,50 à 0,55 s) et souvent un piège ou un express dès le départ.
+- **★★ :** Arrive dans le top 3.
+- **★★★ :** Arrive 1er.
+- **Rivaux :** Inès 🎯, Max ⚡, Jade 🎯, Léo 🐢 et Zoé 🐢.
+- **Taux visés :** moyen environ 50 %.
+
+### 8. BOSS — Le Soleil Cool 😎
+- **Idée :** le soleil met ses lunettes et enchaîne ses coups spéciaux.
+- **Mise en scène :**
+  1. carte d'intro ;
+  2. il se tourne vers toi : « Tu crois pouvoir me toucher ? » ;
+  3. ses lunettes noires tombent du ciel : flash, « BOSS ! », musique 8-bit.
+  4. La barre de progression devient sa barre de vie.
+  5. Victoire : ses lunettes s'envolent (« Mes lunettes !! »), feu d'artifice, fanfare, « SOLEIL COOL BATTU ! ».
+- **Coups spéciaux, annoncés par une bannière :**
+  1. la grande hésitation (« SOOOO… » de 2 s) ;
+  2. double piège ;
+  3. super express ;
+  4. bégaiement piégé ;
+  5. express hésitant ;
+  6. tout en même temps.
+  - Ensuite, tout au hasard, avec des demi-tours de 0,51 à 0,56 s.
+- **Menace :** la grande hésitation, dès le cycle 1 (vers 5 s).
+- **★★ :** Fais 3 OUF.
+- **★★★ :** Arrive 1er.
+- **Rivaux :** Inès 🎯, Max ⚡ et Léo 🐢.
+- **Durée :** jusqu'à 45 s.
+- **Taux visés :** moyen 15 à 35 %, expert au moins 95 %.
+
+## Règles communes
+
+- **Juste :** on peut toujours survivre en lâchant au bon moment. Le joueur « expert » de la simulation (qui lâche dès « SO ») réussit chaque niveau à 100 %.
+- **Fixe d'un essai à l'autre :**
+  - la longueur ;
+  - les rivaux ;
+  - les événements prévus (« mot piège au cycle 2 », coups du boss).
+- **Variable à chaque essai, dans les limites du niveau :**
+  - la durée des mots ;
+  - le demi-tour ;
+  - le regard ;
+  - les pauses ;
+  - les pièges au hasard.
+- **Le défaut des personnalités compte :** le Fonceur craque pendant les hésitations, le Prudent tombe dans les pièges. Cela met les leçons en scène.
