@@ -30,7 +30,8 @@ function placeToast() {
   const el = $('toast'), r = endPanel();
   if (!r) { el.classList.remove('anchored'); el.style.left = el.style.top = ''; return; }
   el.classList.add('anchored');
-  const h = el.offsetHeight || 44, w = el.offsetWidth || 220;
+  const k = S.uiZoom || 1;                         // grand écran : le message est zoomé (CSS zoom), ses positions aussi
+  const h = (el.offsetHeight || 44) * k, w = (el.offsetWidth || 220) * k;
   const vw = window.innerWidth, vh = window.innerHeight, top0 = (S.safe ? S.safe.t : 0) + 8;
   const lo = (S.pillX || 0) + 8 + w / 2, hi = vw - (S.pillR || 0) - 8 - w / 2;   // jamais sous la pilule Poki
   const clampX = x => Math.min(Math.max(x, lo), Math.max(lo, hi));
@@ -46,8 +47,8 @@ function placeToast() {
   const spots = [[r.left + r.width / 2, above], [r.left - GAP - w / 2, top0], [r.right + GAP + w / 2, top0],
                  [vw / 2, top0], [r.left + r.width / 2, Math.max(top0, r.top - h - 4)]].map(([x, t]) => [clampX(x), t]);
   const best = spots.find(([x, t]) => free(x, t)) || spots[spots.length - 1];   // aucune place libre : collé au-dessus
-  el.style.left = Math.round(best[0]) + 'px';
-  el.style.top = Math.round(best[1]) + 'px';
+  el.style.left = Math.round(best[0] / k) + 'px';
+  el.style.top = Math.round(best[1] / k) + 'px';
 }
 function toast(msg, now) {
   const el = $('toast');

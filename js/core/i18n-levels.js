@@ -115,5 +115,8 @@ Object.assign(TXT.en, {
   trialTag: n => `Trial: ${n}`, trialBadge: 'Trial',
   noVideo: 'Video unavailable', rewardDone: 'Done', revived: 'SECOND CHANCE!', noChallengeRevive: 'not possible after a second chance'
 });
+// Qualité d'image (v2.4, js/render/quality.js)
+Object.assign(TXT.fr, { qualityLbl: m => `Qualité : ${{ auto: 'Auto', high: 'Haute', low: 'Basse' }[m] || m}` });
+Object.assign(TXT.en, { qualityLbl: m => `Quality: ${{ auto: 'Auto', high: 'High', low: 'Low' }[m] || m}` });
 S.typoAll(TXT.fr);                                 // typographie française : espaces insécables (core/i18n.js)
 })(window.Soleil);

@@ -82,7 +82,7 @@ function drawHUD() {
     }
   }
   if (S.state === 'play' || S.state === 'caught') {     // étoiles gagnées et combo, sous le bouton son
-    const rx = S.W - 16 - safe.r - S.pillR, ry = safe.t + 66, ss = s2 * 1.25;
+    const rx = S.W - 16 * S.uiZoom - safe.r - S.pillR, ry = safe.t + 66 * S.uiZoom, ss = s2 * 1.25;
     S.ctx.textAlign = 'right'; S.ctx.textBaseline = 'top';
     otext(String(S.runStars), rx, ry, ss, '#FFD166');
     S.ctx.font = `900 ${ss}px ${FONT}`;

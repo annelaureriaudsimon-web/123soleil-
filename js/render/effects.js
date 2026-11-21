@@ -4,7 +4,10 @@
 const { INK, TAU, clamp, css, lerp, pal, Lt, safe } = S;   // déjà chargés
 
 /* ---------- 19. Particules ---------- */
-function addP(p) { if (S.particles.length < 320) S.particles.push(p); }
+function addP(p) {                            // qualité basse (téléphone lent) : moins de particules (js/render/quality.js)
+  const Q = S.Q;
+  if (S.particles.length < Q.pmax && (Q.particles >= 1 || Math.random() < Q.particles)) S.particles.push(p);
+}
 function dust(n, spread) {
   for (let i = 0; i < n; i++) {
     const sd = Math.random() < 0.5 ? -1 : 1;
@@ -58,7 +61,7 @@ function confetti(n) {
            vr: (Math.random() - 0.5) * 12, life: 2.6, max: 2.6, col: cols[i % cols.length] });
   }
 }
-function starPop(n) { popup(`+${n}`, S.W - 104 - safe.r - S.pillR, safe.t + 84, '#FFD166', Math.min(Lt.U * 0.05, 24), 0.85); }
+function starPop(n) { popup(`+${n}`, S.W - 104 * S.uiZoom - safe.r - S.pillR, safe.t + 84 * S.uiZoom, '#FFD166', Math.min(Lt.U * 0.05, 24), 0.85); }
 function popup(text, x, y, col, size, life = 1.1) {
   addP({ type: 'text', text, x, y, vx: 0, vy: -Lt.s * 0.5, g: 0, size, life, max: life, col });
 }

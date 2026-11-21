@@ -43,7 +43,8 @@ function fillMenu() {
   $('pExit').innerHTML = icon(lvl ? 'grid' : 'home') + esc(lvl ? L.mapBtn : daily ? L.giveUp : L.home);
   soundLabel();
 }
-function soundLabel() { $('pSound').innerHTML = icon(Sound.muted ? 'soundOff' : 'soundOn') + esc(Sound.muted ? L.soundOff : L.soundOn); }
+function soundLabel() { $('pSound').innerHTML = icon(Sound.muted ? 'soundOff' : 'soundOn') + esc(Sound.muted ? L.soundOff : L.soundOn); qualLabel(); }
+function qualLabel() { $('pQual').textContent = L.qualityLbl(S.Q.mode); }   // qualité d'image : Auto / Haute / Basse (js/render/quality.js)
 function closeMenu() { clearTimeout(armT); menu.classList.add('hide'); menu.classList.remove('armed'); }
 function unpause() { S.paused = false; Sound.silence('pause', false); }
 
@@ -117,6 +118,7 @@ menu.addEventListener('click', e => {
   else if (b.id === 'pRestart') restartGame();
   else if (b.id === 'pExit') exitGame();
   else if (b.id === 'pSound') toggleSound();
+  else if (b.id === 'pQual') { S.cycleQuality(); qualLabel(); S.dirty = true; }
 });
 document.addEventListener('visibilitychange', () => {   // onglet caché : son coupé, et pause si on jouait
   Sound.silence('cachée', document.hidden);
@@ -133,6 +135,18 @@ window.addEventListener('keydown', e => {
   e.preventDefault();
 }, true);
 window.addEventListener('wheel', e => { if (!(e.target.closest && e.target.closest('.sheet'))) e.preventDefault(); }, { passive: false });
+
+// La fenêtre change beaucoup de taille en pleine partie (plein écran Poki, téléphone tourné) : pause, pour que le
+// joueur ne soit jamais grillé pendant que l'image se remet en place. Les petits changements (barre d'adresse du
+// téléphone qui apparaît) ne mettent pas en pause.
+const RESIZE_PAUSE = 0.15;                         // changement de largeur ou de hauteur de plus de 15 %
+let lastSize = [window.innerWidth, window.innerHeight];
+window.addEventListener('resize', () => {
+  const w = window.innerWidth, h = window.innerHeight, [w0, h0] = lastSize;
+  const big = Math.abs(w - w0) > w0 * RESIZE_PAUSE || Math.abs(h - h0) > h0 * RESIZE_PAUSE;
+  lastSize = [w, h];
+  if (big && !S.paused && pausable()) pauseGame('taille');
+});
 
 Object.assign(S, { GRACE, pausable, pauseGame, resumeGame, restartGame, exitGame, drawGrace, syncButtons, soundLabel });
 })(window.Soleil);

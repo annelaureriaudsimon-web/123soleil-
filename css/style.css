@@ -52,10 +52,10 @@
   .ico.gold { color:#FFD23A; }
 
   /* Le bouton en relief : face dégradée, contour épais, tranche en bas */
-  .hbtn, .btn, .dcard button { position:relative; cursor:pointer; border:3px solid var(--edge); border-radius:20px;
+  .hbtn, .btn { position:relative; cursor:pointer; border:3px solid var(--edge); border-radius:20px;
          background:linear-gradient(180deg, var(--hi) 0%, var(--face) 42%, var(--lo) 100%);
          box-shadow:0 6px 0 var(--edge), inset 0 3px 0 rgba(255,255,255,.35), inset 0 -4px 0 rgba(0,0,0,.12); }
-  .hbtn:active, .btn:active, .dcard button:active { transform:translateY(4px); box-shadow:0 2px 0 var(--edge), inset 0 3px 0 rgba(255,255,255,.35), inset 0 -4px 0 rgba(0,0,0,.12); }
+  .hbtn:active, .btn:active { transform:translateY(4px); box-shadow:0 2px 0 var(--edge), inset 0 3px 0 rgba(255,255,255,.35), inset 0 -4px 0 rgba(0,0,0,.12); }
 
   /* Panneau de fin de partie */
   #over, #duoEnd, .lvcard { color:#fff; --edge:#141A6E; background:linear-gradient(180deg,#4B57F7 0%,#3440D8 55%,#2A35C2 100%);
@@ -72,7 +72,6 @@
   #ovMsg { font-weight:900; font-size:clamp(15px,4.3vw,19px); color:#FFE066; margin-top:2px; }
   #ovSub { font-weight:700; font-size:clamp(13px,3.6vw,15px); opacity:.95; margin-top:2px; }
   #ovSub:empty { display:none; }
-  #ovGrid { font-size:clamp(14px,4vw,18px); line-height:1.25; letter-spacing:1px; margin:6px 0 2px; white-space:pre-line; }
   #ovRew { font-weight:900; font-size:14px; color:#FFE066; }
   #ovDist, #ovMsg, #deTitle, #deScore, .lvcard .ttl, .lvcard .why { text-shadow:0 3px 0 var(--edge),2px 0 0 var(--edge),-2px 0 0 var(--edge),0 -2px 0 var(--edge); }
   .btns { display:flex; flex-wrap:wrap; gap:9px; justify-content:center; align-items:center; margin-top:11px; }
@@ -81,12 +80,12 @@
   .btn .ico { font-size:1.25em; }
   .btn.icon { padding:8px 9px 9px; }
   .btn.icon .ico { font-size:1.45em; }
-  .btn.c-white, .dcard button.c-white { color:var(--edge); text-shadow:none; }
+  .btn.c-white { color:var(--edge); text-shadow:none; }
   .btn.c-white .ico { filter:none; }
   #over .btns { gap:8px; flex-wrap:nowrap; }
   @media (max-width:340px) { #over .btns { flex-wrap:wrap; } }
   @media (max-width:375px) { #over { padding-left:12px; padding-right:12px; } #over .btn { font-size:14.5px; padding:7px 9px 8px; } #over .btn.icon { padding:7px 7px 8px; } }
-  #over.armed .btn { pointer-events:auto; opacity:1; }   /* actifs après 0,7 s : un tap rapide relance sans partager */
+  #over.armed .btn { pointer-events:auto; opacity:1; }   /* actifs après 0,7 s : un tap rapide relance sans appuyer sur un bouton par erreur */
 
   /* Petit message */
   #toast { position:fixed; z-index:8; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 18px); transform:translate(-50%,16px); width:max-content;
@@ -127,12 +126,9 @@
   .dcard { --edge:#7A3B00; color:#fff; background:linear-gradient(180deg,#FFB547,#FF8A00); border:3px solid var(--edge); border-radius:20px;
            box-shadow:0 6px 0 var(--edge), inset 0 3px 0 rgba(255,255,255,.35); padding:8px 12px 10px; text-align:center; }
   .dcard .t { font-weight:900; font-size:clamp(16px,4.6vmin,19px); }
-  .dcard .t, .dcard .g { text-shadow:0 2px 0 var(--edge),1.5px 0 0 var(--edge),-1.5px 0 0 var(--edge),0 -1.5px 0 var(--edge); }
-  .dcard .g { font-size:clamp(14px,3.9vmin,17px); line-height:1.25; white-space:pre-line; margin:3px 0 1px; }
+  .dcard .t { text-shadow:0 2px 0 var(--edge),1.5px 0 0 var(--edge),-1.5px 0 0 var(--edge),0 -1.5px 0 var(--edge); }
   .dcard .r { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:5px 8px; margin-top:5px; }
   .dcard .c { font-weight:800; font-size:12.5px; color:#fff; font-variant-numeric:tabular-nums; background:rgba(122,59,0,.35); border-radius:99px; padding:2px 9px; }
-  .dcard button { --hi:#6B78FF; --face:#3B49F0; --lo:#2A35CC; --edge:#141A6E; display:inline-flex; align-items:center; gap:5px; color:#fff;
-                  font-weight:900; font-size:13.5px; border-radius:12px; padding:4px 10px 5px; box-shadow:0 3px 0 var(--edge); }
   .rules { --edge:#141A6E; text-align:center; color:#fff; font-weight:800; font-size:13px;
            text-shadow:0 2px 0 var(--edge),2px 0 0 var(--edge),-2px 0 0 var(--edge),0 -2px 0 var(--edge); }
   @media (max-height:720px) { #home.done .rules { display:none; } }
@@ -276,12 +272,14 @@
 #pause .btn { justify-content:center; width:100%; font-size:18px; padding:10px 14px 11px; border-radius:18px; }
 #pause #pResume { font-size:23px; padding:12px 14px 13px; border-radius:20px; }
 #pause.armed .btn { pointer-events:auto; opacity:1; }
+#pause #pQual { font-size:14px; padding:6px 12px 7px; border-radius:14px; width:auto; align-self:center; }   /* qualité d'image : petit, en dessous */
 @media (max-height:440px) {                      /* téléphone en paysage, petite fenêtre : boutons sur deux lignes */
   #pause .pcard { width:min(92vw,560px); padding:8px 14px 14px; }
   #pause .ttl { font-size:28px; }
   #pause .pbtns { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:8px; }
   #pause #pResume { grid-column:1 / -1; font-size:20px; padding:9px 12px 10px; }
   #pause .btn { font-size:15px; padding:8px 8px 9px; white-space:normal; line-height:1.1; }
+  #pause #pQual { grid-column:1 / -1; justify-self:center; font-size:13px; padding:5px 12px 6px; }
 }
 /* Pendant une pub (ou sa demande) : rien n'est cliquable */
 #adShield { position:fixed; inset:0; z-index:40; background:transparent; }
@@ -341,7 +339,6 @@ body.pill-zone #meta { left:calc(env(safe-area-inset-left,0px) + 66px); max-widt
 @media (max-height:430px) {
   #over { padding-top:6px; padding-bottom:10px; }
   #ovDist { font-size:34px; }
-  #ovGrid { display:none; }
   #over .btns { margin-top:7px; }
   #over .rpair { margin-top:7px; }
   #over .rcap { margin-top:4px; }
@@ -351,3 +348,8 @@ body.pill-zone #meta { left:calc(env(safe-area-inset-left,0px) + 66px); max-widt
   .ofiche .on { font-size:18px; }
   .ofiche .rpair { margin-top:8px; }
 }
+
+/* Grand écran (plein écran Poki sur PC) : boutons et panneaux HTML zoomés avec l'écran (--uiz, js/render/canvas.js).
+   1 sur téléphone, tablette et dans la fenêtre Poki normale. */
+#home, .lvcard, #over, #duoEnd, #pause .pcard, #panel .sheet, #meta, #toast, #trialTag, .round { zoom:var(--uiz,1); }
+#panel .sheet { max-height:calc(100% / var(--uiz,1)); }

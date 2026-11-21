@@ -91,7 +91,7 @@ function drawPlayground(camZ) {
   const h0 = Math.ceil((camZ + 1.5) / HOP_EVERY), h1 = Math.floor((camZ + 70) / HOP_EVERY);
   for (let k = h1; k >= h0; k--) if (k > 0) drawHopscotch(g, k * HOP_EVERY + hash(k * 9.1) * 6, camZ);
   // objets sur les côtés, du loin vers le près
-  const k0 = Math.ceil((camZ + 1.5) / SEG), k1 = Math.floor((camZ + 115) / SEG);
+  const k0 = Math.ceil((camZ + 1.5) / SEG), k1 = Math.floor((camZ + 115 * S.Q.decor) / SEG);   // qualité basse : décor moins loin
   for (let k = k1; k >= k0; k--) {
     for (let side = -1; side <= 1; side += 2) {
       if (hash(k * 1.913 + side * 51.7) < 0.32) continue;

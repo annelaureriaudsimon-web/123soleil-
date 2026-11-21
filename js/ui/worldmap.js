@@ -48,7 +48,7 @@ function layout() {
   const base = land ? LANDSCAPE : PORTRAIT, pts = MAP.world % 2 ? base : base.map(([x, y]) => [1 - x, y]);   // le parc : chemin en miroir
   const r = clamp(Math.min(S.W, S.H) * (land ? 0.062 : 0.058), 20, 40);
   MAP.nodes = world().levels.map((lv, i) => ({ lv, x: lerp(left + r, right - r, pts[i][0]), y: lerp(top + r * 1.2, bot - r * 1.6, pts[i][1]), r: lv.boss ? r * 1.32 : r }));
-  const tw = Math.min(62, (S.W - safe.l - safe.r - 96 - S.pillX - S.pillR) / WORLDS.length);   // pillX : la pilule Poki
+  const tw = Math.min(62, (S.W - safe.l - safe.r - 96 * S.uiZoom - S.pillX - S.pillR) / WORLDS.length);   // pillX : la pilule Poki
   MAP.tabs = WORLDS.map((w, i) => ({ w, x: safe.l + S.pillX + 14 + tw * (i + 0.5), y: safe.t + 48, r: tw * 0.36 }));
 }
 
@@ -297,7 +297,7 @@ function drawBossFace(g, x, y, R) {                // un petit soleil à lunette
 function drawHeader(g) {
   const w = world(), tot = S.Levels.worldStars(w), max = w.levels.length * 3;
   const x = safe.l + S.pillX + 16, y = safe.t + 22, fs = clamp(Lt.U * 0.05, 15, 23);
-  const hx = safe.l + S.pillX + 6, hy = safe.t + 4, hw = S.W - safe.l - S.pillX - safe.r - S.pillR - 80, hh = MAP.area.head - safe.t - 12;
+  const hx = safe.l + S.pillX + 6, hy = safe.t + 4, hw = S.W - safe.l - S.pillX - safe.r - S.pillR - 80 * S.uiZoom, hh = MAP.area.head - safe.t - 12;
   g.fillStyle = NAVY; rrp(g, hx, hy + 5, hw, hh, 20); g.fill();               // panneau bleu, tranche en bas
   const grd = g.createLinearGradient(0, hy, 0, hy + hh);
   grd.addColorStop(0, '#5965FF'); grd.addColorStop(1, '#2F3BD6');
@@ -306,9 +306,9 @@ function drawHeader(g) {
   g.textAlign = 'left'; g.textBaseline = 'middle';
   g.font = `900 ${fs}px ${S.FONT}`;
   const title = `${L.worldN(w.id)} · ${tr(w.name)}`;
-  otext(title, x, y, fit(title, fs, S.W - 160 - safe.r - S.pillR - x), '#FFFFFF');
+  otext(title, x, y, fit(title, fs, S.W - 160 * S.uiZoom - safe.r - S.pillR - x), '#FFFFFF');
   g.textAlign = 'right';
-  const sx = S.W - safe.r - S.pillR - 90;                    // compteur d'étoiles du monde
+  const sx = S.W - safe.r - S.pillR - 90 * S.uiZoom;                    // compteur d'étoiles du monde
   otext(`${tot}/${max}`, sx, y, fs * 0.9, '#FFE066');
   g.font = `900 ${fs * 0.9}px ${S.FONT}`;
   drawStarShape(sx - g.measureText(`${tot}/${max}`).width - fs * 0.62, y, fs * 0.5, '#FFD23A', 0);

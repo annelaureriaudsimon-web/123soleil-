@@ -2,7 +2,7 @@
 (function (S) {
 'use strict';
 const { L, $, esc, dailyState, DAY, missionsDone, streakAlive, todayNumber, untilMidnight, Sound, Lt, over,
-  newRunner, newWatcher, rankIndex, rankLabel, startRun, shareTextNow, canAfford, releaseAll, icon, setIcon } = S;   // déjà chargés
+  newRunner, newWatcher, rankIndex, rankLabel, startRun, canAfford, releaseAll, icon, setIcon } = S;   // déjà chargés
 
 // Le contenu d'un gros bouton de l'accueil : une pastille ronde avec l'icône, le titre, et une petite ligne dessous
 const hb = (ic, title, hint) => `<span class="bi">${icon(ic)}</span><span class="bt"><b>${esc(title)}</b><small>${esc(hint)}</small></span>`;
@@ -38,11 +38,9 @@ function renderHome() {
   $('home').classList.toggle('done', !!d);
   if (!d) {                                        // pas encore joué : le gros bouton du défi
     box.innerHTML = `<button id="dailyBtn" class="hbtn daily c-orange" type="button">${hb('sun', L.dailyBtn(DAY), L.dailyHint)}</button>`;
-  } else {                                         // déjà joué : résultat, grille, compte à rebours, repartage
-    const grid = d.done && Array.isArray(d.lines) && d.lines.length ? `<div class="g">${esc(d.lines.join('\n'))}</div>` : '';
-    const again = d.done && d.share ? `<button id="reshare" type="button">${icon('share')}${esc(L.reshare)}</button>` : '';
-    box.innerHTML = `<div class="dcard"><div class="t">${esc(d.done ? L.dailyDone(DAY, d.dist) : L.dailyLost(DAY))}</div>${grid}`
-                  + `<div class="r"><span class="c" id="countdown">${esc(L.nextIn(untilMidnight()))}</span>${again}</div></div>`;
+  } else {                                         // déjà joué : résultat et compte à rebours
+    box.innerHTML = `<div class="dcard"><div class="t">${esc(d.done ? L.dailyDone(DAY, d.dist) : L.dailyLost(DAY))}</div>`
+                  + `<div class="r"><span class="c" id="countdown">${esc(L.nextIn(untilMidnight()))}</span></div></div>`;
   }
   const cont = S.Onboard.contLevel(), cw = S.WORLDS.find(w => w.id === cont.world) || S.WORLDS[0];   // un appui : on reprend là où on en était
   $('contBtn').innerHTML = hb('play', S.Onboard.started() ? L.contBtn : L.playBtn, L.contHint(cont.num, S.tr(cw.name)));
@@ -104,7 +102,6 @@ $('home').addEventListener('click', e => {
   else if (b.id === 'dailyBtn') startRun('daily');
   else if (b.id === 'freeBtn') startRun('free');
   else if (b.id === 'duoBtn') S.startDuo();
-  else if (b.id === 'reshare') { const d = dailyState(); if (d && d.share) shareTextNow(d.share); }
 });
 setIcon('homeBtn', 'home'); setIcon('homeBtn2', 'home');
 ['homeBtn', 'homeBtn2', 'deHome'].forEach(id => {

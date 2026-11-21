@@ -2,7 +2,7 @@
 (function (S) {
 'use strict';
 const { BOSS_REST, CLOSE, HOP_DUR, PEEK_P, PHASE_LEN, RET_DUR, V_EPS, L, tr, MEDALS, clamp, easeIn, easeOut,
-  lerp, vibrate, store, PHASE_WATCHER, Sound, SAY, sayEvent, Voice, Lt, anyMoving, logEvent, addStars,
+  lerp, vibrate, store, PHASE_WATCHER, Sound, SAY, sayEvent, Voice, Lt, anyMoving, addStars,
   checkMissions, chantEvent, overdrive, startChant } = S;   // déjà chargés
 
 /* ---------- 14. Le soleil : regard, faux dos, HOP ---------- */
@@ -99,12 +99,12 @@ function lookStart() {
     return;
   }
   S.RS.looks++;
-  if (w.second) { logEvent('👁️'); checkMissions(); return; }   // second regard du faux dos : pas de combo
+  if (w.second) { checkMissions(); return; }   // second regard du faux dos : pas de combo
   const since = r.v > 0 ? 0 : S.runT - r.stopT;
   if (since < CLOSE) {                                     // « OUF ! » : arrêté au tout dernier moment
     S.combo++; S.RS.oufs++; S.RS.combo = Math.max(S.RS.combo, S.combo);
     addStars(S.combo);
-    logEvent('🟨'); Sound.ouf(S.combo); vibrate(18);
+    Sound.ouf(S.combo); vibrate(18);
     S.popup(S.combo > 1 ? `${L.ouf} ×${S.combo}` : L.ouf, Lt.cx, Lt.yFeet - Lt.s * 1.8, S.combo > 2 ? '#FFD166' : '#FFFFFF', Math.min(Lt.U * (0.07 + 0.006 * S.combo), 46), 1.0);
     let extra = 0;
     if (S.star && S.star.taken && S.star.cycle === S.cycleN && !S.star.doubled) {   // étoile + OUF sur le même regard : bonus doublé
@@ -114,14 +114,14 @@ function lookStart() {
     }
     S.starPop(S.combo + extra);
     S.sparks(10 + S.combo * 3, Lt.cx, Lt.yFeet - Lt.s * 1.2, '#FFF3B0');
-  } else { S.combo = 0; logEvent('🟩'); }
+  } else { S.combo = 0; }
   checkMissions();
 }
 
 function bossBeaten() {
   const w = S.watcher, k = w.boss;
   w.boss = 0; w.rest = BOSS_REST;                         // petite pause : le boss râle
-  S.RS.bosses++; logEvent('😎');
+  S.RS.bosses++;
   Voice.quip(SAY.bossBeaten, w.type === 'moon');
   addStars(5);
   S.popup(L.bossWin, Lt.cx, Lt.hy + (Lt.yFeet - Lt.hy) * 0.3, '#FFD166', S.fit(L.bossWin, Math.min(Lt.U * 0.1, 54), S.W * 0.9), 1.6);

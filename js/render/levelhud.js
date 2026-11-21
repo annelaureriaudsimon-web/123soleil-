@@ -13,7 +13,7 @@ function drawLevelHUD() {
   const LV = S.Levels, m = LV.m;
   if (!m) return;
   const g = S.ctx, def = m.level, boss = !!def.boss;
-  const x0 = 14 + safe.l + S.pillX, x1 = Lt.land ? Math.min(x0 + S.W * 0.3, Lt.cx - Lt.R * 1.6) : S.W - RIGHT_FREE - safe.r - S.pillR;   // paysage : le chant reste lisible ; pillX : la pilule Poki
+  const x0 = 14 + safe.l + S.pillX, x1 = Lt.land ? Math.min(x0 + S.W * 0.3, Lt.cx - Lt.R * 1.6) : S.W - RIGHT_FREE * S.uiZoom - safe.r - S.pillR;   // paysage : le chant reste lisible ; pillX : la pilule Poki
   const y = safe.t + 16, w = Math.max(60, x1 - x0);
   const k = clamp(m.player.z / def.length, 0, 1);
   // la barre

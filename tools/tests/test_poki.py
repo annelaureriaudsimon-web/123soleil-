@@ -331,7 +331,7 @@ async def t_scroll_debug(b):
     await done(page, ctx)
 
 async def t_iframe_share(b):
-    print('\n12) Dans une iframe (comme sur Poki) : pilule, bouton Image, partage sans adresse')
+    print('\n12) Dans une iframe (comme sur Poki) : pilule ; et plus AUCUNE fonction de partage (v2.4)')
     wrap = os.path.join(tempfile.gettempdir(), 'soleil_iframe.html')
     open(wrap, 'w').write(f'<!DOCTYPE html><html><body style="margin:0"><iframe id="g" src="{URL}" style="border:0;width:100vw;height:100vh"></iframe></body></html>')
     for touch in (True, False):
@@ -342,21 +342,23 @@ async def t_iframe_share(b):
         page.on('pageerror', lambda e: errs.append(str(e)))
         await page.goto('file://' + wrap); await page.wait_for_timeout(1200)
         fr = page.frames[1]
-        st = await fr.evaluate("({ emb: Soleil.embedded, touch: Soleil.touchUI, pill: Soleil.pillX, cls: document.body.classList.contains('pill-zone'), img: document.getElementById('imgBtn').classList.contains('hide'), meta: getComputedStyle(document.getElementById('meta')).left })")
+        st = await fr.evaluate("({ emb: Soleil.embedded, touch: Soleil.touchUI, pill: Soleil.pillX, cls: document.body.classList.contains('pill-zone'), meta: getComputedStyle(document.getElementById('meta')).left })")
         if touch:
             check('iframe + tactile : zone de la pilule protégée (décalage 56 px)', st['emb'] and st['touch'] and st['pill'] == 56 and st['cls'] and st['meta'] == '66px', json.dumps(st))
         else:
             check('iframe + souris : pas de pilule, pas de décalage', st['emb'] and not st['touch'] and st['pill'] == 0 and not st['cls'], json.dumps(st))
-        check('dans une iframe, le bouton Image est caché proprement', st['img'])
         if touch:
             await fr.click('#freeBtn'); await page.wait_for_timeout(200)
             await fr.evaluate("Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1300)
-            t = await fr.evaluate("Soleil.shareText()")
-            check('texte de partage sans adresse de page', t and 'http' not in t and 'file:' not in t and '.html' not in t, t.split('\n')[0])
-            f = await fr.evaluate("Soleil.prepareStory().then(f => !!f && f.size > 10000)")
-            check('l’image se dessine sans erreur (et sans adresse)', f)
-            await fr.click('#share'); await page.wait_for_timeout(300)
+            r = await fr.evaluate("""({ btns: [...document.querySelectorAll('#over button')].map(b => b.id || b.dataset.act || b.dataset.reward),
+              ids: ['share', 'imgBtn', 'ovGrid', 'reshare'].filter(id => document.getElementById(id)),
+              fns: ['shareText', 'shareTextNow', 'prepareStory', 'shareImage', 'phaseLines', 'logEvent'].filter(f => typeof Soleil[f] !== 'undefined'),
+              daily: Object.keys(Soleil.store.get('daily', {}) || {}) })""")
+            check('aucun bouton Partager / Image, aucune grille, aucune fonction de partage', not r['ids'] and not r['fns'] and 'share' not in ' '.join(map(str, r['btns'])), json.dumps(r))
         ERRS.extend(errs); await ctx.close()
+    src = ''.join(open(os.path.join(ROOT, 'js', d, f)).read() for d in os.listdir(os.path.join(ROOT, 'js')) if os.path.isdir(os.path.join(ROOT, 'js', d)) for f in os.listdir(os.path.join(ROOT, 'js', d)) if f.endswith('.js'))
+    left = [w for w in ('navigator.share', 'clipboard', 'canShare', 'shareText', 'prepareStory') if w in src]
+    check('le code ne contient plus rien de partage (navigator.share, presse-papiers…)', not left, ', '.join(left) or 'rien')
 
 async def t_build(b):
     print('\n13) Le build Poki (dist/poki) marche dans le navigateur, avec et sans SDK')
@@ -609,8 +611,8 @@ async def t_reward_endless(b):
     st0 = await page.evaluate("({ plays: Soleil.plays, stars: Soleil.stars, best: Soleil.best, runs: Soleil.mstate.runs, total: Soleil.mstate.total })")
     await page.click('#ovPair [data-reward]')
     await page.wait_for_function("Soleil.state === 'play'", timeout=4000); await frames(page)
-    st = await page.evaluate("({ z: Soleil.runner.z, v: Soleil.runner.v, toast: Soleil.runner.toast, sun: Soleil.watcher.state, g: Soleil.grace, rev: Soleil.revivedRun, ev: Soleil.events.map(e => e.s).join('') })")
-    check('vidéo vue : la course continue au même endroit, à l’arrêt, soleil de dos, 1 s de protection', abs(st['z'] - 52.4) < 1 and st['v'] == 0 and st['toast'] == 0 and st['sun'] == 'pause' and st['g'] > 0.5 and st['rev'] and '🎬' in st['ev'], json.dumps(st, ensure_ascii=False))
+    st = await page.evaluate("({ z: Soleil.runner.z, v: Soleil.runner.v, toast: Soleil.runner.toast, sun: Soleil.watcher.state, g: Soleil.grace, rev: Soleil.revivedRun})")
+    check('vidéo vue : la course continue au même endroit, à l’arrêt, soleil de dos, 1 s de protection', abs(st['z'] - 52.4) < 1 and st['v'] == 0 and st['toast'] == 0 and st['sun'] == 'pause' and st['g'] > 0.5 and st['rev'], json.dumps(st, ensure_ascii=False))
     await page.wait_for_timeout(1200)
     await page.evaluate("Soleil.runner.z = 61.2; Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1300)
     st1 = await page.evaluate("({ plays: Soleil.plays, stars: Soleil.stars, best: Soleil.best, runs: Soleil.mstate.runs, total: Soleil.mstate.total, pair: document.getElementById('ovPair').innerHTML, isRec: Soleil.lastRun.isRec, prev: Soleil.lastRun.prevBest })")
@@ -676,10 +678,133 @@ async def t_reward_trial(b):
     check('rechargement de la page : l’essai est oublié', await page.evaluate("Soleil.trial === null && Soleil.wornOutfit() === Soleil.outfit"))
     await done(page, ctx)
 
+# ====================================================================================================================
+# v2.4 — étape Poki 3 : grand écran, pas fixe (même partie à 30, 60 et 120 images/s), qualité d'image automatique
+# ====================================================================================================================
+async def t_bigscreen(b):
+    print('\n25) Très grand écran (plein écran Poki) : tout est entier et lisible ; redimensionnement en pleine partie')
+    for w, h in [(1920, 1080), (2560, 1440), (2560, 1080), (1680, 1050), (1024, 768)]:
+        ctx, page = await new_page(b, w=w, h=h)
+        r = {}
+        await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-3', false)"); await page.wait_for_timeout(200)
+        await page.keyboard.press('Space'); await frames(page)
+        await page.evaluate("LVBOT('greedy', 60 * 40, () => Soleil.Levels.phase === 'caught')")
+        await page.wait_for_function("Soleil.Levels.phase === 'fail' && document.getElementById('lvFail').classList.contains('armed')", timeout=5000)
+        INVIEW = """(sel => { const out = []; document.querySelectorAll(sel).forEach(el => { const q = el.getBoundingClientRect(), st = getComputedStyle(el);
+            if (st.display === 'none' || st.visibility === 'hidden' || q.width === 0) return;
+            if (q.left < -1 || q.top < -1 || q.right > innerWidth + 1 || q.bottom > innerHeight + 1) out.push((el.id || el.className) + ' ' + [q.left, q.top, q.right, q.bottom].map(Math.round)); });
+            return out; })"""
+        r['fail'] = await page.evaluate(f"({INVIEW})('#lvFail, #lvFail button, .round')")
+        z = await page.evaluate("Soleil.uiZoom")
+        await page.evaluate("Soleil.Levels.toMap(); Soleil.goHome(); Soleil.startRun('free')"); await page.wait_for_timeout(200)
+        await page.evaluate("Soleil.runner.z = 40; Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1300)
+        r['over'] = await page.evaluate(f"({INVIEW})('#over, #over button, #toast.show')")
+        await page.evaluate("Soleil.goHome(); Soleil.openPanel()"); await page.wait_for_timeout(250)
+        r['panel'] = await page.evaluate(f"({INVIEW})('#panel .sheet')")
+        await page.evaluate("Soleil.closePanel()")
+        r['home'] = await page.evaluate(f"({INVIEW})('#home, #home button, #meta, .round')")
+        fs = await page.evaluate("parseFloat(getComputedStyle(document.querySelector('#contBtn b')).fontSize) * Soleil.uiZoom")
+        ok = not any(r.values()) and (z > 1 if w >= 1680 else z == 1) and 24 <= fs <= 60
+        check(f'{w}×{h} : défaite, fin de course, casier, accueil entiers à l’écran ; boutons agrandis ×{z} (texte {fs:.0f} px)', ok, json.dumps({k: v for k, v in r.items() if v}))
+        await done(page, ctx)
+    ctx, page = await new_page(b, w=1031, h=580)
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-3', false)"); await page.wait_for_timeout(200)
+    await page.keyboard.down('Space'); await page.wait_for_timeout(600)
+    await page.set_viewport_size({'width': 1920, 'height': 1080}); await page.wait_for_timeout(300)
+    st = await page.evaluate("({ p: Soleil.paused, ph: Soleil.Levels.phase, W: Soleil.W, z: Soleil.uiZoom, cv: document.querySelector('canvas').width })")
+    await page.keyboard.up('Space')
+    check('plein écran en pleine partie : le jeu se met en pause, se redessine à la nouvelle taille, personne n’est grillé', st['p'] == 'taille' and st['ph'] == 'play' and st['W'] == 1920 and st['z'] > 1, json.dumps(st))
+    await page.keyboard.press('Escape'); await page.wait_for_timeout(1500)
+    await page.set_viewport_size({'width': 1031, 'height': 580}); await page.wait_for_timeout(300)
+    st = await page.evaluate("({ p: Soleil.paused, ph: Soleil.Levels.phase, z: Soleil.uiZoom })")
+    check('sortie du plein écran : pause aussi, retour à la taille normale', st['p'] == 'taille' and st['ph'] == 'play' and st['z'] == 1, json.dumps(st))
+    await page.keyboard.press('Escape'); await page.wait_for_timeout(200)
+    await page.set_viewport_size({'width': 1031, 'height': 560}); await page.wait_for_timeout(200)
+    check('petit changement de taille (barre d’adresse du téléphone) : pas de pause', not await page.evaluate("Soleil.paused"))
+    await done(page, ctx)
+
+DRIVE = """
+window.__drive = (fps, maxS) => {                 // fait tourner le VRAI jeu image par image, à fps images/s
+  const S = Soleil, L = S.Levels;
+  S.last = 0; S.acc = 0;
+  const df = 1000 / fps, every = 1000 / 30;        // le robot décide toutes les 1/30 s : des instants où il y a une image aux 3 fréquences
+  const decide = () => { const m = L.m, w = m && m.sun;   // il regarde le jeu À CET INSTANT (après l'image), et décide pour la suite
+    S.pressing = !!m && L.phase === 'play' && !((w.state === 'chant' && (w.textKind === 'so' || w.textKind === 'trigger')) || w.state === 'turn' || w.state === 'look'
+      || w.state === 'peek' || w.state === 'hop' || (w.state === 'return' && w.retTo > 0)); };
+  let t = 0, next = every, n = 0;
+  decide();
+  while (t < maxS * 1000) {
+    t += df;
+    S.frame(t); n++;
+    if (t >= next - 1e-6) { next += every; decide(); }
+    if (L.phase === 'results' || L.phase === 'win' || L.phase === 'fail' || L.phase === 'caught') break;
+  }
+  const m = L.m, r = m.result || {};
+  // ce qui compte, figé À L'INSTANT de l'arrivée (après, l'image peut contenir quelques pas de plus selon la fréquence)
+  return { phase: L.phase === 'results' ? 'win' : L.phase, win: !!r.win, time: r.time != null ? +r.time.toFixed(4) : null, place: r.place,
+           stats: JSON.stringify(r.stats || {}), finishers: m.finishers.map(x => x.id + '@' + x.finishT.toFixed(4)).join(','), frames: n };
+};
+0;   // (sinon Playwright appellerait la fonction tout de suite)
+"""
+async def t_fps_fair(b):
+    print('\n26) Pas fixe : le MÊME joueur fait EXACTEMENT la même partie à 30, 60 et 120 images/s')
+    for lv in ('w1-3', 'w2-5'):
+        res = {}
+        for fps in (30, 60, 120):
+            ctx, page = await new_page(b, init_js="window.requestAnimationFrame = () => 0;")
+            await page.evaluate(DRIVE)
+            await page.evaluate(f"Soleil.WorldMap.open(); Soleil.Levels.open('{lv}', false)")
+            await page.evaluate("(() => { const S = Soleil; S.last = 0; for (let i = 1; i <= 20; i++) S.frame(i * 1000 / 60); S.Levels.press(); S.last = 0; S.acc = 0; })()")
+            res[fps] = await page.evaluate("__drive(%d, 90)" % fps)
+            await done(page, ctx)
+        same = res[30] | {'frames': 0} == res[60] | {'frames': 0} == res[120] | {'frames': 0}
+        check(f'niveau {lv} : même résultat, même temps, même distance (30 / 60 / 120 images/s)', same and res[60]['phase'] in ('win', 'results'),
+              ' | '.join(f"{k} i/s : {v['phase']} en {v['time']} s, {v['place']}e" for k, v in res.items()))
+
+async def t_quality(b):
+    print('\n27) Qualité d’image automatique : téléphone lent simulé (processeur ralenti 4× et 6×)')
+    ctx, page = await new_page(b, w=390, h=844, touch=True, init_js="Object.defineProperty(window, 'devicePixelRatio', { get: () => 3 });")
+    st0 = await page.evaluate("({ lvl: Soleil.Q.level, dpr: Soleil.DPR, mode: Soleil.Q.mode })")
+    check('au départ : qualité haute (résolution ×2 sur un écran ×3)', st0['lvl'] == 0 and st0['dpr'] == 2 and st0['mode'] == 'auto', json.dumps(st0))
+    await page.evaluate("""window.__qlog = []; (function f() { const S = Soleil, w = S.watcher;
+      const last = __qlog[__qlog.length - 1];
+      if (!last || last.lvl !== S.Q.level) __qlog.push({ lvl: S.Q.level, sun: w ? w.state : '', fps: Math.round(S.Q.fps), t: Math.round(performance.now()) });
+      __origRAF(f); })();""".replace('__origRAF', 'requestAnimationFrame'))
+    await page.click('#freeBtn'); await page.wait_for_timeout(200)
+    async def play(sec):
+        t = 0
+        while t < sec * 1000:
+            await page.keyboard.down('Space'); await page.wait_for_timeout(700); await page.keyboard.up('Space'); await page.wait_for_timeout(900); t += 1600
+            if await page.evaluate("Soleil.state") != 'play': await page.evaluate("Soleil.afterBreak(() => Soleil.startRun('free'))"); await page.wait_for_timeout(300)
+    await play(4)
+    fps_fast = await page.evaluate("Math.round(Soleil.Q.fps)")
+    cdp = await ctx.new_cdp_session(page)
+    out = []
+    for rate in (4, 6):
+        await cdp.send('Emulation.setCPUThrottlingRate', {'rate': rate})
+        await play(9)
+        out.append(await page.evaluate("({ lvl: Soleil.Q.level, fps: Math.round(Soleil.Q.fps), dpr: Soleil.DPR, pmax: Soleil.Q.pmax, decor: Soleil.Q.decor })"))
+    log = await page.evaluate("__qlog")
+    bad = [e for e in log[1:] if e['sun'] in ('turn', 'look', 'peek', 'hop', 'return')]
+    check('processeur ralenti : la qualité baisse toute seule (résolution, particules, décor)', out[-1]['lvl'] >= 1 and out[-1]['dpr'] < 2,
+          f'normal {fps_fast} i/s ; ' + ' ; '.join(f"×{r} : niveau {o['lvl']}, {o['fps']} i/s, résolution ×{o['dpr']}" for r, o in zip((4, 6), out)))
+    check('chaque changement de qualité arrive à un moment calme (jamais pendant que le soleil se retourne ou regarde)', not bad, json.dumps(log))
+    await cdp.send('Emulation.setCPUThrottlingRate', {'rate': 1})
+    await page.keyboard.press('Escape'); await page.wait_for_timeout(300)
+    lbl = await page.evaluate("document.getElementById('pQual').innerText")
+    await page.click('#pQual'); await page.wait_for_timeout(100)
+    a = await page.evaluate("({ m: Soleil.Q.mode, l: Soleil.Q.level, s: Soleil.store.get('quality'), t: document.getElementById('pQual').innerText })")
+    await page.click('#pQual'); await page.wait_for_timeout(100)
+    c = await page.evaluate("({ m: Soleil.Q.mode, l: Soleil.Q.level, dpr: Soleil.DPR })")
+    check('menu pause : « Qualité : Auto » → Haute → Basse, mémorisé', 'Auto' in lbl and a['m'] == 'high' and a['l'] == 0 and a['s'] == 'high' and 'Haute' in a['t'] and c['m'] == 'low' and c['l'] == 2 and c['dpr'] == 1, json.dumps([lbl, a, c]))
+    await page.click('#pQual')
+    await done(page, ctx)
+
 TESTS = [t_new_player, t_soft_level1, t_returning, t_pause_endless, t_pause_level_daily, t_ads, t_fail_retry, t_hidden_blur,
          t_casier_duo, t_sdk_modes, t_scroll_debug, t_iframe_share, t_build,
          t_fix_toast, t_fix_pill, t_fix_late_ad, t_fix_typo,
-         t_reward_revive_level, t_reward_refused, t_reward_hidden, t_reward_endless, t_reward_double, t_reward_trial, t_event_log]
+         t_reward_revive_level, t_reward_refused, t_reward_hidden, t_reward_endless, t_reward_double, t_reward_trial,
+         t_bigscreen, t_fps_fair, t_quality, t_event_log]
 
 async def main():
     only = sys.argv[1:]

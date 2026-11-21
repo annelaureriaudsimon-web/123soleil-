@@ -230,7 +230,7 @@ function drawDuoBeams() {                          // le regard qui grille, vers
   }
 }
 function drawDuoHUD() {                            // distances, barres jusqu'à l'arrivée, score
-  const fs = Math.min(Lt.U * 0.052, 26), left = 14 + safe.l + S.pillX, right = S.W - 122 - safe.r - S.pillR;   // pillX : la pilule Poki
+  const fs = Math.min(Lt.U * 0.052, 26), left = 14 + safe.l + S.pillX, right = S.W - 122 * S.uiZoom - safe.r - S.pillR;   // pillX : la pilule Poki
   const bw = Math.max(70, Math.min(190, (right - left) / 2 - 14));
   const rowY = safe.t + 12 + (Lt.land ? 0 : fs * 1.35);
   for (const r of S.duo.racers) {

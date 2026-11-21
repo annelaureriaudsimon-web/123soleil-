@@ -168,9 +168,10 @@ async def t_map(b):
 async def t_save(b):
     print('\n7) Sauvegarde : les anciennes données restent intactes')
     ctx, page = await new_page(b)
-    await page.evaluate("""(() => { const S = Soleil; S.store.set('best', 321); S.store.set('stars', 45); S.store.set('owned', ['classic', 'cap']);
-      S.store.set('outfit', 'cap'); S.store.set('medals', ['midi']); S.store.set('plays', 12); S.store.set('ghost', [0, 10, 25, 40]); })()""")
-    await page.reload(); await page.wait_for_timeout(300); await page.evaluate(FAST)
+    # l'ancienne sauvegarde est écrite au tout début du chargement (adresse ?oldsave) : plus fiable qu'un reload juste après un localStorage.setItem
+    await ctx.add_init_script("""if (location.search.includes('oldsave')) { const set = (k, v) => localStorage.setItem('soleil.' + k, JSON.stringify(v));
+      set('best', 321); set('stars', 45); set('owned', ['classic', 'cap']); set('outfit', 'cap'); set('medals', ['midi']); set('plays', 12); set('ghost', [0, 10, 25, 40]); }""")
+    await page.goto(URL + '?oldsave'); await page.wait_for_function("Soleil.Poki && Soleil.Poki.loaded"); await page.wait_for_timeout(300); await page.evaluate(FAST)
     a = await page.evaluate("({ best: Soleil.best, stars: Soleil.stars, owned: Soleil.owned, outfit: Soleil.outfit, plays: Soleil.plays, ghost: !!Soleil.ghost })")
     check('ancienne sauvegarde relue telle quelle', a['best'] == 321 and a['stars'] == 45 and a['owned'] == ['classic', 'cap'] and a['outfit'] == 'cap' and a['plays'] == 12 and a['ghost'], json.dumps(a))
     await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-1', false)")
@@ -304,8 +305,8 @@ async def t_w2_map(b):
     await page.evaluate("Soleil.WorldMap.tap(14 + 62 * 1.5, 48 + 18)"); await page.wait_for_timeout(200)
     t = await page.evaluate("document.getElementById('toast').innerText")
     check('monde 2 verrouillé : « Gagne 12 ★ dans le monde 1… »', '12' in t and 'monde 1' in t, t)
-    await page.evaluate("""(() => { const s = {}; for (let i = 1; i <= 6; i++) s['w1-' + i] = { s: [true, true, false], best: 30, tries: 1, done: true }; Soleil.store.set('levels', s); })()""")
-    await page.reload(); await page.wait_for_timeout(300); await page.evaluate(FAST)
+    await ctx.add_init_script("""if (location.search.includes('w1stars')) { const s = {}; for (let i = 1; i <= 6; i++) s['w1-' + i] = { s: [true, true, false], best: 30, tries: 1, done: true }; localStorage.setItem('soleil.levels', JSON.stringify(s)); }""")
+    await page.goto(URL + '?w1stars'); await page.wait_for_function("Soleil.Poki && Soleil.Poki.loaded"); await page.wait_for_timeout(300); await page.evaluate(FAST)
     await page.click('#lvBtn'); await page.wait_for_timeout(1600)
     r = await page.evaluate("[Soleil.WorldMap.nodes[0].lv.id, Soleil.Levels.unlocked(Soleil.levelById('w2-1')), Soleil.Levels.unlocked(Soleil.levelById('w2-2')), JSON.stringify(Soleil.store.get('worldsShown', []))]")
     check('12 étoiles : animation, la carte passe sur le parc, niveau 1 ouvert, niveau 2 fermé', r[0] == 'w2-1' and r[1] and not r[2] and '2' in r[3], str(r))
@@ -379,7 +380,7 @@ TESTS = [t_flow, t_fail, t_determinism, t_fair, t_rivals, t_map, t_save, t_boss,
 async def main():
     only = sys.argv[1:]
     async with async_playwright() as p:
-        b = await p.chromium.launch(executable_path=os.environ.get('CHROME') or None)
+        b = await p.chromium.launch(executable_path=os.environ.get('CHROME') or None, args=['--disable-gpu'])
         for t in TESTS:
             if only and t.__name__ not in only: continue
             try: await t(b)
