@@ -282,7 +282,7 @@ function drawNode(g, n, i, current) {
   else inkText(g, String(lv.num), x, n.y + r * 0.04, r * 1.05, TILE.open[3]);
   for (let k = 0; k < 3; k++) {                    // 3 étoiles au-dessus, en arc
     const sx = x + (k - 1) * r * 0.7, sy = n.y - r * 1.16 - (k === 1 ? r * 0.2 : 0);
-    drawStarShape(sx, sy, r * 0.34, k < stars ? '#FFD23A' : 'rgba(255,255,255,0.8)', (k - 1) * 0.25);
+    drawStarShape(sx, sy, r * (k < stars ? 0.34 : 0.27), k < stars ? '#FFD23A' : 'rgba(30,36,110,0.38)', (k - 1) * 0.25);   // vide = plus petite et sombre (pas seulement une autre couleur)
   }
   if (lv.boss) inkText(g, L.bossTag, x, n.y + r * 1.42, r * 0.38, TILE.boss[3]);
 }

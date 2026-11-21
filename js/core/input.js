@@ -42,6 +42,7 @@ window.addEventListener('keydown', e => {
     else if (k === 'm' && !e.ctrlKey && !e.metaKey) { toggleMute(); S.soundLabel(); }
     return;
   }
+  if (S.langOpen && S.langOpen()) return;          // choix de la langue ouvert (js/ui/lang.js) : il gère ses touches
   if (pauseKey && !e.repeat && S.pausable()) { e.preventDefault(); S.pauseGame('clavier'); return; }   // pendant la partie : pause
   if (e.code === 'Escape') {                          // hors partie : comme avant
     if (S.panelOpen) { if (S.ficheOpen && S.ficheOpen()) S.closeFiche(); else closePanel(); return; }   // la fiche d'une tenue, puis le casier

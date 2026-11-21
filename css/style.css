@@ -351,5 +351,19 @@ body.pill-zone #meta { left:calc(env(safe-area-inset-left,0px) + 66px); max-widt
 
 /* Grand écran (plein écran Poki sur PC) : boutons et panneaux HTML zoomés avec l'écran (--uiz, js/render/canvas.js).
    1 sur téléphone, tablette et dans la fenêtre Poki normale. */
-#home, .lvcard, #over, #duoEnd, #pause .pcard, #panel .sheet, #meta, #toast, #trialTag, .round { zoom:var(--uiz,1); }
+#home, .lvcard, #over, #duoEnd, #pause .pcard, #langCard .lcard, #panel .sheet, #meta, #toast, #trialTag, .round { zoom:var(--uiz,1); }
 #panel .sheet { max-height:calc(100% / var(--uiz,1)); }
+
+/* Choix de la langue (v2.4, js/ui/lang.js) : un bouton rond « FR » sur l'accueil, puis une carte avec les 6 langues,
+   chacune écrite dans sa propre langue (pas de drapeaux) */
+#langBtn { top:calc(env(safe-area-inset-top,0px) + 68px); right:calc(env(safe-area-inset-right,0px) + var(--pr,0px) + 68px);
+           font-size:17px; font-weight:900; letter-spacing:.02em; }
+#langCard { position:fixed; inset:0; z-index:7; display:flex; align-items:center; justify-content:center; background:rgba(15,15,40,.5);
+            padding:calc(env(safe-area-inset-top,0px) + 12px) 12px calc(env(safe-area-inset-bottom,0px) + 12px); }
+#langCard.hide { display:none; }
+#langCard .lcard { --edge:#141A6E; color:#fff; text-align:center; width:min(92vw,360px); border-radius:26px; padding:10px 16px 16px;
+         background:linear-gradient(180deg,#4B57F7 0%,#3440D8 55%,#2A35C2 100%); border:4px solid var(--edge);
+         box-shadow:0 7px 0 var(--edge), 0 16px 34px rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.28); animation:pausePop .25s cubic-bezier(.2,1.6,.4,1); }
+#langCard .ttl { font-weight:900; font-size:28px; line-height:1.2; text-shadow:0 3px 0 var(--edge),2px 0 0 var(--edge),-2px 0 0 var(--edge),0 -2px 0 var(--edge); }
+#langCard .lbtns { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+#langCard .btn { justify-content:center; width:100%; font-size:18px; padding:10px 10px 11px; border-radius:18px; pointer-events:auto; opacity:1; }

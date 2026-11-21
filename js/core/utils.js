@@ -1,7 +1,6 @@
 /* js/core/utils.js — Petits outils (maths, couleurs, DOM) */
 (function (S) {
 'use strict';
-const { LANG } = S;   // déjà chargés
 
 /* ---------- 4. Petits outils ---------- */
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
@@ -9,7 +8,7 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const easeIn = t => t * t;
 const easeOut = t => 1 - (1 - t) * (1 - t);
-const fmt = s => { const v = Math.max(0.01, s).toFixed(2); return LANG === 'fr' ? v.replace('.', ',') : v; };
+const fmt = s => { const v = Math.max(0.01, s).toFixed(2); return S.L.decimal === ',' ? v.replace('.', ',') : v; };   // virgule sauf en anglais
 const $ = id => document.getElementById(id);
 const RGB = new Map();
 function rgb(c) {

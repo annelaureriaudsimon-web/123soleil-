@@ -74,7 +74,7 @@ function updateWatcher(dt) {
       if (anyMoving() && !w.spotted) { w.spotted = true; w.spotAt = w.t; w.peekDur = Math.min(w.peekDur, w.t + 0.1); }   // il t'a vu bouger
       if (!w.hopSaid && w.t >= w.peekDur - Voice.lead) { w.hopSaid = true; if (Voice.active()) Voice.say(SAY.hop, w.type === 'moon'); }
       if (w.t >= w.peekDur) {
-        w.state = 'hop'; w.t = 0; w.text = 'HOP !'; w.textKind = 'trigger'; w.textT = S.gtime; w.bump = 1; Sound.hop();
+        w.state = 'hop'; w.t = 0; w.text = S.chantW().hop; w.textKind = 'trigger'; w.textT = S.gtime; w.bump = 1; Sound.hop();
       }
       break;
     case 'hop':

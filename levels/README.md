@@ -18,7 +18,7 @@ Un niveau est un simple objet JavaScript, rangé dans `levels/worldN.js`. Pas be
     turn: [0.555, 0.605],                           // LE réglage le plus important : temps pour s'arrêter après « SOLEIL ! »
     look: [1.2, 1.9],                               // durée de son regard (s)
     traps: 0.8, double: 0.45,                       // probabilité d'un mot piège dans un chant, puis d'un deuxième
-    words: ['SOLDES !', 'SOUPE !', 'SOFA !']        // mots pièges de ce niveau (sinon ceux du jeu)
+    words: [0, 1, 4]                                // mots pièges de ce niveau : numéros dans la liste de la langue (0 = SOLDES / RED HAT…)
   },
   script: { 1: { traps: 2 } },                      // événements prévus : ici, double piège au cycle 1, à chaque essai
   hints: [{ on: 'reveal', cycle: 1, banner: 'trap' }],   // indications à l'écran (voir plus bas)
@@ -61,7 +61,7 @@ Les valeurs par défaut sont dans `js/game/match.js` (`SUN_BASE`).
 | `hesOnTrap` | probabilité que l'hésitation finisse sur un mot piège |
 | `stutter`, `stutterRush` | bégaiement « 2… 2… 3… », puis accélération (× durée) |
 | `express`, `expressK`, `expressTurn` | chant express : × durée des mots, × durée du demi-tour |
-| `words` | liste de mots pièges du niveau |
+| `words` | mots pièges du niveau : numéros (0 à 11) dans la liste de la langue (`chant.traps` de js/core/i18n.js et js/core/lang/*.js) ; ainsi chaque langue a ses mots, au même rythme |
 | `tempt` | tentations pendant le regard (monde 2) : `{ star, fakeRet, sneeze, taunt, fly, crack, max }`. Chaque nombre est la probabilité qu'elle arrive dans un regard ; `max` (1 à 3) limite leur nombre. Deux tentations qui se liraient au même endroit de l'écran ne vont jamais ensemble. |
 | `fakeBack` | probabilité d'un faux dos à la fin d'un regard (monde 2) |
 | `peek` | durée de l'œil qui dépasse pendant le faux dos (s), `[0.5, 1.1]` par défaut |

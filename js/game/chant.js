@@ -45,10 +45,10 @@ function makeChant(D, O, moon, z, R, boss, pTrapOver, forceTrap) {
   for (let i = 0; ; i++) {
     const last = i >= traps;
     if (!moon) {
-      ev.push({ t, text: 'SO', kind: 'so' });
+      ev.push({ t, text: S.chantW().pre, kind: 'so' });
       t += hes && last ? lerp(0.55, 1.45, dHesLen) : w * 0.55 * J();
     } else if (hes && last) t += lerp(0.55, 1.45, dHesLen);
-    if (last) { ev.push({ t, text: moon ? 'LUNE !' : 'SOLEIL !', kind: 'trigger' }); break; }
+    if (last) { ev.push({ t, text: moon ? S.chantW().moon : S.chantW().sun, kind: 'trigger' }); break; }
     ev.push({ t, text: words[i], kind: 'trap' });             // « SOLDES ! » : il ne se retourne pas…
     t += lerp(0.5, 0.75, r());                                // …il rigole…
     ev.push({ t, text: '3', kind: 'num', n: 2 });             // …et reprend à « 3 »
@@ -116,9 +116,9 @@ function buildChant(c) {
   });
   for (let i = 0; ; i++) {
     const last = i >= c.traps;
-    ev.push({ t, text: 'SO', kind: 'so', hes: i === c.hesAt });
+    ev.push({ t, text: S.chantW().pre, kind: 'so', hes: i === c.hesAt });
     t += i === c.hesAt ? c.hesLen : w * c.soK * J() * rush;
-    if (last) { ev.push({ t, text: 'SOLEIL !', kind: 'trigger' }); break; }
+    if (last) { ev.push({ t, text: S.chantW().sun, kind: 'trigger' }); break; }
     ev.push({ t, text: c.words[i], kind: 'trap' });                  // « SOUPE ! » : il ne se retourne pas…
     t += c.laugh;                                                    // …il rigole…
     ev.push({ t, text: '3', kind: 'num', n: 2 });                    // …et reprend à « 3 »

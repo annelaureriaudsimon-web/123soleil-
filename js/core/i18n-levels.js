@@ -63,7 +63,7 @@ Object.assign(TXT.en, {
     : g.type === 'quick' ? `Get ${g.n} lightning starts` : g.type === 'resist' ? `Resist ${g.n} temptations` : '',
   tapStart: 'Tap to start',
   posOf: (n, t) => `${ordEn(n)}/${t}`, toGo: m => `${m} m`,
-  failWhyRunning: 'You were still running! Let go on “SO”',
+  failWhyRunning: 'You were still running! Let go on “RED”',
   failAlmost: m => `${m} m from the finish!`, failPlace: p => `You were ${ordEn(p)}!`, failTap: 'Tap to try again',
   failTipTrap: 'He got you right after a trap word 😏',
   winTitle: 'WELL DONE!', bossWinTitle: 'COOL SUN BEATEN! 😎', you: 'You', notIn: 'not in',

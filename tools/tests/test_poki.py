@@ -800,11 +800,111 @@ async def t_quality(b):
     await page.click('#pQual')
     await done(page, ctx)
 
+async def t_colorblind(b):
+    print('\n28) Daltoniens : le vrai signal et le piège démasqué se distinguent sans la couleur')
+    ctx, page = await new_page(b, w=390, h=600)
+    await page.click('#freeBtn'); await page.wait_for_timeout(300)
+    await page.evaluate("Soleil.update = () => {}; Soleil.frame = () => {}")   # image figée : on dessine nous-mêmes
+    async def look(kind, text, age):
+        return await page.evaluate(f"""(() => {{ const S = Soleil, w = S.watcher; S.gtime = 100; S.runner.z = 30;
+          w.state = 'chant'; w.chant = {{ events: [], trig: 99 }}; w.t = 0; w.text = {json.dumps(text)}; w.textKind = '{kind}'; w.textT = S.gtime - {age}; S.render();
+          const c = document.querySelector('canvas'), g = c.getContext('2d'), k = c.width / innerWidth, y0 = Math.round((S.Lt.chantY - S.Lt.chantSize) * k);
+          const d = g.getImageData(0, y0, c.width, Math.round(S.Lt.chantSize * 2 * k)).data;
+          let burst = 0, white = 0;
+          for (let i = 0; i < d.length; i += 4) {{
+            if (Math.abs(d[i] - 255) < 4 && Math.abs(d[i + 1] - 244) < 6 && Math.abs(d[i + 2] - 194) < 8) burst++;
+            if (d[i] > 250 && d[i + 1] > 250 && d[i + 2] > 250) white++; }}
+          return {{ burst, white }}; }})()""")
+    sig, trap0, trap1, so = await look('trigger', 'SOLEIL !', 0.15), await look('trap', 'SOLDES !', 0.1), await look('trap', 'SOLDES !', 0.5), await look('so', 'SO', 0.3)
+    check('« SOLEIL ! » : une étoile « POW » derrière le mot (une forme, pas seulement du rouge)', sig['burst'] > 2000, json.dumps(sig))
+    check('mot piège au début : même étoile (on doit LIRE le mot, comme avant)', trap0['burst'] > 2000, json.dumps(trap0))
+    check('piège démasqué : plus d’étoile, et le mot est rayé d’un gros trait blanc', trap1['burst'] < 50 and trap1['white'] > so['white'] + 300, f"{json.dumps(trap1)} / SO {json.dumps(so)}")
+    await done(page, ctx)
+
+LANG_CHECK = """(() => {
+  const S = Soleil, en = S.TXT.en, out = [];
+  const sample = (k, f) => { try { return f({ type: 'top', n: 3, s: 30 }, 'Max', 3); } catch (e) { return 'ERREUR ' + e; } };
+  const cmp = (a, b, path) => {                         // même forme que l'anglais : clés, listes, fonctions qui rendent du texte
+    for (const k of Object.keys(a)) {
+      if (k === 'phrases') continue;
+      const x = a[k], y = b ? b[k] : undefined, p = path + k;
+      if (y === undefined) { out.push('manque ' + p); continue; }
+      if (typeof x === 'function') { const r = sample(k, y); if (typeof y !== 'function' || typeof r !== 'string' || /undefined|ERREUR|NaN/.test(r)) out.push('fonction ' + p + ' → ' + r); }
+      else if (Array.isArray(x)) { if (!Array.isArray(y) || (k !== 'traps' && k !== 'moonTraps' && y.length !== x.length)) out.push('liste ' + p); }
+      else if (x && typeof x === 'object') cmp(x, y, p + '.');
+      else if (typeof y !== typeof x || (typeof y === 'string' && !y.trim() && x.trim())) out.push('texte ' + p);
+    }
+  };
+  const found = new Set(), seen = new Set();
+  const walk = o => { if (!o || typeof o !== 'object' || seen.has(o)) return; seen.add(o);
+    if (typeof o.fr === 'string' && typeof o.en === 'string') found.add(o.en.replace(/\\u00A0/g, ' ')); for (const k of Object.keys(o)) walk(o[k]); };
+  walk(S.WORLDS); walk(S.RANKS); walk(S.MEDALS); walk(S.MISSIONS); walk(S.OUTFITS);
+  const res = {};
+  for (const l of S.LANGS) {
+    out.length = 0;
+    const T = S.TXT[l.code]; cmp(en, T, '');
+    if (l.code !== 'fr' && l.code !== 'en') for (const f of found) if (!T.phrases || T.phrases[f] == null) out.push('phrase « ' + f + ' »');
+    const c = T.chant, bare = w => w.replace(/^[¡¿]/, '');
+    if (c.traps.length !== 12 || c.moonTraps.length !== 5) out.push('12 pièges et 5 pièges de Lune');
+    if (!bare(c.sun).startsWith(c.pre)) out.push('le vrai signal commence par ' + c.pre);
+    c.traps.forEach(w => { if (!bare(w).startsWith(c.pre) || w === c.sun) out.push('piège ' + w); });
+    if (new Set(c.traps).size !== 12) out.push('pièges en double');
+    res[l.code] = out.slice(0, 6);
+  }
+  return res; })()"""
+
+async def t_languages(b):
+    print('\n29) Langues : FR, EN, ES, PT, DE, IT complètes, même rythme partout, choix depuis l’accueil')
+    ctx, page = await new_page(b)
+    r = await page.evaluate(LANG_CHECK)
+    for lg, bad in r.items():
+        check(f'{lg} : tous les textes (mêmes clés que l’anglais, phrases des niveaux, missions, tenues), 12 mots pièges qui commencent comme le vrai signal', not bad, '; '.join(bad))
+    await done(page, ctx)
+    # même rythme : le même joueur robot fait exactement la même partie, quelle que soit la langue
+    res = {}
+    for lg in ('fr', 'en', 'es', 'pt', 'de', 'it'):
+        ctx, page = await new_page(b, url=URL + '?lang=' + lg, init_js="window.requestAnimationFrame = () => 0;")
+        await page.evaluate(DRIVE)
+        await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-3', false)")
+        await page.evaluate("(() => { const S = Soleil; S.last = 0; for (let i = 1; i <= 20; i++) S.frame(i * 1000 / 60); S.Levels.press(); S.last = 0; S.acc = 0; })()")
+        res[lg] = await page.evaluate("__drive(60, 90)")
+        ch = await page.evaluate("""(() => { const S = Soleil, R = Array.from({ length: 16 }, (_, i) => ((i * 7919) % 97) / 97);
+          return S.makeChant(0.6, 0.2, false, 400, R, 0, null, true).events.map(e => e.kind + '@' + e.t.toFixed(4)).join(' '); })()""")
+        res[lg]['chant'] = ch
+        await done(page, ctx)
+    ref = res['fr']
+    check('même niveau, même joueur : même résultat et même temps dans les 6 langues', all({k: v for k, v in x.items() if k != 'frames'} == {k: v for k, v in ref.items() if k != 'frames'} for x in res.values()),
+          ' | '.join(f"{k} : {v['phase']} en {v['time']} s" for k, v in res.items()))
+    # le défi du jour ne dépend pas de la langue (même graine, mêmes dés : seuls les mots changent)
+    days = []
+    for lg in ('fr', 'de'):
+        ctx, page = await new_page(b, url=URL + '?lang=' + lg)
+        days.append(await page.evaluate("(() => { const S = Soleil; return [S.DAY, S.todayMissions ? S.todayMissions.map(m => m.id).join(',') : '', String(S.SEED)].join('|'); })()"))
+        await done(page, ctx)
+    check('défi du jour : le même numéro, les mêmes missions dans toutes les langues', days[0] == days[1], ' / '.join(days))
+    # choix à la main : bouton « FR » sur l'accueil → carte des langues → Deutsch, sans recharger
+    ctx, page = await new_page(b, url=URL + '?x=1')
+    await page.wait_for_timeout(300)
+    vis = await page.evaluate("!document.getElementById('langBtn').classList.contains('hide') && document.getElementById('langBtn').textContent")
+    await page.click('#langBtn'); await page.wait_for_timeout(200)
+    names = await page.evaluate("[...document.querySelectorAll('#lList [data-lang]')].map(b => b.textContent).join(', ')")
+    check('accueil : bouton de langue, puis les 6 langues écrites dans leur langue (sans drapeaux)', vis == 'FR' and names == 'Français, English, Español, Português, Deutsch, Italiano', f'{vis} → {names}')
+    await page.click('#lList [data-lang="de"]'); await page.wait_for_timeout(200)
+    st = await page.evaluate("({ lang: Soleil.LANG, html: document.documentElement.lang, btn: document.getElementById('langBtn').textContent, cont: document.getElementById('contBtn').innerText, title: document.title, saved: localStorage.getItem('soleil.lang'), traps: Soleil.SUN_TRAPS[0], calls: (window.__pokiCalls || []).filter(c => /init/.test(c)).length })")
+    check('Deutsch choisi : tout l’accueil change tout de suite, le chant aussi, et c’est mémorisé', st['lang'] == 'de' and st['btn'] == 'DE' and ('SPIELEN' in st['cont'].upper() or 'WEITER' in st['cont'].upper()) and st['saved'] == '"de"' and st['traps'] == 'SOFA!' and 'SONNE' in st['title'] and st['html'] == 'de', json.dumps(st, ensure_ascii=False))
+    await page.click('#freeBtn'); await page.wait_for_timeout(200)
+    check('pendant une partie : pas de bouton de langue', await page.evaluate("document.getElementById('langBtn').classList.contains('hide')"))
+    await done(page, ctx)
+    # au prochain lancement : la langue mémorisée gagne sur celle de l'appareil (ici fr-FR)
+    ctx, page = await new_page(b, init_js="localStorage.setItem('soleil.lang', '\"it\"');")
+    check('… au prochain lancement, la langue choisie est reprise (même sur un appareil en français)', await page.evaluate("Soleil.LANG + ' ' + Soleil.L.playBtn") == 'it GIOCA')
+    await done(page, ctx)
+
 TESTS = [t_new_player, t_soft_level1, t_returning, t_pause_endless, t_pause_level_daily, t_ads, t_fail_retry, t_hidden_blur,
          t_casier_duo, t_sdk_modes, t_scroll_debug, t_iframe_share, t_build,
          t_fix_toast, t_fix_pill, t_fix_late_ad, t_fix_typo,
          t_reward_revive_level, t_reward_refused, t_reward_hidden, t_reward_endless, t_reward_double, t_reward_trial,
-         t_bigscreen, t_fps_fair, t_quality, t_event_log]
+         t_bigscreen, t_fps_fair, t_quality, t_colorblind, t_languages, t_event_log]
 
 async def main():
     only = sys.argv[1:]

@@ -23,6 +23,7 @@
 <button id="mute" class="round" type="button" aria-label="Son"></button>
 <button id="voice" class="round" type="button" aria-label="Voix"></button>
 <button id="locker" class="round" type="button" aria-label="Casier"><span class="dot hide" id="dot1"></span></button>
+<button id="langBtn" class="round hide" type="button" aria-label="Langue"></button>
 <button id="homeBtn" class="round hide" type="button" aria-label="Accueil"></button>
 <button id="pauseBtn" class="round hide" type="button" aria-label="Pause"></button>
 <div id="home" class="hide">
@@ -76,13 +77,24 @@
     </div>
   </div>
 </div>
+<div id="langCard" class="hide" role="dialog" aria-modal="true" aria-labelledby="lTitle">
+  <div class="lcard">
+    <div id="lTitle" class="ttl"></div>
+    <div id="lList" class="lbtns"></div>
+  </div>
+</div>
 <div id="toast"></div>
 <div id="safe"></div>
 <noscript>Active JavaScript pour jouer ☀️</noscript>
 <script src="js/core/config.js"></script>
 <script src="js/core/i18n.js"></script>
 <script src="js/core/i18n-levels.js"></script>
+<script src="js/core/lang/es.js"></script>
+<script src="js/core/lang/pt.js"></script>
+<script src="js/core/lang/de.js"></script>
+<script src="js/core/lang/it.js"></script>
 <script src="js/game/content.js"></script>
+<script src="js/core/i18n-apply.js"></script>
 <script src="js/core/utils.js"></script>
 <script src="js/core/rng.js"></script>
 <script src="js/core/storage.js"></script>
@@ -133,6 +145,7 @@
 <script src="js/ui/settings.js"></script>
 <script src="js/core/input.js"></script>
 <script src="js/ui/home.js"></script>
+<script src="js/ui/lang.js"></script>
 <script src="js/modes/duo.js"></script>
 <script src="js/ui/levelintro.js"></script>
 <script src="js/ui/results.js"></script>

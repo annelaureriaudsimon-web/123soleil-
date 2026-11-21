@@ -29,6 +29,7 @@ function refreshUI() {
   $('locker').classList.toggle('hide', !(S.state === 'title' || S.state === 'over' || S.state === 'map') || !!S.booting);
   document.body.classList.toggle('st-map', S.state === 'map');   // carte : le casier passe sous le bouton 🏠
   if (S.syncButtons) S.syncButtons(true);
+  if (S.syncLangBtn) S.syncLangBtn();              // bouton de langue « FR » (js/ui/lang.js), accueil seulement
   if (S.syncTrialTag) S.syncTrialTag();            // le badge « Essai » (pub récompensée, js/ui/reward.js)          // ⏸, 🏠 et 🗣️ (ils changent aussi pendant la partie : js/ui/pause.js)
   const dot = canAfford();
   $('dot1').classList.toggle('hide', !dot); $('dot2').classList.toggle('hide', !dot);

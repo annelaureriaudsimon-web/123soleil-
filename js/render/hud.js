@@ -27,15 +27,46 @@ function drawChant() {                               // « 1… 2… 3… SO… 
   S.ctx.save(); S.ctx.translate(Lt.cx, Lt.chantY);
   if (trapShown) S.ctx.rotate(Math.sin(S.gtime * 22) * 0.06 * Math.max(0, 1 - (since - 0.2) * 1.5));
   S.ctx.scale(sc, sc);
+  // Daltoniens : la couleur n'est jamais le seul indice. Un mot « qui claque » (SOLEIL !, LUNE !, HOP ! et, au tout début,
+  // les mots pièges) a une étoile « POW » derrière lui ; un piège démasqué perd l'étoile et se fait rayer (et tremble).
+  const loud = w.textKind === 'trigger' || (w.textKind === 'trap' && !trapShown);
+  if (loud || trapShown) { S.ctx.font = `900 ${size}px ${FONT}`; }
+  const tw = loud || trapShown ? S.ctx.measureText(w.text).width : 0;
+  if (loud) drawBurst(Math.min(tw * 0.56 + size * 0.22, S.W * 0.47), size * 0.82, a, S.gtime);
   otextC(w.text, size, col, a);
+  if (trapShown) drawStrike(tw, size, clamp((since - 0.2) / 0.12, 0, 1), a);
   if ((w.textKind === 'num' || w.textKind === 'so') && w.state === 'chant' && since > 0.42 && S.cloudK < 0.05) {   // il fait durer le suspense…
     const n = 1 + (Math.floor((since - 0.42) / 0.22) % 3);
     S.ctx.font = `900 ${size}px ${FONT}`;
-    const tw = S.ctx.measureText(w.text).width;
+    const dw = S.ctx.measureText(w.text).width;
     S.ctx.textAlign = 'left';
-    otext('.'.repeat(n), tw / 2 + size * 0.05, 0, size, col);
+    otext('.'.repeat(n), dw / 2 + size * 0.05, 0, size, col);
   }
   S.ctx.restore();
+}
+
+function drawBurst(rx, ry, a, t) {                   // étoile « POW » de bande dessinée derrière le vrai signal
+  const c = S.ctx, n = 16, wob = 1 + 0.04 * Math.sin(t * 18);
+  c.save(); c.globalAlpha *= a * 0.95; c.rotate(Math.sin(t * 6) * 0.03);
+  c.beginPath();
+  for (let i = 0; i < n * 2; i++) {
+    const ang = (i / (n * 2)) * Math.PI * 2, k = i % 2 ? 0.72 : 1.08 * wob;
+    const x = Math.cos(ang) * rx * k, y = Math.sin(ang) * ry * k;
+    if (i) c.lineTo(x, y); else c.moveTo(x, y);
+  }
+  c.closePath(); c.fillStyle = '#FFF4C2'; c.fill();
+  c.lineJoin = 'round'; c.lineWidth = Math.max(2.5, ry * 0.07); c.strokeStyle = INK; c.stroke();
+  c.restore();
+}
+
+function drawStrike(tw, size, k, a) {               // piège démasqué : le mot est rayé d'un gros trait
+  if (k <= 0) return;
+  const c = S.ctx, x0 = -tw * 0.56, x1 = x0 + (tw * 1.12) * k;
+  c.save(); c.globalAlpha *= a; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(x0, size * 0.12); c.lineTo(x1, size * 0.12 - (x1 - x0) * 0.12);
+  c.strokeStyle = INK; c.lineWidth = size * 0.2; c.stroke();
+  c.strokeStyle = '#FFFFFF'; c.lineWidth = size * 0.1; c.stroke();
+  c.restore();
 }
 
 function drawGrille() {                              // gros « GRILLÉ ! »
@@ -153,7 +184,7 @@ function drawTitle() {                     // le titre se cale au-dessus des bou
     s2 = Math.min(fit(L.title2, Math.min(Lt.U * 0.18, 110), S.W * 0.86), Math.max(20, (bottom - top) / 1.75));
   }
   const s1 = s2 * 0.6, wob = Math.sin(S.gtime * 2.4);
-  S.ctx.save(); S.ctx.translate(cx, midY - s2 * 0.62); S.ctx.rotate(-0.05 + wob * 0.012); drawLogo('1, 2, 3…', s1, '#FFFFFF', '#D6DDFF'); S.ctx.restore();
+  S.ctx.save(); S.ctx.translate(cx, midY - s2 * 0.62); S.ctx.rotate(-0.05 + wob * 0.012); drawLogo(L.title1, s1, '#FFFFFF', '#D6DDFF'); S.ctx.restore();
   S.ctx.save(); S.ctx.translate(cx, midY + s2 * 0.18); S.ctx.rotate(-0.035); const k = 1 + wob * 0.025; S.ctx.scale(k, k);
   drawLogo(L.title2, s2, '#FFF27A', '#FFAE1A'); S.ctx.restore();
 }

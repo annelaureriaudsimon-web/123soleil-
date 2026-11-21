@@ -48,7 +48,7 @@ const SUN_BASE = {
   express: 0,                  // probabilité d'un chant express
   expressK: 0.5,               // chant express : tout va deux fois plus vite (× durée)…
   expressTurn: 0.9,            // …et il se retourne un peu plus vite (× demi-tour)
-  words: null,                 // mots pièges du niveau (null = la liste du jeu)
+  words: null,                 // mots pièges du niveau : numéros dans L.chant.traps (null = toute la liste)
   // Monde 2
   tempt: null,                 // tentations : { star: 0.5, fakeRet: 0.3, …, max: 2 } (probabilité par regard)
   fakeBack: 0,                 // probabilité d'un faux dos à la fin du regard
@@ -120,7 +120,7 @@ function cycleConfig(m, n) {
   if (c.express && sc.turn == null) c.turn *= P.expressTurn;
   c.hesAt = !c.hes ? -1 : c.traps && d[12] < P.hesOnTrap ? Math.min(c.traps - 1, Math.floor(d[13] * c.traps)) : c.traps;
   if (c.hes && sc.hesAt != null) c.hesAt = Math.min(sc.hesAt, c.traps);
-  const list = P.words || SUN_TRAPS;
+  const list = P.words ? P.words.map(i => SUN_TRAPS[i]) : SUN_TRAPS;   // words : des numéros dans la liste de la langue
   const i1 = Math.floor(d[14] * list.length);
   let i2 = Math.floor(d[15] * list.length); if (i2 === i1) i2 = (i2 + 1) % list.length;
   c.words = [list[i1], list[i2]];

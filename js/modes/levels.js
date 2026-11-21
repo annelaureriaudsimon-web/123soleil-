@@ -277,7 +277,7 @@ function events() {
         w.text = L.hmm; w.textKind = 'hmm'; w.textT = S.gtime; w.textFadeT = 0; Sound.hmm();
         firstTime('fakeBack');
         break;
-      case 'hop': w.text = 'HOP !'; w.textKind = 'trigger'; w.textT = S.gtime; w.bump = 1; Sound.hop(); vibrate(20); break;
+      case 'hop': w.text = S.chantW().hop; w.textKind = 'trigger'; w.textT = S.gtime; w.bump = 1; Sound.hop(); vibrate(20); break;
       case 'clear': if (LV.def.world >= SIGNAL_WORLD) onTrueEnd(e.resisted); break;
       case 'quick': {
         if (LV.def.world < SIGNAL_WORLD) break;
