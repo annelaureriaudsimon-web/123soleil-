@@ -33,6 +33,21 @@ S.debugHook = (kind, name, info) => {
 };
 setInterval(draw, 500);                            // l'état (en jeu, pub, pause) reste à jour
 
+// ---------- ?debug=1&pill=1 : la zone réservée à la pilule Poki, en rouge transparent ----------
+// À comparer avec la vraie pilule dans le Poki Inspector (réglage : PILL dans js/platform/flow.js).
+if (q.get('pill') === '1') {
+  const zone = document.createElement('div');
+  zone.id = 'pillZone';
+  const place = () => {
+    const P = S.PILL || { side: 'left', w: 56, top: 16, h: 80 };
+    zone.style.cssText = `position:fixed;z-index:81;top:${P.top}px;${P.side === 'right' ? 'right' : 'left'}:0;width:${P.w}px;height:${P.h}px;`
+      + 'background:rgba(255,0,0,.35);outline:2px dashed #F00;pointer-events:none;';
+    zone.title = `PILL.side = '${P.side}'`;
+  };
+  const show = () => { place(); if (!zone.isConnected) document.body.appendChild(zone); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show); else setTimeout(show, 0);
+}
+
 // ---------- Faux SDK avec une fausse pub de 2 s ----------
 if (q.get('fakead') !== '1') return;
 const AD_MS = 2000;

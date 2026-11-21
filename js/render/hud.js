@@ -82,7 +82,7 @@ function drawHUD() {
     }
   }
   if (S.state === 'play' || S.state === 'caught') {     // étoiles gagnées et combo, sous le bouton son
-    const rx = S.W - 16 - safe.r, ry = safe.t + 66, ss = s2 * 1.25;
+    const rx = S.W - 16 - safe.r - S.pillR, ry = safe.t + 66, ss = s2 * 1.25;
     S.ctx.textAlign = 'right'; S.ctx.textBaseline = 'top';
     otext(String(S.runStars), rx, ry, ss, '#FFD166');
     S.ctx.font = `900 ${ss}px ${FONT}`;
@@ -161,8 +161,12 @@ function drawTitle() {                     // le titre se cale au-dessus des bou
 function drawReplayHint() {
   if (S.state !== 'over' || S.gtime - S.overT < 0.3 || S.panelOpen) return;
   const txt = S.mode === 'daily' ? S.forDevice(L.replayHome, L.keyHome) : S.forDevice(L.replayTouch, L.replayKey);   // après le défi : retour à l'accueil
-  const size = fit(txt, Math.min(Lt.U * 0.05, 22), S.W * 0.9), k = 1 + 0.05 * Math.sin(S.gtime * 6);
-  S.ctx.save(); S.ctx.translate(Lt.cx, S.H - safe.b - size * 1.4); S.ctx.scale(k, k);
+  // Panneau de fin à droite (paysage) qui descend jusqu'en bas (petit écran) : la consigne se centre dans la place libre à gauche
+  const ov = S.over && S.over.classList.contains('show') ? S.over.getBoundingClientRect() : null;
+  const side = ov && ov.left > S.W * 0.3 && ov.bottom > S.H - safe.b - 44;
+  const cx = side ? (safe.l + ov.left) / 2 : Lt.cx, room = side ? ov.left - safe.l - 16 : S.W * 0.9;
+  const size = fit(txt, Math.min(Lt.U * 0.05, 22), room), k = 1 + 0.05 * Math.sin(S.gtime * 6);
+  S.ctx.save(); S.ctx.translate(cx, S.H - safe.b - size * 1.4); S.ctx.scale(k, k);
   S.ctx.textAlign = 'center'; S.ctx.textBaseline = 'middle';
   otext(txt, 0, 0, size, '#FFFFFF');
   S.ctx.restore();

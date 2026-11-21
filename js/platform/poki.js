@@ -17,7 +17,8 @@ const AD_MAX = 60000;         // ms : une pub ne bloque jamais le jeu plus longt
 let api = () => window.PokiSDK;
 api = () => S.fakePoki || window.PokiSDK;                    // @debug (?debug=1&fakead=1 : une fausse pub sans SDK)
 
-const P = { mode: 'secours', state: 'chargement', pending: null, inited: null };
+const P = { mode: 'secours', state: 'chargement', pending: null, inited: null,
+            sdkBusy: false };   // le SDK n'a pas encore répondu à la dernière demande (même si le jeu, lui, a repris)
 let embedded = false;                                        // le jeu tourne-t-il dans une iframe (comme sur Poki) ?
 try { embedded = window.self !== window.top; } catch (e) { embedded = true; }
 S.embedded = embedded;
@@ -102,9 +103,14 @@ function gameplayStop() {
 
 // ---------- Les pubs : Poki décide s'il y en a une ----------
 // run(onStart) lance la pub côté SDK et rend sa promesse ; fallback : la réponse sans SDK.
+// Pub EN RETARD : si elle n'a pas commencé après BREAK_START, le jeu reprend (le joueur n'attend pas). Mais si
+// le SDK la lance quand même plus tard, elle passe par-dessus le jeu : on fige alors tout (son coupé, entrées
+// bloquées) jusqu'à ce que le SDK réponde vraiment. Aucun événement n'est envoyé PENDANT la pub : à la fin, le
+// jeu se met en pause (adEnd { late }), ce qui envoie gameplayStop. Tant que le SDK n'a pas répondu, aucune
+// nouvelle pub n'est demandée.
 function adBreak(name, run, fallback) {
-  if (P.pending || P.state === 'chargement' || P.state === 'pub') {
-    note('bad', name, P.pending ? 'déjà demandée' : P.state);   // @debug
+  if (P.pending || P.sdkBusy || P.state === 'chargement' || P.state === 'pub') {
+    note('bad', name, P.pending ? 'déjà demandée' : P.sdkBusy ? 'le SDK n’a pas fini la précédente' : P.state);   // @debug
     return Promise.resolve(fallback);
   }
   if (P.state === 'en jeu') {                      // une pub ne se demande jamais en pleine partie
@@ -112,7 +118,7 @@ function adBreak(name, run, fallback) {
     gameplayStop();
   }
   note('sent', name);   // @debug
-  let answer = null, started = false, over = false, t1 = 0, t2 = 0;
+  let answer = null, started = false, over = false, late = false, wasPlaying = false, t1 = 0, t2 = 0, t3 = 0;
   const pending = new Promise(r => { answer = r; });
   P.pending = pending;
   const end = value => {
@@ -124,8 +130,22 @@ function adBreak(name, run, fallback) {
     note('info', name, hadAd ? 'fin de la pub' : 'pas de pub');   // @debug
     answer(value);
   };
+  const endLate = () => {                          // fin d'une pub arrivée en retard
+    if (!late) return;
+    late = false; clearTimeout(t3);
+    if (P.state === 'pub') { P.state = wasPlaying ? 'en jeu' : 'arrêté'; hooks.adEnd.forEach(f => f({ late: true })); }   // la pause qui suit envoie gameplayStop
+    note('info', name, 'fin de la pub en retard');   // @debug
+  };
   const onStart = () => {
-    if (over || started) return;
+    if (started) return;
+    if (over) {                                    // la pub commence APRÈS le délai : le jeu avait repris
+      started = true; late = true; wasPlaying = P.state === 'en jeu';
+      P.state = 'pub';                             // rien n'est envoyé au SDK pendant la pub
+      note('info', name, 'pub en retard : on fige le jeu');   // @debug
+      hooks.adStart.forEach(f => f({ late: true }));
+      t3 = setTimeout(endLate, AD_MAX);
+      return;
+    }
     started = true; clearTimeout(t1);
     P.state = 'pub';
     note('info', name, 'début de la pub');   // @debug
@@ -137,7 +157,9 @@ function adBreak(name, run, fallback) {
   t1 = setTimeout(() => end(fallback), BREAK_START);
   let p;
   try { p = run(sdk, onStart); } catch (e) { end(fallback); return pending; }
-  Promise.resolve(p).then(v => end(v === undefined ? fallback : v), () => end(fallback));
+  P.sdkBusy = true;
+  const settled = v => { P.sdkBusy = false; if (late) endLate(); else end(v); };
+  Promise.resolve(p).then(v => settled(v === undefined ? fallback : v), () => settled(fallback));
   return pending;
 }
 // Pause pub entre deux parties (Rejouer, Suivant, Recommencer, Reprendre)

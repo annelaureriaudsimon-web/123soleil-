@@ -23,6 +23,7 @@ const ICONS = {
   sun: '<circle cx="12" cy="12" r="4.7"/>' + s('M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.35 5.35l1.55 1.55M17.1 17.1l1.55 1.55M5.35 18.65l1.55-1.55M17.1 6.9l1.55-1.55', 2.3),
   trophy: '<path d="M7 3.2h10v1.4h3.1v2.2a4.6 4.6 0 0 1-4.1 4.57 5.1 5.1 0 0 1-2.8 2.43v2.4h2.6v2.6H8.2v-2.6h2.6v-2.4A5.1 5.1 0 0 1 8 11.37 4.6 4.6 0 0 1 3.9 6.8V4.6H7zM5.9 6.6v.2a2.6 2.6 0 0 0 1.4 2.3A5 5 0 0 1 7 7.6v-1zm12.2 0H17v1a5 5 0 0 1-.3 1.5 2.6 2.6 0 0 0 1.4-2.3z"/><rect x="6.6" y="18.4" width="10.8" height="2.6" rx="1"/>',
   target: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="1.9"/>',
+  video: '<rect x="2.4" y="6.1" width="13.6" height="11.8" rx="2.6"/><path d="M17.3 10.5 21.6 7.7v8.6l-4.3-2.8z"/>',   // 🎬 pub récompensée
   pause: '<rect x="5.6" y="4.4" width="4.6" height="15.2" rx="1.6"/><rect x="13.8" y="4.4" width="4.6" height="15.2" rx="1.6"/>',
 };
 

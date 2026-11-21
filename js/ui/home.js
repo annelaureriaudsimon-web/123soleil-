@@ -28,7 +28,8 @@ function refreshUI() {
   if (showMeta) { renderHome(); layoutHome(); }
   $('locker').classList.toggle('hide', !(S.state === 'title' || S.state === 'over' || S.state === 'map') || !!S.booting);
   document.body.classList.toggle('st-map', S.state === 'map');   // carte : le casier passe sous le bouton 🏠
-  if (S.syncButtons) S.syncButtons(true);          // ⏸, 🏠 et 🗣️ (ils changent aussi pendant la partie : js/ui/pause.js)
+  if (S.syncButtons) S.syncButtons(true);
+  if (S.syncTrialTag) S.syncTrialTag();            // le badge « Essai » (pub récompensée, js/ui/reward.js)          // ⏸, 🏠 et 🗣️ (ils changent aussi pendant la partie : js/ui/pause.js)
   const dot = canAfford();
   $('dot1').classList.toggle('hide', !dot); $('dot2').classList.toggle('hide', !dot);
 }
@@ -55,12 +56,34 @@ function layoutHome() {                            // boutons en bas (portrait) 
   if (el.classList.contains('hide')) return;
   const side = Lt.land && S.W > S.H * 1.2;
   el.classList.toggle('side', side);
+  fitRow();
   Lt.homeTop = side ? 0 : el.getBoundingClientRect().top;   // le titre se cale au-dessus
 }
+// Les 3 petits boutons (Niveaux, Infini, 2 joueurs) : le texte doit TOUJOURS tenir dans le bouton, à toutes les
+// tailles et dans toutes les langues. On réduit d'abord la taille du texte ; si ça ne suffit pas, l'icône s'efface.
+const FIT_MIN = 12;                                // px : taille de texte la plus petite acceptée
+function fitRow() {
+  const btns = [...document.querySelectorAll('#home .row .hbtn')];
+  const over = bt => { const t = bt.querySelector('.bt'); return t && (t.scrollWidth > t.clientWidth + 0.5 || bt.scrollWidth > bt.clientWidth + 0.5); };
+  btns.forEach(bt => { bt.classList.remove('noico'); const b = bt.querySelector('b'); if (b) b.style.fontSize = ''; });
+  if (!btns.some(over)) return;
+  const b0 = btns[0] && btns[0].querySelector('b');
+  if (!b0) return;
+  let fs = parseFloat(getComputedStyle(b0).fontSize);
+  const setFs = v => btns.forEach(bt => { const b = bt.querySelector('b'); if (b) b.style.fontSize = v + 'px'; });   // même taille pour les 3
+  while (fs > FIT_MIN && btns.some(over)) setFs(fs -= 0.5);
+  if (btns.some(over)) {                           // toujours trop serré : sans l'icône, à la taille d'origine
+    btns.forEach(bt => { bt.classList.add('noico'); const b = bt.querySelector('b'); if (b) b.style.fontSize = ''; });
+    fs = parseFloat(getComputedStyle(b0).fontSize);
+    while (fs > FIT_MIN && btns.some(over)) setFs(fs -= 0.5);
+  }
+}
+window.addEventListener('resize', () => { if (!$('home').classList.contains('hide')) fitRow(); });
 function goHome() {
   if (S.state === 'level' && S.Levels.m) { S.Levels.toMap(); return; }   // 🏠 pendant un niveau : retour à la carte
   if (todayNumber() !== DAY) { location.reload(); return; }   // minuit est passé : nouveau défi
   S.Levels.cleanup(); S.mapKeys = false;                       // on quitte proprement le mode Niveaux
+  S.trialEnd();                                                // une tenue d'essai ne dure qu'une partie
   S.state = 'title'; S.mode = 'free'; S.duo = null;
   clearTimeout(S.armTimer); clearTimeout(S.deTimer);
   over.classList.remove('show', 'armed'); $('duoEnd').classList.remove('show', 'armed');

@@ -88,7 +88,7 @@ async def t_fail(b):
       for (let i = 0; i < 3000 && !(m.sun.state === 'turn' && m.sun.t >= m.sun.turnDur - 0.1); i++) S.update(1/60);
       S.pressing = false; for (let i = 0; i < 400 && S.Levels.phase !== 'fail'; i++) S.update(1/60); })()""")
     txt = await page.evaluate("document.getElementById('lvFail').innerText")
-    check('lâché pendant le demi-tour : « Lâché 0,xx s trop tard ! »', bool(re.search(r'Lâché 0,\d\d s trop tard', txt)), txt.split('\n')[0])
+    check('lâché pendant le demi-tour : « Lâché 0,xx s trop tard ! »', bool(re.search(r'Lâché 0,\d\d\s+s trop tard', txt)), txt.split('\n')[0])
     ERRS.extend(page.errs); await ctx.close()
 
 async def t_determinism(b):

@@ -9,17 +9,25 @@
 const { Poki, Sound, finePointer } = S;
 
 // ---------- Réglages ----------
-// Pilule Poki (mobile) : 46×62 px, par défaut movePill(0, 24). Poki ne dit pas de quel côté : on la suppose
-// en haut à gauche. La zone x < 56 px, 16 < y < 96 px reste libre : les textes du haut à gauche se décalent
-// de PILL.w px, et aucun bouton n'y est placé (ils sont tous à droite).
-const PILL = { w: 56 };
+// Pilule Poki (mobile) : environ 46×62 px, par défaut movePill(0, 24), donc dans la bande 16 < y < 96 px.
+// Poki ne dit pas de quel côté elle est : C'EST ICI QU'ON LE RÈGLE, après l'avoir vue dans le Poki Inspector.
+//   side: 'left'  → les textes du haut à gauche se décalent de w px (S.pillX) ;
+//   side: 'right' → les boutons ronds du haut à droite se décalent de w px vers la gauche (S.pillR).
+// Pour voir la zone : index.html?debug=1&pill=1 (rectangle rouge). Pour essayer l'autre côté sans toucher au
+// code : ?debug=1&pill=1&pillside=right (ou left). Voir docs/POKI_INTEGRATION.md, section « La pilule ».
+const PILL = { side: 'left', w: 56, top: 16, h: 80 };
+{ const m = location.search.match(/[?&]pillside=(left|right)/); if (m) PILL.side = m[1]; }   // @debug
 
 // ---------- L'appareil ----------
 S.touchUI = !finePointer();                        // tactile (téléphone, tablette) : main animée ; sinon touche Espace
-S.pillX = 0;
+S.pillX = 0; S.pillR = 0;
 function refreshPill() {
-  S.pillX = S.embedded && S.touchUI ? PILL.w : 0;   // dans l'iframe de Poki, sur un appareil tactile
+  const on = S.embedded && S.touchUI;               // dans l'iframe de Poki, sur un appareil tactile
+  S.pillX = on && PILL.side === 'left' ? PILL.w : 0;
+  S.pillR = on && PILL.side === 'right' ? PILL.w : 0;
   document.body.classList.toggle('pill-zone', S.pillX > 0);
+  document.body.classList.toggle('pill-right', S.pillR > 0);
+  document.documentElement.style.setProperty('--pr', S.pillR + 'px');
   document.body.classList.toggle('touch', S.touchUI);
 }
 window.addEventListener('pointerdown', e => {      // un vrai doigt sur l'écran : consignes tactiles
@@ -65,13 +73,15 @@ Poki.onAdStart(() => {                             // la pub commence : tout se 
   Sound.silence('pub', true);
   shield.classList.remove('hide');
 });
-Poki.onAdEnd(() => {                               // la pub est finie : le son revient (sauf si le joueur l'avait coupé)
+Poki.onAdEnd(info => {                             // la pub est finie : le son revient (sauf si le joueur l'avait coupé)
   Sound.silence('pub', false);
   S.releaseAll();
   S.dirty = true;
+  if (!S.breakWait) shield.classList.add('hide');  // pub récompensée ou pub en retard (afterBreak retire le sien lui-même)
+  if (info && info.late && !S.paused && S.pausable()) S.pauseGame('pub');   // pub en retard, par-dessus le jeu : on repart en pause
   try { window.focus(); } catch (e) { /* tant pis : un clic rendra le clavier au jeu */ }   // le clavier revient au jeu
 });
-const locked = () => S.booting || S.breakWait || Poki.inAd;
+const locked = () => S.booting || S.breakWait || S.rewardWait || Poki.inAd;
 window.addEventListener('keydown', e => { if (locked()) { e.preventDefault(); e.stopPropagation(); } }, true);
 window.addEventListener('pointerdown', e => { if (locked()) { e.preventDefault(); e.stopPropagation(); } }, true);
 const halted = () => !!S.paused || S.breakWait || Poki.inAd;   // la boucle ne fait plus avancer le monde

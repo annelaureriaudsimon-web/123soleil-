@@ -26,13 +26,13 @@
   .ico { width:1em; height:1em; display:inline-block; flex:none; vertical-align:-0.14em; filter:drop-shadow(0 2px 0 var(--edge)); }
 
   /* Boutons ronds (son, voix, casier, accueil) : bleus, en relief, icône blanche */
-  .round { position:fixed; z-index:3; right:calc(env(safe-area-inset-right,0px) + 10px); width:50px; height:50px; border-radius:50%;
+  .round { position:fixed; z-index:3; right:calc(env(safe-area-inset-right,0px) + var(--pr,0px) + 10px); width:50px; height:50px; border-radius:50%;
            border:3px solid var(--edge); background:radial-gradient(circle at 50% 28%, var(--hi) 0 22%, var(--face) 55%, var(--lo) 100%);
            font-size:26px; display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;
            box-shadow:0 4px 0 var(--edge), inset 0 -3px 0 rgba(0,0,0,.14); }
   .round:active { transform:translateY(3px); box-shadow:0 1px 0 var(--edge), inset 0 -3px 0 rgba(0,0,0,.14); }
   #mute { top:calc(env(safe-area-inset-top,0px) + 10px); }
-  #voice { top:calc(env(safe-area-inset-top,0px) + 10px); right:calc(env(safe-area-inset-right,0px) + 68px); }
+  #voice { top:calc(env(safe-area-inset-top,0px) + 10px); right:calc(env(safe-area-inset-right,0px) + var(--pr,0px) + 68px); }
   .round.off { filter:saturate(.35) brightness(.95); }
   .round.off::after { content:''; position:absolute; left:8px; right:8px; top:50%; height:4px; margin-top:-2px; background:#FF4D6D;
                       border:1.5px solid var(--edge); border-radius:3px; transform:rotate(-40deg); }
@@ -89,11 +89,13 @@
   #over.armed .btn { pointer-events:auto; opacity:1; }   /* actifs après 0,7 s : un tap rapide relance sans partager */
 
   /* Petit message */
-  #toast { position:fixed; z-index:8; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 18px); transform:translate(-50%,16px);
+  #toast { position:fixed; z-index:8; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 18px); transform:translate(-50%,16px); width:max-content;
            background:linear-gradient(180deg,#2A35CC,#141A6E); color:#fff; font-weight:800; font-size:15px; padding:10px 18px; border-radius:16px;
            border:3px solid #fff; box-shadow:0 4px 0 rgba(20,26,110,.6); max-width:92vw;
            text-align:center; opacity:0; transition:opacity .2s, transform .2s; pointer-events:none; }
   #toast.show { opacity:1; transform:translate(-50%,0); }
+  #toast.anchored { bottom:auto; transform:translate(-50%,-10px); }   /* écran de fin : au-dessus du panneau (js/ui/toast.js) */
+  #toast.anchored.show { transform:translate(-50%,0); }
 
   /* Accueil : les gros boutons des modes de jeu */
   #home { position:fixed; z-index:2; left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
@@ -120,6 +122,8 @@
   #home .row .hbtn .bt { width:100%; text-align:center; }
   #home .row .hbtn b { font-size:clamp(15px,4.2vmin,18px); }
   #home .row .hbtn small { font-size:11.5px; }
+  #home .row .hbtn b { white-space:nowrap; }
+  #home .row .hbtn.noico .bi { display:none; }   /* trop serré : l'icône s'efface (js/ui/home.js, fitRow) */
   .dcard { --edge:#7A3B00; color:#fff; background:linear-gradient(180deg,#FFB547,#FF8A00); border:3px solid var(--edge); border-radius:20px;
            box-shadow:0 6px 0 var(--edge), inset 0 3px 0 rgba(255,255,255,.35); padding:8px 12px 10px; text-align:center; }
   .dcard .t { font-weight:900; font-size:clamp(16px,4.6vmin,19px); }
@@ -156,7 +160,7 @@
     #home.side .row .hbtn small { display:none; }
   }
   #homeBtn { top:calc(env(safe-area-inset-top,0px) + 68px); }
-  #pauseBtn { top:calc(env(safe-area-inset-top,0px) + 10px); right:calc(env(safe-area-inset-right,0px) + 68px); }   /* à la place de 🗣️ pendant la partie */
+  #pauseBtn { top:calc(env(safe-area-inset-top,0px) + 10px); right:calc(env(safe-area-inset-right,0px) + var(--pr,0px) + 68px); }   /* à la place de 🗣️ pendant la partie */
 
   /* Fin de match à 2 joueurs */
   #duoEnd { position:fixed; z-index:3; left:50%; top:50%; transform:translate(-50%,-50%) scale(.85); opacity:0; visibility:hidden;
@@ -294,3 +298,56 @@
 @media (max-width:360px), (orientation:landscape) and (max-width:760px) { #home .row .hbtn .bi { display:none; } }   /* petit écran : le nom seul */
 /* Zone protégée de la pilule Poki (mobile, dans l'iframe) : rien en haut à gauche */
 body.pill-zone #meta { left:calc(env(safe-area-inset-left,0px) + 66px); max-width:calc(100vw - 196px); }
+
+/* ---------- Pubs récompensées (v2.3, js/ui/reward.js) ----------
+   Règles de Poki : le bouton normal (vert) est à gauche du bouton 🎬, AU MOINS aussi grand (plus large, même
+   hauteur) ; le bouton 🎬 n'est jamais vert ; une phrase sous les deux annonce la vidéo avant le clic. */
+.rpair { display:flex; gap:9px; justify-content:center; align-items:stretch; margin-top:12px; }
+.rpair .btn { justify-content:center; min-width:0; }
+.rpair .rnorm { flex:1.3 1 0; font-size:18px; padding:9px 12px 10px; }
+.rpair .rbtn { flex:1 1 0; font-size:15px; padding:9px 10px 10px; }
+.rpair.busy .btn { pointer-events:none !important; }
+.rpair .rbtn.loading { opacity:.75 !important; animation:rwPulse .8s ease-in-out infinite; }
+@keyframes rwPulse { 50% { transform:scale(.96); } }
+.rpair .rbtn.got { filter:saturate(.35) brightness(1.05); }
+.rcap { display:flex; align-items:center; justify-content:center; gap:5px; margin-top:6px; font-weight:800; font-size:12px; opacity:.88; }
+.ico.sm { font-size:1.05em; filter:none; flex:none; }
+#over .rpair { margin-top:10px; }
+@media (max-width:375px) { .rpair .rnorm { font-size:16px; } .rpair .rbtn { font-size:14px; } }
+
+/* La fiche d'une tenue verrouillée (casier) : Acheter (vert) + 🎬 Essayer */
+#ofiche { position:absolute; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; background:rgba(10,12,40,.55); padding:14px; }
+#ofiche.hide { display:none; }
+.ofiche { --edge:#141A6E; position:relative; width:min(88vw,330px); padding:16px 16px 14px; border-radius:24px; text-align:center; color:#fff;
+          background:linear-gradient(180deg,#4B57F7 0%,#3440D8 55%,#2A35C2 100%); border:4px solid var(--edge);
+          box-shadow:0 7px 0 var(--edge), 0 16px 34px rgba(0,0,0,.3), inset 0 3px 0 rgba(255,255,255,.28); }
+.ofiche canvas { width:150px; height:172px; display:block; margin:2px auto 6px; border-radius:16px; border:3px solid var(--edge); }
+.ofiche .on { font-weight:900; font-size:21px; text-shadow:0 2px 0 var(--edge),2px 0 0 var(--edge),-2px 0 0 var(--edge),0 -2px 0 var(--edge); }
+.ofiche .miss { font-weight:800; font-size:13px; color:#FFE066; margin-top:2px; }
+.ofiche .x { top:8px; right:8px; width:40px; height:40px; }
+#ofiche.armed .btn { pointer-events:auto; opacity:1; }
+.oc.trying { box-shadow:0 0 0 3px #E0AAFF, 0 5px 0 var(--edge); }
+.oc.trying .op { --edge:#3C096C; background:linear-gradient(180deg,#C77DFF,#9D4EDD); }
+
+/* Le badge « Essai : Vampire » pendant la partie */
+#trialTag { position:fixed; z-index:3; left:calc(env(safe-area-inset-left,0px) + 10px); bottom:calc(env(safe-area-inset-bottom,0px) + 10px);
+            font-weight:900; font-size:13px; padding:3px 11px 4px; background:linear-gradient(180deg,#C77DFF,#9D4EDD); --edge:#3C096C; pointer-events:none; }
+#trialTag.hide { display:none; }
+.lvcard.end .rpair .btn[data-act="next"], .lvcard.end .rpair .rnorm { flex:1.3 1 0; font-size:19px; padding:10px 12px 11px; border-radius:18px; }   /* à côté du 🎬 : ne prend plus toute la ligne */
+.lvcard.end .rpair .rbtn { font-size:16px; border-radius:18px; }
+
+/* Petits écrans en paysage (PC 640×360 sur Poki, téléphone couché) : le panneau de fin et la fiche d'une tenue
+   restent entiers à l'écran (v2.3, avec les boutons 🎬). */
+@media (max-height:430px) {
+  #over { padding-top:6px; padding-bottom:10px; }
+  #ovDist { font-size:34px; }
+  #ovGrid { display:none; }
+  #over .btns { margin-top:7px; }
+  #over .rpair { margin-top:7px; }
+  #over .rcap { margin-top:4px; }
+  .lvcard .rcap { margin-top:4px; }
+  .ofiche { padding:10px 14px 10px; }
+  .ofiche canvas { width:auto; height:min(172px, 30vh); }
+  .ofiche .on { font-size:18px; }
+  .ofiche .rpair { margin-top:8px; }
+}

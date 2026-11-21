@@ -72,6 +72,7 @@ function open(id, retry, opts = {}) {
   const def = levelById(id);
   if (!def) return;
   if (S.closeLevelCards) S.closeLevelCards();
+  S.trialEnd();                                   // une tenue d'essai ne dure qu'une partie (js/ui/reward.js)
   const r = rec(def.id);
   r.tries++; persist();
   LV.def = def; LV.attempt = r.tries;
@@ -80,6 +81,7 @@ function open(id, retry, opts = {}) {
   Object.assign(m.player, { jx: 0, statue: 0, toast: 0, slide: 0, step: 0, pressed: false });
   m.rivals.forEach(rv => Object.assign(rv, { jx: 0, statue: 0, toast: 0, sizzled: true, step: 0 }));
   S.mode = 'level'; S.state = 'level';
+  S.trialBegin();
   S.runner = m.player; S.watcher = m.sun;
   S.lvSkyZ = def.sky * PHASE_LEN;
   S.lvCaught = false; S.caughtT = 0; S.timeScale = 1; S.particles = []; S.shake = 0; S.flash = 0;
@@ -497,7 +499,7 @@ function onWin() {
   Sound.buzz(false);
   const firstWin = !r.done;
   r.s = r.s.map((s, i) => s || stars[i]); r.done = true;
-  const newBest = !r.best || res.time < r.best;
+  const newBest = !res.revived && (!r.best || res.time < r.best);   // après une 2e chance : pas de meilleur temps
   if (newBest) r.best = +res.time.toFixed(2);
   persist();
   if (coins) S.addStars(coins);
@@ -525,6 +527,7 @@ function onWin() {
 // ---------- Quitter / naviguer ----------
 function cleanup() {                              // on quitte le mode Niveaux (carte, accueil)
   if (S.closeLevelCards) S.closeLevelCards();
+  S.trialEnd();
   Music.stop(0.3); Sound.buzz(false);
   LV.m = null; LV.phase = 'off';
   S.lvCaught = false; S.lvSkyZ = null; S.timeScale = 1;
@@ -536,15 +539,34 @@ function next() {                                 // Suivant : pause pub, puis l
   if (!n || !unlocked(n)) { toMap(); return; }   // vers la carte : pas de pub
   S.afterBreak(() => open(n.id, false));
 }
+// 2e chance (pub récompensée vue jusqu'au bout, js/ui/reward.js) : on reprend là où on a été grillé
+function revive() {
+  const m = LV.m;
+  if (!m || LV.phase !== 'fail' || !Match.revive(m)) return false;
+  if (S.closeLevelCards) S.closeLevelCards();
+  const p = m.player;
+  Object.assign(p, { jx: 0, statue: 0, toast: 0, slide: 0, pressed: false });
+  const w = m.sun;
+  w.angry = false; w.laugh = 0; w.angryUntil = 0; w.textFadeT = 0; w.bump = 0;
+  S.lvCaught = false; S.caughtT = 0; S.timeScale = 1; S.shake = 0; S.flash = 0;
+  if (LV.def.boss) Music.setDuck(false);
+  LV.info = null; LV.hand = null; LV.oops = null; LV.fx.star = null; LV.fx.sneeze = null; LV.fx.taunt = null;
+  setPhase('play');
+  S.releaseAll();
+  S.grace = S.GRACE;                              // 1 s de protection : le monde reste figé, l'anneau se remplit
+  popup(L.revived, Lt.cx, Lt.chantY, '#C77DFF', S.fit(L.revived, Lt.chantSize, S.W * 0.85), 1.2);
+  sparks(24, Lt.cx, Lt.yFeet - Lt.s * 1.2, '#E0AAFF'); Sound.start(); vibrate([20, 30, 40]);
+  return true;
+}
 function restart() { if (LV.def) open(LV.def.id, true); }   // le niveau repart tout de suite (sans pub : déjà demandée)
 function retry() { if (LV.def) S.afterBreak(restart); }      // Rejouer : pause pub (si Poki le décide), puis on relance
 
 S.Levels = {
-  open, press, update, toMap, next, retry, restart, cleanup, totalStars, maxStars, worldStars, starsOf, unlocked, lastUnlocked, rec, peek, worldOpen,
+  open, press, update, toMap, next, retry, restart, revive, cleanup, totalStars, maxStars, worldStars, starsOf, unlocked, lastUnlocked, rec, peek, worldOpen,
   get fx() { return LV.fx; },
   get m() { return LV.m; }, get phase() { return LV.phase; }, get def() { return LV.def; },
   get hold() { return LV.hold; }, get banner() { return LV.banner; }, get tip() { return LV.tip; }, get glass() { return LV.glass; }, get jump() { return LV.jump; },
-  get hand() { return LV.hand; }, get oops() { return LV.oops; }, get spin() { return spin(); }, get info() { return LV.info; },
+  get hand() { return LV.hand; }, get oops() { return LV.oops; }, get spin() { return spin(); }, get info() { return LV.info; }, get attempt() { return LV.attempt; },
   isBossLevel: () => !!(LV.def && LV.def.boss)
 };
 })(window.Soleil);

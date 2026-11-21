@@ -178,7 +178,30 @@ const TXT = {
   }
 };
 const L = TXT[LANG];
-const tr = o => o[LANG] || o.fr;
 
-Object.assign(S, { LANG, TXT, L, tr });
+// ---------- Typographie française : une espace INSÉCABLE avant « ! ? ; : », à l'intérieur des « », et entre
+// un nombre et son unité (« 0,08 s », « 12 m »). Sans elle, un « ! » peut se retrouver seul en début de ligne.
+// Appliquée à TOUS les textes français d'un coup (typoAll, à la fin de core/i18n-levels.js) et aux textes
+// des niveaux (tr). On écrit donc les textes normalement, avec des espaces ordinaires.
+const NB = '\u00A0';
+function typoFr(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[ \u202F]+([!?;:»])/g, NB + '$1')
+            .replace(/«[ \u202F]+/g, '«' + NB)
+            .replace(/(\d) (s|m|ms|px|%|⭐|★)(?=$|[\s.,!?;:)…·])/gu, '$1' + NB + '$2');
+}
+function typoAll(o, seen = new Set()) {           // chaque texte, liste et fonction (dont le résultat est un texte)
+  if (!o || typeof o !== 'object' || seen.has(o)) return o;
+  seen.add(o);
+  for (const k of Object.keys(o)) {
+    const v = o[k];
+    if (typeof v === 'string') o[k] = typoFr(v);
+    else if (typeof v === 'function' && !v.typo) { const f = (...a) => typoFr(v(...a)); f.typo = true; o[k] = f; }
+    else if (v && typeof v === 'object') typoAll(v, seen);
+  }
+  return o;
+}
+const tr = o => (LANG === 'fr' ? typoFr(o.fr) : o[LANG] || o.fr);
+
+Object.assign(S, { LANG, TXT, L, tr, typoFr, typoAll });
 })(window.Soleil);

@@ -13,7 +13,7 @@ function drawLevelHUD() {
   const LV = S.Levels, m = LV.m;
   if (!m) return;
   const g = S.ctx, def = m.level, boss = !!def.boss;
-  const x0 = 14 + safe.l + S.pillX, x1 = Lt.land ? Math.min(x0 + S.W * 0.3, Lt.cx - Lt.R * 1.6) : S.W - RIGHT_FREE - safe.r;   // paysage : le chant reste lisible ; pillX : la pilule Poki
+  const x0 = 14 + safe.l + S.pillX, x1 = Lt.land ? Math.min(x0 + S.W * 0.3, Lt.cx - Lt.R * 1.6) : S.W - RIGHT_FREE - safe.r - S.pillR;   // paysage : le chant reste lisible ; pillX : la pilule Poki
   const y = safe.t + 16, w = Math.max(60, x1 - x0);
   const k = clamp(m.player.z / def.length, 0, 1);
   // la barre
@@ -28,7 +28,7 @@ function drawLevelHUD() {
     g.fillStyle = css(rv.state === 'grilled' ? '#2A2524' : rivalOutfit(rv).body); g.strokeStyle = INK; g.lineWidth = 2;
     g.beginPath(); g.arc(x0 + w * rk, y + BAR_H / 2, BAR_H * 0.42, 0, TAU); g.fill(); g.stroke();
   }
-  g.fillStyle = css(S.outfitById(S.outfit).body); g.strokeStyle = '#FFFFFF'; g.lineWidth = 3;
+  g.fillStyle = css(S.outfitById(S.wornOutfit()).body); g.strokeStyle = '#FFFFFF'; g.lineWidth = 3;
   g.beginPath(); g.arc(x0 + w * k, y + BAR_H / 2, BAR_H * 0.62, 0, TAU); g.fill(); g.stroke();
   // l'arrivée : un petit soleil
   g.font = `${BAR_H * 1.5}px ${S.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';

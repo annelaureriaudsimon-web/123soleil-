@@ -1,5 +1,25 @@
 # Journal des versions
 
+## v2.3 — étape Poki 2 : 4 corrections et les pubs récompensées
+
+### Corrigé (vérification de la v2.2)
+- **Un message ne cache plus « Touche l'écran pour rejouer »** (`js/ui/toast.js`). Sur un écran de fin (fin de course, défaite ou victoire d'un niveau, fin du mode 2 joueurs), les petits messages (« Série de 1 jour : +1 ⭐ », « Mission : +6 ⭐ »…) se placent juste au-dessus du panneau, jamais sur un bouton ni sur la consigne du bas. Le message ne se rétrécit plus non plus quand il est long (`width:max-content`).
+- **La pilule Poki, à gauche OU à droite, avec un seul réglage** : `PILL.side` dans `js/platform/flow.js`. À droite, la colonne des boutons ronds se décale vers la gauche (variable CSS `--pr`), et le canvas laisse la place en haut à droite. `?debug=1&pill=1` dessine la zone en rouge pour la comparer à la vraie pilule dans le Poki Inspector ; `&pillside=right` essaie l'autre côté sans toucher au code. Explications : `docs/POKI_INTEGRATION.md`, section 6.
+- **Une pub qui démarre en retard** (après les 5 s d'attente) ne passe plus par-dessus un jeu qui tourne : le jeu se fige, le son se coupe, les entrées sont bloquées, sans aucun événement pendant la pub ; à la fin, la partie est en pause (`gameplayStop` part alors). Aucune nouvelle pub n'est demandée tant que le SDK n'a pas répondu à la précédente.
+- **Typographie française** : une espace insécable avant « ! ? : ; », à l'intérieur des « » et entre un nombre et son unité (« 0,08 s »), dans TOUS les textes français, avec une règle commune (`typoFr` / `typoAll`, `js/core/i18n.js`). Un « ! » ne peut plus se retrouver seul sur une ligne (carte d'intro du niveau 3 en paysage).
+- **Accueil** : « Niveaux », « Infini » et « 2 joueurs » tiennent toujours dans leur bouton (`fitRow`, `js/ui/home.js`) : le texte rapetisse un peu, puis l'icône s'efface si ça ne suffit pas (640×360, 360×640…).
+
+### Nouveau : les pubs récompensées (🎬) — `js/ui/reward.js`
+- **2e chance** (niveaux et course infinie) : après « GRILLÉ ! », un bouton « 🎬 2e chance » (« 🎬 Continuer » en course infinie) à côté de « Réessayer » / « Rejouer ». Vidéo vue jusqu'au bout : on reprend EXACTEMENT là où on a été grillé, à l'arrêt, le soleil de dos, avec 1 s de protection (l'anneau). Une seule par essai / par partie. Jamais dans le défi du jour, en 2 joueurs, ni dans le niveau 1 en douceur. Ensuite, la ★★★ (défi) n'est plus possible (c'est écrit sur l'écran de résultats) et le meilleur temps n'est pas enregistré. En course infinie, rien n'est compté deux fois (partie, distance du jour, bonus de record et de rang) et le record se compare à celui d'avant la partie. Logique du niveau : `Match.revive` (`js/game/match.js`), la simulation ne l'utilise pas.
+- **×2 ⭐** : sur l'écran de résultats, quand le niveau vient de rapporter des ⭐ pour le casier, « 🎬 ×2 ⭐ » à côté de « Suivant ». Une fois par résultat.
+- **Essayer une tenue** : dans le casier, toucher une tenue pas encore achetée ouvre une fiche (« Acheter », et « 🎬 Essayer »). La tenue est portée tout de suite pour la PROCHAINE partie (niveau ou course libre), avec un badge « Essai », puis « Tu l'as aimée ? ». Jamais enregistrée comme achetée, oubliée au rechargement.
+- **Les règles de Poki** sont respectées partout et mesurées par les tests : bouton normal vert, à gauche, plus large et aussi haut ; bouton 🎬 violet (jamais vert) avec l'icône caméra et une phrase « Regarde une courte vidéo pour… » ; récompense seulement si la vidéo a été vue jusqu'au bout ; jamais deux fois (jetons, double clic) ; pas de message sur les bloqueurs de pub ; jeu figé et muet pendant la vidéo ; **aucun bouton 🎬 en mode de secours** (sans SDK).
+- Correction trouvée en route : après une pub récompensée, l'écran invisible qui bloque les clics pendant les pubs restait en place. Il disparaît maintenant à la fin de toute pub.
+
+### Tests
+- `tools/tests/test_poki.py` : 10 nouveaux tests (15 à 24) pour les 4 corrections et les 3 récompenses, dont les règles de Poki mesurées sur les boutons (couleur, taille, position, icône, phrase) ; le faux SDK sait maintenant montrer une vidéo récompensée, la refuser, n'en avoir aucune, et démarrer une pub en retard.
+- `tools/tests/test_levels.py` : le test « Lâché 0,xx s trop tard » accepte l'espace insécable.
+
 ## v2.2 — étape Poki 1 : les fondations
 
 Retours de la phase 2 : rien à signaler (la section était vide), donc rien à corriger avant de commencer.

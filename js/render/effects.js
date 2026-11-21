@@ -58,7 +58,7 @@ function confetti(n) {
            vr: (Math.random() - 0.5) * 12, life: 2.6, max: 2.6, col: cols[i % cols.length] });
   }
 }
-function starPop(n) { popup(`+${n}`, S.W - 104 - safe.r, safe.t + 84, '#FFD166', Math.min(Lt.U * 0.05, 24), 0.85); }
+function starPop(n) { popup(`+${n}`, S.W - 104 - safe.r - S.pillR, safe.t + 84, '#FFD166', Math.min(Lt.U * 0.05, 24), 0.85); }
 function popup(text, x, y, col, size, life = 1.1) {
   addP({ type: 'text', text, x, y, vx: 0, vy: -Lt.s * 0.5, g: 0, size, life, max: life, col });
 }

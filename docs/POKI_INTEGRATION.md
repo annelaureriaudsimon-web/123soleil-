@@ -1,4 +1,4 @@
-# Intégration Poki — étape 1 : les fondations (v2.2)
+# Intégration Poki — étape 1 : les fondations (v2.2) · étape 2 : corrections et pubs récompensées (v2.3)
 
 Ce document est le **plan** écrit avant de coder, puis tenu à jour (v2.2) : chaque moment du jeu, l'événement
 SDK envoyé (ou aucun), le schéma des états, les règles de la couche SDK, la pause, l'affichage, le build,
@@ -144,7 +144,8 @@ même quand l'onglet est caché et que les images s'arrêtent).
 ## 4. La couche SDK — `js/platform/poki.js`
 
 API (`S.Poki`) : `init()`, `loadingFinished()`, `gameplayStart()`, `gameplayStop()`,
-`commercialBreak()` (promesse), `rewardedBreak()` (prête, **pas utilisée** à cette étape), `movePill()`.
+`commercialBreak()` (promesse), `rewardedBreak(taille)` (promesse : `true` seulement si la vidéo a été vue
+jusqu'au bout ; utilisée par les boutons 🎬, section 11), `movePill()`.
 Lecture : `mode` (`'sdk'` ou `'secours'`), `state` (`'chargement'`, `'arrêté'`, `'en jeu'`, `'pub'`),
 `playing`, `busy` (une pause pub est demandée ou en cours).
 
@@ -163,6 +164,11 @@ Lecture : `mode` (`'sdk'` ou `'secours'`), `state` (`'chargement'`, `'arrêté'`
   bloquées et relâchées. Délais de sécurité : si la pub n'a pas commencé au bout de 5 s, ou dure plus de
   60 s, on reprend quand même (le jeu ne reste jamais bloqué). Une seule pause pub à la fois : le double
   tap sur Rejouer n'en demande qu'une.
+- **Pub en retard (v2.3)** : si le SDK lance quand même la pub APRÈS ces 5 s, alors que le jeu a repris,
+  elle passe par-dessus le jeu. La couche fige alors tout (boucle arrêtée, son coupé, entrées bloquées),
+  **sans envoyer aucun événement pendant la pub**, et attend que le SDK réponde vraiment. À la fin, le jeu
+  se met en **pause** (menu), ce qui envoie `gameplayStop` : le joueur reprend quand il veut. Tant que le SDK
+  n'a pas répondu à une demande, aucune nouvelle pub n'est demandée (`P.sdkBusy`).
 - **Après la pub** : son rétabli (s'il était coupé par le joueur, il le reste), entrées rétablies **sans
   appui fantôme** (tout est relâché, il faut un nouvel appui), puis le jeu repart et `gameplayStart`.
 - **Debug** : `index.html?debug=1` affiche un journal à l'écran (heure, événement) ; les enchaînements
@@ -194,8 +200,9 @@ Tailles vérifiées : 640×360, 836×470, 1031×580 (PC sur Poki), 390×844 (té
 et 844×390 (téléphone paysage). Tablette = mobile (contrôles tactiles, main animée).
 
 **Zone protégée de la pilule Poki** (mobile seulement) : Poki la place par défaut en
-`movePill(0, 24)`, 46×62 px, **en haut à gauche** (Poki ne documente pas le côté : c'est notre hypothèse,
-réglable dans `PILL` de `js/platform/flow.js`). Quand le jeu tourne dans une iframe sur un appareil
+`movePill(0, 24)`, environ 46×62 px. Poki ne documente pas de quel côté : **c'est un seul réglage**,
+`PILL.side` (`'left'` ou `'right'`) dans `js/platform/flow.js` (voir « La pilule : quelle ligne changer »
+ci-dessous). Par défaut : à gauche. Quand le jeu tourne dans une iframe sur un appareil
 tactile, la zone `x < 56 px, 16 px < y < 96 px` (+ encoche) est laissée libre : les textes du haut à gauche
 (distance, barre de progression, place, pastilles de l'accueil, en-tête et onglets de la carte, J1 en
 2 joueurs) se décalent de 56 px vers la droite. Aucun bouton n'y est jamais placé (les boutons ronds
@@ -208,6 +215,24 @@ sont à droite).
 | J1 : distance et barre (2 joueurs) | x = 14 | x = 70 |
 | Pastilles de l'accueil (`#meta`) | left 10 | left 66 |
 | En-tête et onglets des mondes (carte) | x = 6 / 14 | x = 62 / 70 |
+
+**Si la pilule est à droite** (`PILL.side = 'right'`) : rien ne bouge à gauche ; c'est la colonne des
+boutons ronds du haut à droite (son, voix/pause, casier, accueil) qui se décale de 56 px vers la gauche
+(variable CSS `--pr`), ainsi que tout ce que le canvas dessine en haut à droite (place réservée aux boutons
+dans le HUD des niveaux et en 2 joueurs, étoiles de la course, compteur et onglets de la carte, panneau de
+fin en paysage). Les deux côtés sont testés (`test_poki.py`, test 16).
+
+### La pilule : quelle ligne changer
+
+1. Dans le Poki Inspector, sur un téléphone (ou en mode tactile), ouvre le jeu avec **`?debug=1&pill=1`**
+   à la fin de l'adresse de la version dev : la zone réservée apparaît en **rouge transparent**.
+2. Compare avec la vraie pilule de Poki :
+   - elle est **dans le rectangle rouge** : rien à faire ;
+   - elle est **de l'autre côté** : dans `js/platform/flow.js`, change `side: 'left'` en `side: 'right'`
+     (ou l'inverse) dans la ligne `const PILL = { side: 'left', w: 56, top: 16, h: 80 };` ;
+   - elle est **plus grande ou plus bas** : augmente `w` (largeur) ou `h` (hauteur).
+3. Pour essayer l'autre côté sans toucher au code : `?debug=1&pill=1&pillside=right` (ou `left`).
+4. Relance `node tools/build-poki.js` (le réglage de test et le rectangle rouge sont retirés du build).
 
 ## 7. Première expérience
 
@@ -239,7 +264,8 @@ fichier est entier après le retrait du debug (un commentaire mal fermé avalera
 
 ## 9. Ce qui est vérifié automatiquement
 
-- `python3 tools/tests/test_poki.py` : 76 vérifications dans un vrai navigateur, avec un faux SDK qui note
+- `python3 tools/tests/test_poki.py` : toutes les vérifications de l'étape 1 et de l'étape 2 (corrections et
+  pubs récompensées, tests 15 à 24) dans un vrai navigateur, avec un faux SDK qui note
   chaque appel et peut montrer une « pub » (`tools/tests/fake_poki_sdk.js`). Tous les modes et tous les cas
   limites du tableau ci-dessus (ralenti de la défaite, double tap, onglet caché, fenêtre quittée, casier depuis
   l'écran de fin, défi déjà joué, retour à la carte en plein niveau), avec le SDK, sans SDK, avec un bloqueur de
@@ -282,6 +308,64 @@ fichier est entier après le retrait du debug (un commentaire mal fermé avalera
     rien n'est coupé ; sur téléphone, la pilule Poki ne cache aucun bouton ni aucun texte important ; les
     consignes parlent de toucher (téléphone, tablette) ou de clic / Espace (PC).
 17. À la fin, relis la liste des événements : jamais deux fois le même de suite, rien pendant une pub.
+18. **Pilule** : sur téléphone, avec `?debug=1&pill=1` (version dev), vérifie que la vraie pilule est dans le
+    rectangle rouge. Sinon, change `PILL.side` (section 6, « La pilule : quelle ligne changer »).
+19. **🎬 2e chance (niveau)** : fais-toi griller au niveau 3. La carte de défaite montre « Réessayer » (vert, à
+    gauche, plus large) et « 🎬 2e chance » (violet), avec la phrase « Regarde une courte vidéo… » dessous.
+    Appuie sur 🎬 : `rewardedBreak`, la vidéo de l'Inspector se lance, le jeu est figé et muet. Vidéo vue
+    jusqu'au bout : tu repars au même endroit, à l'arrêt, avec l'anneau d'une seconde, puis `gameplayStart`.
+    Grillé à nouveau dans le même essai : plus de bouton 🎬.
+20. **Vidéo fermée avant la fin** (si l'Inspector le permet) : aucune récompense, petit message « Vidéo
+    indisponible », « Réessayer » marche toujours.
+21. **🎬 Continuer (course infinie)** : même chose sur l'écran de fin (« Rejouer » vert + « 🎬 Continuer »).
+    La distance, le record et le fantôme continuent. Pas de bouton 🎬 dans le défi du jour ni en 2 joueurs.
+22. **🎬 ×2 ⭐** : gagne un niveau pour la première fois (des ⭐ pour le casier) : « Suivant » (vert) + « 🎬 ×2 ⭐ ».
+    Vidéo vue : le nombre double une fois, le bouton devient « ✓ Fait ».
+23. **🎬 Essayer une tenue** : casier → touche une tenue que tu n'as pas → fiche avec « Acheter » (vert) et
+    « 🎬 Essayer ». Vidéo vue : badge « Essai », tu la portes pendant la prochaine partie (niveau ou course
+    libre), puis tu retrouves la tienne avec « Tu l'as aimée ? ».
+
+## 11. Les pubs récompensées (v2.3) — `js/ui/reward.js`
+
+Toutes passent par **un seul composant** : `S.Reward.pairHTML(normal, récompense)` dessine le duo de boutons,
+et un seul écouteur gère le clic sur n'importe quel bouton 🎬 (`[data-reward]`).
+
+| Récompense | Où | Quand | Taille | Ce qu'elle donne | Limites |
+|---|---|---|---|---|---|
+| **2e chance** | carte de défaite d'un niveau ; écran de fin de la course infinie | grillé | `medium` | on reprend là où on a été grillé : à l'arrêt, soleil de dos, nouveau cycle après 1,2 s de pause, 1 s de protection (l'anneau) ; les rivaux continuent | une par essai de niveau, une par partie de course ; jamais : défi du jour, 2 joueurs, niveau 1 en douceur ; ensuite ★★★ impossible (écrit sur les résultats) et pas de meilleur temps |
+| **×2 ⭐** | écran de résultats d'un niveau | le niveau vient de rapporter des ⭐ pour le casier | `small` | les ⭐ de CE résultat une 2e fois | une fois par résultat ; jamais : défi du jour, 2 joueurs |
+| **Essayer une tenue** | casier → fiche d'une tenue pas encore achetée | quand on veut (sauf pendant un essai en cours) | `small` | la tenue est portée tout de suite, pour la PROCHAINE partie (niveau ou course libre) | jamais enregistrée comme achetée ; oubliée au rechargement ; pas dans le défi du jour ni en 2 joueurs (elle reste en attente) |
+
+**Les règles de Poki, respectées et testées** (`test_poki.py`, tests 19 à 24, mesurées dans le navigateur) :
+- un bouton normal **vert** (`.rnorm`) est toujours affiché **en même temps**, **à gauche** du bouton 🎬, **plus
+  large et aussi haut** (`flex 1.3` contre `1`) ; le bouton 🎬 (`.rbtn`) est **violet**, jamais vert ;
+- l'icône 🎬 (caméra dessinée en SVG, `video` dans `js/ui/icons.js`) et une phrase sous les deux boutons
+  (« Regarde une courte vidéo pour… ») préviennent **avant** le clic ;
+- la récompense n'est donnée **que si la vidéo a été vue jusqu'au bout** (`true`) ; sinon rien, et au plus un
+  petit message neutre « Vidéo indisponible » (jamais de message sur les bloqueurs de pub) ;
+- **jamais deux fois** : chaque occasion a un jeton (`revive:niveau:essai`, `revive:run:graine:n°`,
+  `double:niveau:essai`) ; un double clic ne lance qu'une vidéo ; un bouton déjà récompensé devient « ✓ Fait » ;
+- une seule vidéo par récompense ; aucun minuteur de pubs maison ;
+- pendant la vidéo : comme pour `commercialBreak` (boucle figée, tout le son coupé, entrées bloquées et
+  relâchées, aucun événement) ; après : aucun appui fantôme ; `gameplayStart` part quand le jeu reprend
+  vraiment (2e chance) ;
+- **mode de secours** (aucun SDK) : **aucun bouton 🎬** (aucune vidéo possible). En dev, ils apparaissent avec
+  `?debug=1&fakead=1` (fausse vidéo de 2 s).
+
+Enchaînement des événements (2e chance) : `gameplayStop` (au « GRILLÉ ! ») → `rewardedBreak` → (pub) →
+`gameplayStart` quand le niveau reprend. Les autres récompenses se prennent sur un écran déjà arrêté :
+`rewardedBreak` → (pub) → rien d'autre.
+
+```
+ Carte de défaite                 Résultats                         Casier : fiche d'une tenue
+┌───────────────────────┐   ┌──────────────────────────────┐   ┌────────────────────────────┐
+│ [ Réessayer ][🎬 2e   ]│   │ [  ▶ Suivant  ][ 🎬 ×2 ⭐ ]   │   │ [ ⭐ Acheter · 80 ][🎬 Essayer]│
+│   vert, large  chance │   │    vert, large   violet       │   │    vert, large     violet   │
+│ 🎬 Regarde une courte │   │ 🎬 Regarde une courte vidéo…  │   │ 🎬 Regarde une courte vidéo…│
+│    vidéo pour…        │   │ [ Rejouer ][ Carte ]          │   └────────────────────────────┘
+│ [ Carte ]             │   └──────────────────────────────┘
+└───────────────────────┘
+```
 
 Astuce : dans la version dev, `index.html?debug=1` montre le même journal directement dans le jeu (en rouge
 si quelque chose cloche), et `index.html?debug=1&fakead=1` simule une pub de 2 secondes.

@@ -202,6 +202,16 @@ sources.forEach(([f, src], i) => {
 });
 check(broken.length === 0, 'Chaque fichier est entier après le retrait du debug', broken.join(', ') || `${kept.length} fichiers`);
 
+// i) le SDK n'est appelé QUE par la couche plateforme (js/platform/poki.js) : pubs, pubs récompensées, événements
+const direct = [];
+for (const [f, src] of stripped) {
+  if (f === 'js/platform/poki.js') continue;
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');   // les commentaires ne comptent pas
+  if (/PokiSDK\s*[.[]/.test(code) || /\brewardedBreak\s*\(/.test(code.replace(/Poki\.rewardedBreak\s*\(/g, ''))) direct.push(f);
+}
+check(direct.length === 0, 'Le SDK (pubs et pubs récompensées comprises) passe toujours par js/platform/poki.js',
+  direct.join(', ') || 'aucun appel direct');
+
 // g) seulement les fichiers utiles, et index.html ne demande rien d'autre
 const inDist = fs.readdirSync(OUT).sort().join(', ');
 const refs = [...page.matchAll(/(?:src|href)="([^"]+)"/g)].map(m => m[1]).filter(u => !u.startsWith('data:') && u !== SDK);

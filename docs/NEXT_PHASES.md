@@ -1,6 +1,6 @@
 # Notes pour les phases suivantes
 
-Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout relire. Il est à jour à la fin de l'**étape Poki 1** (v2.2 : SDK Poki, pause, premiers pas, build Poki), après la phase 2 (monde 2 « Le parc ») et la v2.1 (nouveau look).
+Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout relire. Il est à jour à la fin de l'**étape Poki 2** (v2.3 : corrections et pubs récompensées), après l'étape Poki 1 (v2.2 : SDK Poki, pause, premiers pas, build Poki), la phase 2 (monde 2 « Le parc ») et la v2.1 (nouveau look).
 
 ## L'architecture en 30 secondes
 
@@ -25,9 +25,12 @@ Tout est décrit dans `docs/POKI_INTEGRATION.md` (le tableau de chaque moment du
 - **Ne jamais appeler `PokiSDK` directement.** Tout passe par `S.Poki` (`js/platform/poki.js`), qui protège chaque appel et marche sans SDK.
 - **Ne jamais envoyer `gameplayStart` / `gameplayStop` à la main.** `S.gameActive()` (`js/platform/flow.js`) dit si le joueur joue vraiment ; la boucle envoie l'événement quand la réponse change. Pour un **nouveau mode** : ajoutez une ligne dans `gameActive()` (quand il est « en jeu »), une dans `pausable()` (`js/ui/pause.js`, quand ⏸ est permis), et ses libellés dans `fillMenu()`. Une nouvelle cinématique ou carte d'intro = une phase qui n'est pas « en jeu ».
 - **Une pub avant de rejouer** : `S.afterBreak(() => …)` (Rejouer, Suivant, Recommencer, Reprendre, Revanche). Elle bloque le double tap, fige et coupe le son si Poki montre une pub, puis lance la suite. Pas de pub quand on va vers la carte, l'accueil ou un écran de sélection.
-- **Pubs récompensées (étape suivante)** : `S.Poki.rewardedBreak('small' | 'medium' | 'large')` est prête : elle répond `true` seulement si la pub a été vue jusqu'au bout (sans SDK : `false`). Il reste à ajouter les boutons 🎬 et ce qu'ils donnent ; passez par `afterBreak` pour le gel et le son (ou copiez sa logique).
+- **Pubs récompensées (v2.3)** : tout passe par `js/ui/reward.js`. Pour une nouvelle récompense : ajoutez un `handlers.xxx = { can(token), give(token, bouton) }`, une taille dans `SIZE`, et affichez le duo avec `S.Reward.pairHTML({ act, label, icon }, { kind: 'xxx', token, label, cap })` (le bouton normal vert reste à gauche, plus large). Ne montrez jamais de bouton 🎬 si `S.Reward.available()` est faux (mode de secours). Une 2e chance dans un nouveau mode : une fonction de reprise (comme `Match.revive` ou `S.reviveRun`) et une ligne dans `canRevive()`.
+- **Tenue dessinée** : utilisez `S.wornOutfit()` (et plus `S.outfit`) pour dessiner le joueur : c'est la tenue d'essai s'il y en a une. `S.trialBegin()` au début d'une partie, `S.trialEnd()` quand on la quitte.
 - **Sons** : pour couper le son pour une raison du jeu, `Sound.silence('raison', true)` (jamais `Sound.muted`, qui est le choix du joueur). Testez `Sound.quiet` avant de jouer un son.
-- **Nouveaux boutons** : à droite (colonne des boutons ronds) ou au centre. **Jamais en haut à gauche** sur téléphone : c'est la place de la pilule Poki (`S.pillX` vaut 56 px dans l'iframe sur un appareil tactile ; décalez les textes du haut à gauche de `S.pillX`). La zone est réglable dans `PILL` (`js/platform/flow.js`).
+- **Nouveaux boutons** : à droite (colonne des boutons ronds) ou au centre, jamais dans la zone de la pilule Poki. Elle est à gauche (`S.pillX` = 56 px) OU à droite (`S.pillR` = 56 px) selon `PILL.side` (`js/platform/flow.js`) : décalez les textes du haut à gauche de `S.pillX`, et ce que vous placez en haut à droite de `S.pillR` (les boutons ronds le font tout seuls avec `--pr`).
+- **Messages** (`S.toast`) : sur un écran de fin, ils se placent tout seuls au-dessus du panneau. Un nouvel écran de fin : ajoutez son sélecteur à `END_PANELS` (`js/ui/toast.js`).
+- **Textes français** : écrivez-les avec des espaces normales, `typoAll` met les espaces insécables (avant « ! ? : ; », dans les « », entre un nombre et son unité). Un texte construit ailleurs : passez-le dans `S.typoFr()`.
 - **Consignes** : `S.forDevice(texteTactile, texteClavier)` donne le bon texte (« Touche… » ou « Clic ou Espace… ») ; `S.drawTut('hold' | 'release')` dessine la main (tactile) ou la touche Espace (clavier), `S.drawTutWord(mot)` le mot au-dessus du coureur. Dans un niveau : `hints: [{ on: 'so', cycle: 1, text: T('LÂCHE !', 'LET GO!'), hand: 'release' }]`.
 - **Premiers pas** : `js/ui/onboard.js` (`soleil.onboard` : 0 → 3). Le niveau 1 est en douceur (`soft: { back: 6 }`, géré par `match.js`) : un niveau difficile ne doit jamais l'utiliser.
 - **Mode debug** : `index.html?debug=1` (journal à l'écran, enchaînements interdits en rouge), `&fakead=1` (fausse pub de 2 s). Le code de debug va dans `js/platform/debug.js`, ou sur une ligne marquée `// @debug` (ou entre `// @debug-start` et `// @debug-end`) : le build les retire.
@@ -35,7 +38,6 @@ Tout est décrit dans `docs/POKI_INTEGRATION.md` (le tableau de chaque moment du
 
 ## Les prochaines étapes Poki (pas faites à l'étape 1, exprès)
 
-- Pubs récompensées (`rewardedBreak`, boutons 🎬) : la couche SDK est prête.
 - Autres langues que le français et l'anglais, et adaptation des mots pièges.
 - `PokiSDK.shareableURL` et le défi « Bats-moi » (le partage n'a plus d'adresse : c'est là qu'elle reviendra, fournie par Poki).
 - Les vignettes (images de présentation du jeu sur Poki).

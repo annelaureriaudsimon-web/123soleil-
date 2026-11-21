@@ -94,4 +94,26 @@ Object.assign(TXT.en, {
   bossTaunt2: 'You’ll laugh… or cry!', bossDown2: 'My nose!!', bossWin2: 'PRANKSTER SUN BEATEN! 🤡', bossBar2: 'Prankster Sun',
   worldDone2: 'World 2 complete! More coming soon 🎉',
 });
+// Pubs récompensées (v2.3, js/ui/reward.js)
+Object.assign(TXT.fr, {
+  tryAgain: 'Réessayer', reviveBtn: '2e chance', reviveCap: 'Regarde une courte vidéo pour continuer d’ici',
+  continueBtn: 'Continuer', continueCap: 'Regarde une courte vidéo pour continuer ta course d’ici',
+  doubleBtn: '×2 ⭐', doubleCap: n => `Regarde une courte vidéo pour gagner ${n} ⭐ de plus`, doubledPop: n => `+${n} ⭐ ×2 !`, doubledTag: ' ×2',
+  tryBtn: 'Essayer', tryCap: 'Regarde une courte vidéo pour la porter pendant ta prochaine partie',
+  buyBtn: p => `Acheter · ${p} ⭐`, close: 'Fermer',
+  trialOn: n => `${n} : tu la portes pour ta prochaine partie !`, trialEnd: (n, p) => `Tu l’as aimée ? ${n} coûte ${p} ⭐`,
+  trialTag: n => `Essai : ${n}`, trialBadge: 'Essai',
+  noVideo: 'Vidéo indisponible', rewardDone: 'Fait', revived: '2E CHANCE !', noChallengeRevive: 'impossible après une 2e chance'
+});
+Object.assign(TXT.en, {
+  tryAgain: 'Try again', reviveBtn: 'Second chance', reviveCap: 'Watch a short video to continue from here',
+  continueBtn: 'Continue', continueCap: 'Watch a short video to continue your run from here',
+  doubleBtn: '×2 ⭐', doubleCap: n => `Watch a short video to get ${n} more ⭐`, doubledPop: n => `+${n} ⭐ ×2!`, doubledTag: ' ×2',
+  tryBtn: 'Try it', tryCap: 'Watch a short video to wear it in your next game',
+  buyBtn: p => `Buy · ${p} ⭐`, close: 'Close',
+  trialOn: n => `${n}: you’ll wear it in your next game!`, trialEnd: (n, p) => `Liked it? ${n} costs ${p} ⭐`,
+  trialTag: n => `Trial: ${n}`, trialBadge: 'Trial',
+  noVideo: 'Video unavailable', rewardDone: 'Done', revived: 'SECOND CHANCE!', noChallengeRevive: 'not possible after a second chance'
+});
+S.typoAll(TXT.fr);                                 // typographie française : espaces insécables (core/i18n.js)
 })(window.Soleil);

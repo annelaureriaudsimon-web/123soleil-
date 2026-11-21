@@ -1,4 +1,4 @@
-# Tests de l'intégration Poki (étape 1, v2.2), dans un vrai navigateur (Playwright).
+# Tests de l'intégration Poki (étape 1, v2.2 ; étape 2, v2.3 : corrections et pubs récompensées), dans un vrai navigateur (Playwright).
 # Un faux SDK (tools/tests/fake_poki_sdk.js) remplace celui de Poki : il note chaque appel et peut montrer une « pub ».
 # Lance : python3 tools/tests/test_poki.py            (tous les tests)
 #         python3 tools/tests/test_poki.py t_ads      (un seul test)
@@ -387,7 +387,7 @@ async def t_event_log(b):
                 if inad: bad.append(f'{e} pendant une pub')
                 if 'gameLoadingFinished' not in log[:i]: bad.append(f'{e} avant gameLoadingFinished')
                 last = e
-            if e == 'commercialBreak' and last == 'gameplayStart': bad.append('commercialBreak en pleine partie')
+            if (e == 'commercialBreak' or e.startswith('rewardedBreak')) and last == 'gameplayStart': bad.append(f'{e} en pleine partie')
             if e == 'adStart': inad = True
             if e == 'adEnd': inad = False
         if log.count('gameLoadingFinished') > 1: bad.append('gameLoadingFinished plusieurs fois')
@@ -395,8 +395,291 @@ async def t_event_log(b):
     check('aucun enchaînement interdit dans les journaux', not bad and n > 0, f'{n} événements, {len(LOGS)} journaux' + (' ; ' + ', '.join(bad[:5]) if bad else ''))
     check('aucune erreur JavaScript', not ERRS, '; '.join(ERRS[:3]))
 
+# ====================================================================================================================
+# v2.3 — étape Poki 2 : les 4 corrections, puis les pubs récompensées
+# ====================================================================================================================
+PAIR_JS = """(sel) => {                       // les règles de Poki, mesurées dans le navigateur
+  const box = document.querySelector(sel);
+  if (!box) return null;
+  const n = box.querySelector('.rnorm'), r = box.querySelector('[data-reward]'), cap = box.parentNode.querySelector('.rcap');
+  if (!n || !r) return { missing: true };
+  const a = n.getBoundingClientRect(), c = r.getBoundingClientRect();
+  const vis = el => { const s = getComputedStyle(el), q = el.getBoundingClientRect(); return s.visibility !== 'hidden' && s.display !== 'none' && +s.opacity > 0.5 && q.width > 0; };
+  return { normGreen: n.classList.contains('c-green'), rewGreen: r.classList.contains('c-green'),
+           wide: a.width >= c.width - 0.5, tall: a.height >= c.height - 0.5,
+           place: a.right <= c.left + 1 || a.bottom <= c.top + 1, both: vis(n) && vis(r),
+           cam: !!r.querySelector('svg.ico'), cap: !!cap && cap.innerText.length > 10, capTxt: cap ? cap.innerText : '' };
+}"""
+def pair_ok(p): return p and not p.get('missing') and p['normGreen'] and not p['rewGreen'] and p['wide'] and p['tall'] and p['place'] and p['both'] and p['cam'] and p['cap']
+async def pair(page, sel): return await page.evaluate(f"({PAIR_JS})('{sel}')")
+
+async def to_fail(page, lv='w1-3'):                # un niveau, perdu exprès (le robot fonce)
+    await page.evaluate(f"Soleil.WorldMap.open(); Soleil.Levels.open('{lv}', false)"); await page.wait_for_timeout(200)
+    await page.keyboard.press('Space'); await frames(page)
+    await page.evaluate("LVBOT('greedy', 60 * 40, () => Soleil.Levels.phase === 'caught')")
+    await page.wait_for_function("Soleil.Levels.phase === 'fail' && document.getElementById('lvFail').classList.contains('armed')", timeout=5000)
+    await page.wait_for_timeout(150)
+
+async def t_fix_toast(b):
+    print('\n15) Correction 1 : un message ne cache jamais « Touche l’écran pour rejouer » ni un bouton')
+    for w, h, touch in [(390, 844, True), (640, 360, False), (844, 390, True)]:
+        ctx, page = await new_page(b, w=w, h=h, touch=touch)
+        await page.click('#freeBtn'); await page.wait_for_timeout(200)
+        await page.evaluate("Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1300)
+        await page.evaluate("Soleil.toast('Série de 2 jours : +2 ⭐ (un message assez long pour le test)', true)"); await page.wait_for_timeout(350)
+        r = await page.evaluate("""(() => { const t = document.getElementById('toast').getBoundingClientRect(), H = innerHeight;
+          const hit = el => { const q = el.getBoundingClientRect(); return q.width > 0 && !(q.right <= t.left || q.left >= t.right || q.bottom <= t.top || q.top >= t.bottom); };
+          const btns = [...document.querySelectorAll('button')].filter(el => !el.closest('.hide') && getComputedStyle(el).display !== 'none' && hit(el)).map(el => el.id || el.className);
+          return { top: Math.round(t.top), bottom: Math.round(t.bottom), H, hint: H - 70, btns, inView: t.top >= 0 && t.bottom <= H }; })()""")
+        check(f'{w}×{h} fin de course : message hors de la consigne du bas et d’aucun bouton', r['bottom'] < r['hint'] and not r['btns'] and r['inView'], json.dumps(r))
+        await to_fail(page)
+        await page.evaluate("Soleil.toast('Mission : +6 ⭐ (un message assez long pour le test)', true)"); await page.wait_for_timeout(350)
+        r = await page.evaluate("""(() => { const t = document.getElementById('toast').getBoundingClientRect(), c = document.getElementById('lvFail').getBoundingClientRect();
+          return { over: !(t.bottom <= c.top || t.top >= c.bottom || t.right <= c.left || t.left >= c.right), inView: t.top >= 0 && t.bottom <= innerHeight }; })()""")
+        check(f'{w}×{h} défaite d’un niveau : message hors de la carte (ses boutons et « Touche pour réessayer »)', not r['over'] and r['inView'], json.dumps(r))
+        await done(page, ctx)
+
+async def t_fix_pill(b):
+    print('\n16) Correction 2 : la pilule Poki, à gauche OU à droite (un seul réglage), et sa zone en mode debug')
+    for side in ('left', 'right'):
+        wrap = os.path.join(tempfile.gettempdir(), f'soleil_pill_{side}.html')
+        open(wrap, 'w').write(f'<!DOCTYPE html><html><body style="margin:0"><iframe id="g" src="{URL}?debug=1&pill=1&pillside={side}" style="border:0;width:100vw;height:100vh"></iframe></body></html>')
+        ctx = await b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=1, locale='fr-FR', has_touch=True, is_mobile=True)
+        await ctx.route('**/poki-sdk.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body=FAKE))
+        await ctx.add_init_script("try { localStorage.setItem('soleil.onboard', '3'); localStorage.setItem('soleil.plays', '3'); } catch (e) {}")
+        page = await ctx.new_page(); errs = []
+        page.on('pageerror', lambda e: errs.append(str(e)))
+        await page.goto('file://' + wrap); await page.wait_for_timeout(1300)
+        fr = page.frames[1]
+        for where in ('home', 'level', 'map'):
+            if where == 'level': await fr.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-3', false); Soleil.Levels.press()"); await page.wait_for_timeout(300)
+            if where == 'map': await fr.evaluate("Soleil.Levels.toMap()"); await page.wait_for_timeout(300)
+            r = await fr.evaluate("""(() => { const W = innerWidth, P = Soleil.PILL, z = Soleil.PILL.side === 'right' ? { l: W - P.w, r: W } : { l: 0, r: P.w };
+              const zone = { l: z.l, r: z.r, t: P.top, b: P.top + P.h };
+              const bad = [...document.querySelectorAll('button')].filter(el => el.offsetParent !== null).filter(el => { const q = el.getBoundingClientRect();
+                return q.width > 0 && !(q.right <= zone.l || q.left >= zone.r || q.bottom <= zone.t || q.top >= zone.b); }).map(el => el.id || el.className);
+              const pz = document.getElementById('pillZone'), pr = pz && pz.getBoundingClientRect();
+              return { side: P.side, pillX: Soleil.pillX, pillR: Soleil.pillR, bad, zone: !!pz && Math.round(pr.left) === zone.l && Math.round(pr.width) === P.w }; })()""")
+            ok = r['side'] == side and not r['bad'] and r['zone'] and (r['pillX'] == 56 if side == 'left' else r['pillR'] == 56)
+            check(f'pilule à {"gauche" if side == "left" else "droite"} ({where}) : aucun bouton dans sa zone, zone rouge en mode debug', ok, json.dumps(r))
+        ERRS.extend(errs); await ctx.close()
+    check('dans le build Poki, le réglage de test « pillside » et la zone rouge sont retirés',
+          all(x not in open(os.path.join(ROOT, 'dist', 'poki', 'game.js')).read() for x in ('match(/[?&]pillside', 'pillZone')) if os.path.exists(os.path.join(ROOT, 'dist', 'poki', 'game.js')) else True)
+
+async def t_fix_late_ad(b):
+    print('\n17) Correction 3 : une pub qui démarre APRÈS le délai de 5 s')
+    ctx, page = await new_page(b, ad=900, init_js="window.__adDelay = 6000;")
+    await page.click('#freeBtn'); await page.wait_for_timeout(250)
+    await page.evaluate("Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1200)
+    mark = len(await calls(page))
+    await page.mouse.click(195, 300)                   # Rejouer : commercialBreak… la pub ne démarre pas
+    await page.wait_for_timeout(5300)
+    st = await page.evaluate("({ s: Soleil.state, wait: Soleil.breakWait, inAd: Soleil.Poki.inAd, busy: Soleil.Poki.busy })")
+    check('au bout de 5 s sans pub : la partie reprend (le joueur n’attend pas plus)', st['s'] == 'play' and not st['wait'] and not st['inAd'], json.dumps(st))
+    await page.keyboard.down('Space'); await page.wait_for_timeout(500)
+    await page.wait_for_function("Soleil.Poki.inAd", timeout=3000)
+    st = await page.evaluate("({ h: Soleil.halted(), q: Soleil.Sound.quiet, k: Soleil.keyDown, pr: Soleil.pressing, shield: !document.getElementById('adShield').classList.contains('hide'), playing: Soleil.Poki.playing, g: Soleil.gtime })")
+    log = tail(await calls(page), mark)
+    check('la pub démarre en retard : le jeu se fige, le son se coupe, les entrées sont bloquées', st['h'] and st['q'] and not st['k'] and not st['pr'] and st['shield'], json.dumps(st))
+    check('… et aucun événement n’est envoyé pendant la pub', log.endswith('gameplayStart adStart'), log)
+    await page.keyboard.up('Space')
+    r = await page.evaluate("Soleil.Poki.commercialBreak().then(() => __calls.slice(-1)[0])")
+    check('pendant ce temps, aucune nouvelle pub n’est demandée', r != 'commercialBreak', r)
+    await page.wait_for_timeout(1300)
+    st = await page.evaluate("({ inAd: Soleil.Poki.inAd, p: Soleil.paused, q: Soleil.Sound.hush.has('pub'), shield: document.getElementById('adShield').classList.contains('hide'), busy: Soleil.Poki.busy })")
+    log = tail(await calls(page), mark)
+    check('à la fin de la pub en retard : le son revient, la partie est en PAUSE (menu), rien ne bloque', not st['inAd'] and st['p'] == 'pub' and not st['q'] and st['shield'], json.dumps(st))
+    check('… et gameplayStop part APRÈS la pub, avec la pause', log.endswith('adStart adEnd gameplayStop'), log)
+    await done(page, ctx)
+
+async def t_fix_typo(b):
+    print('\n18) Correction 4 : typographie française et boutons de l’accueil')
+    ctx, page = await new_page(b)
+    r = await page.evaluate("""(() => { const S = Soleil, bad = [];
+      const look = (k, v) => { if (typeof v === 'string' && /[ \\u202F][!?;:»]|«[ \\u202F]/.test(v)) bad.push(k + ' = ' + v); };
+      for (const [k, v] of Object.entries(S.L)) {
+        if (typeof v === 'string') look(k, v);
+        else if (Array.isArray(v)) v.forEach((x, i) => look(k + '[' + i + ']', x));
+        else if (typeof v === 'function') { try { look(k + '()', v(3, 'Zoé', 2)); } catch (e) { /* signature différente */ } }
+      }
+      for (const w of S.WORLDS) for (const lv of w.levels) { look(lv.id + '.name', S.tr(lv.name)); if (lv.tip) look(lv.id + '.tip', S.tr(lv.tip)); }
+      return { bad: bad.slice(0, 5), n: bad.length, late: S.L.late('0,08'), sample: S.tr({ fr: 'Lis le mot avant de lâcher !', en: 'x' }) }; })()""")
+    check('aucun « ! ? : ; » français précédé d’une espace ordinaire (insécable partout)', r['n'] == 0 and '\u00a0!' in r['late'] and '0,08\u00a0s' in r['late'], json.dumps(r, ensure_ascii=False))
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-3', false)"); await page.wait_for_timeout(300)
+    t = await page.evaluate("document.getElementById('lvIntro').innerText")
+    check('carte d’intro du niveau 3 : « lâcher\u00a0! » (le « ! » ne peut plus être seul sur une ligne)', 'lâcher\u00a0!' in t, t.split('\n')[2] if len(t.split('\n')) > 2 else t)
+    await done(page, ctx)
+    for w, h, touch in [(640, 360, False), (836, 470, False), (1031, 580, False), (390, 844, True), (844, 390, True), (320, 568, True)]:
+        ctx, page = await new_page(b, w=w, h=h, touch=touch)
+        r = await page.evaluate("""[...document.querySelectorAll('#home .row .hbtn')].map(bt => { const t = bt.querySelector('.bt'), q = bt.getBoundingClientRect();
+          return { id: bt.id, fit: t.scrollWidth <= t.clientWidth + 0.5 && bt.scrollWidth <= bt.clientWidth + 0.5 && q.right <= innerWidth && q.left >= 0,
+                   fs: parseFloat(getComputedStyle(bt.querySelector('b')).fontSize) }; })""")
+        check(f'accueil {w}×{h} : « Niveaux », « Infini », « 2 joueurs » tiennent dans leur bouton', all(x['fit'] for x in r) and all(x['fs'] >= 12 for x in r), json.dumps(r))
+        await done(page, ctx)
+
+async def t_reward_revive_level(b):
+    print('\n19) 🎬 2e chance dans un niveau : règles de Poki, vidéo vue, on repart au même endroit')
+    ctx, page = await new_page(b, ad=500)
+    await to_fail(page)
+    p = await pair(page, '#lvFail .rpair')
+    check('carte de défaite : « Réessayer » vert + « 🎬 2e chance » (pas vert, plus petit ou égal, à droite, phrase « vidéo »)', pair_ok(p), json.dumps(p, ensure_ascii=False))
+    z = await page.evaluate("Soleil.Levels.m.result.z")
+    mark = len(await calls(page))
+    await page.click('#lvFail [data-reward]'); await page.wait_for_timeout(5)
+    await page.evaluate("document.querySelector('#lvFail [data-reward]') && document.querySelector('#lvFail [data-reward]').click()")
+    await page.wait_for_function("Soleil.Poki.inAd", timeout=3000)
+    st = await page.evaluate("({ q: Soleil.Sound.quiet, h: Soleil.halted(), shield: !document.getElementById('adShield').classList.contains('hide') })")
+    check('pendant la vidéo : jeu figé, son coupé, écran bloqué', st['q'] and st['h'] and st['shield'], json.dumps(st))
+    await page.wait_for_function("Soleil.Levels.phase === 'play'", timeout=4000); await frames(page)
+    st = await page.evaluate("({ z: Soleil.Levels.m.player.z, v: Soleil.Levels.m.player.v, toast: Soleil.Levels.m.player.toast, rev: Soleil.Levels.m.revived, g: Soleil.grace, sun: Soleil.Levels.m.sun.state, att: Soleil.Levels.attempt, shield: document.getElementById('adShield').classList.contains('hide') })")
+    log = tail(await calls(page), mark)
+    check('vidéo vue : on reprend au même endroit, à l’arrêt, plus grillé, soleil de dos, 1 s de protection', abs(st['z'] - z) < 1.5 and st['v'] == 0 and st['toast'] == 0 and st['rev'] and st['g'] > 0.5 and st['sun'] == 'pause' and st['shield'], json.dumps(st))
+    check('une seule vidéo (double clic), puis gameplayStart quand le jeu reprend', log == 'rewardedBreak:medium adStart adEnd gameplayStart', log)
+    await page.keyboard.down('Space'); await page.wait_for_timeout(400)
+    check('pendant la seconde de protection, on ne bouge pas', abs(await page.evaluate("Soleil.Levels.m.player.z") - st['z']) < 1e-6)
+    await page.keyboard.up('Space'); await page.wait_for_timeout(800)
+    await page.evaluate("LVBOT('greedy', 60 * 40, () => Soleil.Levels.phase === 'caught')")
+    await page.wait_for_function("Soleil.Levels.phase === 'fail'", timeout=5000); await page.wait_for_timeout(300)
+    check('grillé une 2e fois dans le même essai : plus de bouton 🎬 (une seule 2e chance par essai)', await page.evaluate("!document.querySelector('#lvFail [data-reward]') && !!document.querySelector('#lvFail .tap')"))
+    await page.evaluate("Soleil.Levels.restart()"); await page.wait_for_timeout(200)
+    await page.evaluate("LVBOT('greedy', 60 * 40, () => Soleil.Levels.phase === 'caught')")
+    await page.wait_for_function("Soleil.Levels.phase === 'fail'", timeout=5000); await page.wait_for_timeout(300)
+    check('nouvel essai : la 2e chance est de nouveau proposée', await page.evaluate("!!document.querySelector('#lvFail [data-reward]')"))
+    best0 = await page.evaluate("(Soleil.Levels.peek('w1-3').best) || 0")
+    await page.click('#lvFail [data-reward]')
+    await page.wait_for_function("Soleil.Levels.phase === 'play'", timeout=4000); await page.wait_for_timeout(1100)
+    await page.evaluate("LVBOT('good', 60 * 120, () => Soleil.Levels.phase === 'results' || Soleil.Levels.phase === 'fail')")
+    await page.wait_for_function("Soleil.Levels.phase === 'results' || Soleil.Levels.phase === 'fail'", timeout=8000)
+    st = await page.evaluate("({ ph: Soleil.Levels.phase, stars: Soleil.Levels.info && Soleil.Levels.info.stars, best: Soleil.Levels.peek('w1-3').best, nb: Soleil.Levels.info && Soleil.Levels.info.newBest })")
+    await page.wait_for_timeout(2200)
+    txt = await page.evaluate("document.getElementById('lvEnd') ? document.getElementById('lvEnd').innerText : ''")
+    check('gagné après une 2e chance : ★★★ impossible (et c’est écrit), meilleur temps pas enregistré', st['ph'] == 'results' and st['stars'][2] is False and not st['nb'] and st['best'] == best0 and '2e chance' in txt, json.dumps(st))
+    await done(page, ctx)
+
+async def t_reward_refused(b):
+    print('\n20) 🎬 vidéo refusée, indisponible, bloqueur de pub : AUCUNE récompense')
+    for label, js in [('vidéo pas vue jusqu’au bout', 'window.__rewardOk = false;'), ('aucune vidéo disponible', 'window.__rewardNone = true;')]:
+        ctx, page = await new_page(b, ad=300, init_js=js)
+        await to_fail(page)
+        await page.click('#lvFail [data-reward]'); await page.wait_for_timeout(900)
+        st = await page.evaluate("({ ph: Soleil.Levels.phase, rev: Soleil.Levels.m.revived, toast: document.getElementById('toast').innerText, btn: !!document.querySelector('#lvFail [data-reward]:not([disabled])'), shield: document.getElementById('adShield').classList.contains('hide'), w: Soleil.rewardWait })")
+        check(f'{label} : pas de 2e chance, le bouton revient, petit message neutre, rien ne bloque', st['ph'] == 'fail' and not st['rev'] and st['btn'] and 'indisponible' in st['toast'] and 'bloqu' not in st['toast'] and st['shield'] and not st['w'], json.dumps(st, ensure_ascii=False))
+        await page.keyboard.press('Space'); await page.wait_for_timeout(1000)
+        check('… et « Réessayer » (Espace) marche toujours', await page.evaluate("Soleil.Levels.phase") == 'play')
+        await done(page, ctx)
+    ctx, page = await new_page(b, sdk='adblock')
+    await to_fail(page)
+    check('bloqueur de pub (init refusé) : bouton 🎬 présent, mais la vidéo ne donne rien', await page.evaluate("Soleil.Poki.rewardedBreak('small')") is False)
+    await done(page, ctx)
+
+async def t_reward_hidden(b):
+    print('\n21) 🎬 jamais proposé : sans SDK, défi du jour, 2 joueurs, niveau en douceur')
+    ctx, page = await new_page(b, sdk='none')
+    await to_fail(page)
+    a = await page.evaluate("!document.querySelector('#lvFail [data-reward]') && !!document.querySelector('#lvFail .tap')")
+    await page.evaluate("Soleil.Levels.toMap(); Soleil.goHome()"); await page.wait_for_timeout(200)
+    await page.click('#freeBtn'); await page.wait_for_timeout(200)
+    await page.evaluate("Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1300)
+    c = await page.evaluate("document.getElementById('ovPair').innerHTML === ''")
+    await page.evaluate("Soleil.goHome(); Soleil.openPanel(); Soleil.openFiche(Soleil.OUTFITS.find(o => o.id === 'vampire'))"); await page.wait_for_timeout(300)
+    d = await page.evaluate("!document.querySelector('#ofiche [data-reward]') && !!document.querySelector('#ofiche .rnorm')")
+    check('mode de secours (aucun SDK) : aucun bouton 🎬 (défaite, fin de course, casier)', a and c and d, f'{a} {c} {d}')
+    await done(page, ctx)
+    ctx, page = await new_page(b)
+    await page.click('#dailyBtn'); await page.wait_for_timeout(200)
+    await page.evaluate("Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1300)
+    check('défi du jour : pas de 2e chance (un seul essai, le même pour tous)', await page.evaluate("document.getElementById('ovPair').innerHTML === '' && !Soleil.Reward.canRevive()"))
+    await page.evaluate("Soleil.goHome()"); await page.wait_for_timeout(200)
+    await page.click('#duoBtn'); await page.wait_for_timeout(300)
+    check('2 joueurs : aucune 2e chance', await page.evaluate("!Soleil.Reward.canRevive() && !document.querySelector('[data-reward]')"))
+    await done(page, ctx)
+    ctx, page = await new_page(b, onboard=0)
+    await page.keyboard.down('Space'); await page.wait_for_timeout(3000); await page.keyboard.up('Space')
+    st = await page.evaluate("({ id: Soleil.Levels.def.id, ph: Soleil.Levels.phase, soft: !!Soleil.Levels.m.level.soft, can: Soleil.Reward.canRevive(), rev: Soleil.Match.revive(Soleil.Levels.m) })")
+    check('niveau 1 en douceur : on ne peut pas y perdre, donc pas de 2e chance', st['soft'] and not st['can'] and st['rev'] is False and st['ph'] != 'fail', json.dumps(st))
+    await done(page, ctx)
+
+async def t_reward_endless(b):
+    print('\n22) 🎬 Continuer en course infinie : une fois par partie, rien n’est compté deux fois')
+    ctx, page = await new_page(b, ad=400, init_js="localStorage.setItem('soleil.best', '40'); localStorage.setItem('soleil.plays', '5');")
+    await page.click('#freeBtn'); await page.wait_for_timeout(200)
+    await page.evaluate("Soleil.runner.z = 52.4; Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1300)
+    p = await pair(page, '#ovPair .rpair')
+    check('fin de course : « Rejouer » vert + « 🎬 Continuer » (règles de Poki)', pair_ok(p), json.dumps(p, ensure_ascii=False))
+    st0 = await page.evaluate("({ plays: Soleil.plays, stars: Soleil.stars, best: Soleil.best, runs: Soleil.mstate.runs, total: Soleil.mstate.total })")
+    await page.click('#ovPair [data-reward]')
+    await page.wait_for_function("Soleil.state === 'play'", timeout=4000); await frames(page)
+    st = await page.evaluate("({ z: Soleil.runner.z, v: Soleil.runner.v, toast: Soleil.runner.toast, sun: Soleil.watcher.state, g: Soleil.grace, rev: Soleil.revivedRun, ev: Soleil.events.map(e => e.s).join('') })")
+    check('vidéo vue : la course continue au même endroit, à l’arrêt, soleil de dos, 1 s de protection', abs(st['z'] - 52.4) < 1 and st['v'] == 0 and st['toast'] == 0 and st['sun'] == 'pause' and st['g'] > 0.5 and st['rev'] and '🎬' in st['ev'], json.dumps(st, ensure_ascii=False))
+    await page.wait_for_timeout(1200)
+    await page.evaluate("Soleil.runner.z = 61.2; Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1300)
+    st1 = await page.evaluate("({ plays: Soleil.plays, stars: Soleil.stars, best: Soleil.best, runs: Soleil.mstate.runs, total: Soleil.mstate.total, pair: document.getElementById('ovPair').innerHTML, isRec: Soleil.lastRun.isRec, prev: Soleil.lastRun.prevBest })")
+    check('grillé à nouveau : une seule partie comptée, la distance n’est pas comptée deux fois, record par rapport à AVANT la partie',
+          st1['plays'] == st0['plays'] and st1['runs'] == st0['runs'] and st1['total'] == st0['total'] + 9 and st1['best'] == 61 and st1['isRec'] and st1['prev'] == 40, json.dumps({k: st1[k] for k in st1 if k != 'pair'}))
+    check('… et plus de bouton 🎬 (une seule 2e chance par partie)', st1['pair'] == '')
+    mark = len(await calls(page))
+    await page.mouse.click(195, 300)
+    await page.wait_for_function("Soleil.state === 'play' && Soleil.Poki.playing", timeout=4000)
+    check('nouvelle partie : 2e chance de nouveau possible plus tard, Rejouer = commercialBreak', tail(await calls(page), mark) == 'commercialBreak adStart adEnd gameplayStart' and await page.evaluate("!Soleil.revivedRun"), tail(await calls(page), mark))
+    await done(page, ctx)
+
+async def t_reward_double(b):
+    print('\n23) 🎬 ×2 ⭐ sur l’écran de résultats')
+    ctx, page = await new_page(b, ad=300)
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-3', false)"); await page.wait_for_timeout(200)
+    await page.keyboard.press('Space'); await frames(page)
+    await page.evaluate("LVBOT('good', 60 * 120, () => Soleil.Levels.phase === 'results')")
+    await page.wait_for_function("document.getElementById('lvEnd') && document.getElementById('lvEnd').classList.contains('armed')", timeout=6000)
+    coins = await page.evaluate("Soleil.Levels.info.coins")
+    p = await pair(page, '#lvEnd .rpair')
+    check('résultats : « Suivant » vert + « 🎬 ×2 ⭐ » (règles de Poki)', coins > 0 and pair_ok(p), f'{coins} ⭐ ' + json.dumps(p, ensure_ascii=False))
+    s0 = await page.evaluate("Soleil.stars")
+    await page.click('#lvEnd [data-reward]'); await page.wait_for_timeout(80); await page.click('#lvEnd [data-reward]', force=True)
+    await page.wait_for_timeout(900)
+    st = await page.evaluate("({ s: Soleil.stars, d: Soleil.Levels.info.doubled, btn: document.querySelector('#lvEnd [data-reward]').disabled, ex: document.querySelector('#lvEnd .extra').innerText, n: __calls.filter(c => c.startsWith('rewardedBreak')).length })")
+    check('vidéo vue : les ⭐ du niveau sont doublées UNE fois (double clic = une seule vidéo)', st['s'] == s0 + coins and st['d'] and st['btn'] and st['n'] == 1 and '×2' in st['ex'], json.dumps(st, ensure_ascii=False))
+    await page.evaluate("Soleil.Reward.claim(document.querySelector('#lvEnd [data-reward]'))"); await page.wait_for_timeout(500)
+    check('impossible de la redemander', await page.evaluate("Soleil.stars") == s0 + coins)
+    await page.evaluate("Soleil.Levels.restart()"); await page.wait_for_timeout(200)
+    await page.evaluate("LVBOT('good', 60 * 120, () => Soleil.Levels.phase === 'results')")
+    await page.wait_for_timeout(2500)
+    check('rejoué sans rien gagner de nouveau : pas de bouton ×2', await page.evaluate("Soleil.Levels.info.coins === 0 ? !document.querySelector('#lvEnd [data-reward]') : true"))
+    await done(page, ctx)
+
+async def t_reward_trial(b):
+    print('\n24) 🎬 Essayer une tenue : portée UNE partie, jamais achetée, oubliée au rechargement')
+    ctx, page = await new_page(b, ad=300, init_js="localStorage.setItem('soleil.stars', '5');")
+    await page.click('#locker'); await page.wait_for_timeout(200)
+    await page.evaluate("Soleil.openFiche(Soleil.OUTFITS.find(o => o.id === 'vampire'))"); await page.wait_for_timeout(400)
+    p = await pair(page, '#ofiche .rpair')
+    check('fiche d’une tenue : « Acheter » vert + « 🎬 Essayer » (règles de Poki)', pair_ok(p), json.dumps(p, ensure_ascii=False))
+    await page.click('#ofiche [data-reward]'); await page.wait_for_timeout(900)
+    st = await page.evaluate("({ t: Soleil.trial, worn: Soleil.wornOutfit(), outfit: Soleil.outfit, owned: Soleil.owned.slice(), saved: Soleil.store.get('owned'), fiche: document.getElementById('ofiche').classList.contains('hide'), badge: !!document.querySelector('.oc.trying') })")
+    check('vidéo vue : portée tout de suite (badge « Essai »), jamais ajoutée aux tenues achetées', st['t'] == {'id': 'vampire', 'state': 'ready'} and st['worn'] == 'vampire' and st['outfit'] == 'classic' and 'vampire' not in st['owned'] and 'vampire' not in (st['saved'] or []) and st['badge'], json.dumps(st))
+    await page.click('#pClose'); await page.wait_for_timeout(150)
+    await page.click('#dailyBtn'); await page.wait_for_timeout(250)
+    st = await page.evaluate("({ worn: Soleil.wornOutfit(), t: Soleil.trial && Soleil.trial.state })")
+    check('défi du jour : pas d’essai (la tenue habituelle), l’essai reste en attente', st['worn'] == 'classic' and st['t'] == 'ready', json.dumps(st))
+    await page.evaluate("Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1200)
+    await page.evaluate("Soleil.goHome()"); await page.wait_for_timeout(200)
+    await page.click('#freeBtn'); await page.wait_for_timeout(250)
+    st = await page.evaluate("({ worn: Soleil.wornOutfit(), t: Soleil.trial && Soleil.trial.state, tag: !document.getElementById('trialTag').classList.contains('hide') })")
+    check('partie suivante (course libre) : la tenue d’essai est portée, badge à l’écran', st['worn'] == 'vampire' and st['t'] == 'on' and st['tag'], json.dumps(st))
+    await page.evaluate("Soleil.caught('running', 0.4)"); await page.wait_for_timeout(1200)
+    await page.mouse.click(195, 300)
+    await page.wait_for_function("Soleil.state === 'play' && Soleil.Poki.playing", timeout=4000); await page.wait_for_timeout(150)
+    st = await page.evaluate("({ worn: Soleil.wornOutfit(), t: Soleil.trial, tag: document.getElementById('trialTag').classList.contains('hide'), toast: document.getElementById('toast').innerText })")
+    check('partie d’après : retour à la tenue habituelle, message « Tu l’as aimée ? »', st['worn'] == 'classic' and st['t'] is None and st['tag'] and 'aimée' in st['toast'], json.dumps(st, ensure_ascii=False))
+    await page.evaluate("Soleil.goHome(); Soleil.openPanel(); Soleil.openFiche(Soleil.OUTFITS.find(o => o.id === 'cap'))"); await page.wait_for_timeout(400)
+    await page.click('#ofiche [data-reward]'); await page.wait_for_timeout(900)
+    await page.reload(); await page.wait_for_function("Soleil.Poki && Soleil.Poki.loaded"); await page.wait_for_timeout(200)
+    check('rechargement de la page : l’essai est oublié', await page.evaluate("Soleil.trial === null && Soleil.wornOutfit() === Soleil.outfit"))
+    await done(page, ctx)
+
 TESTS = [t_new_player, t_soft_level1, t_returning, t_pause_endless, t_pause_level_daily, t_ads, t_fail_retry, t_hidden_blur,
-         t_casier_duo, t_sdk_modes, t_scroll_debug, t_iframe_share, t_build, t_event_log]
+         t_casier_duo, t_sdk_modes, t_scroll_debug, t_iframe_share, t_build,
+         t_fix_toast, t_fix_pill, t_fix_late_ad, t_fix_typo,
+         t_reward_revive_level, t_reward_refused, t_reward_hidden, t_reward_endless, t_reward_double, t_reward_trial, t_event_log]
 
 async def main():
     only = sys.argv[1:]

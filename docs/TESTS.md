@@ -11,7 +11,7 @@
 | Comparaison avec la version d'avant, image par image | `python3 tools/tests/compare_frames.py <dossier de la v2.1>` | La course infinie et le monde 1 se dessinent exactement pareil (même graine, même hasard visuel, même robot ; SDK coupé, joueur qui revient). **94/94 images identiques** contre la v2.1. |
 | Syntaxe | `for f in js/*.js js/*/*.js levels/*.js tools/*.js; do node --check $f; done` | Aucune erreur de syntaxe (63 fichiers du jeu + les outils). |
 
-### Ce que vérifie `test_poki.py` (v2.2)
+### Ce que vérifie `test_poki.py` (v2.2, v2.3 : tests 15 à 24 pour les corrections et les pubs récompensées)
 
 - **1re visite** : directement le niveau 1 « prêt » (pas de titre, d'accueil ni de carte), main ou touche Espace, prêt en moins de 3 s ; rien ne bouge et aucun `gameplayStart` sans appui ; un appui → `gameplayStart`, une fois.
 - **Niveau 1 en douceur** : « OUPS ! » au lieu de la défaite, il faut lâcher pour repartir ; à la fin, pas d'écran de résultats ni de pub, la petite carte d'intro du niveau 2 ; après le niveau 2, Suivant → la carte se présente, sans pub.
@@ -58,6 +58,19 @@ Monde 2 (phase 2) :
 | Course infinie, comparée image par image à la version d'avant (`compare_frames.py`) | 14 images sur 14 identiques au pixel près (portrait et paysage, de 0 à 900 m : boue, verglas, descente, décor). |
 | Niveaux 1, 3, 5, 7 et 8 du monde 1, comparés image par image à la version d'avant (`compare_frames.py`) | 80 images sur 80 identiques au pixel près (portrait et paysage, boss compris). |
 | Simulation | v2.2 : seul le niveau 1 change (débutant 66 % → 100 %, niveau en douceur). Les 7 autres niveaux du monde 1 et tout le monde 2 : mêmes chiffres qu'en v2.1, à 0 point près. |
+
+## L'étape Poki 2 (v2.3) : 8 vérifications rapides sur ton téléphone et ton PC
+
+Les pubs récompensées n'apparaissent qu'avec un SDK : teste-les sur la version dev avec `index.html?debug=1&fakead=1` (fausse vidéo de 2 s), ou dans le Poki Inspector.
+
+1. **Fin de course, message** : fais une course libre le premier jour (« Série de 1 jour ») et fais-toi griller vite : le message est au-dessus du panneau, « Touche l'écran pour rejouer » reste lisible en bas.
+2. **🎬 2e chance** (niveau 3) : fais-toi griller, appuie sur « 🎬 2e chance » : la fausse vidéo, puis tu repars exactement au même endroit, à l'arrêt, avec l'anneau. Refais-toi griller : plus de 🎬.
+3. **Gagner après une 2e chance** : l'écran de résultats dit « ★★★ … (impossible après une 2e chance) ».
+4. **🎬 Continuer** (course libre) : la course continue, la distance et le fantôme aussi ; à la 2e défaite, une seule partie est comptée.
+5. **🎬 ×2 ⭐** : gagne un nouveau niveau : le nombre de ⭐ double, le bouton devient « ✓ Fait ».
+6. **🎬 Essayer une tenue** : casier → une tenue verrouillée → « 🎬 Essayer » : badge « Essai », tu la portes à la course suivante, puis « Tu l'as aimée ? ».
+7. **Sans SDK** (double-clic sur `index.html`, sans `?debug`) : aucun bouton 🎬 nulle part.
+8. **Accueil sur petit écran** (PC à 640×360, petit téléphone) : « Niveaux », « Infini », « 2 joueurs » tiennent dans leur bouton.
 
 ## L'étape Poki 1 (v2.2) : 8 vérifications rapides sur ton téléphone et ton PC
 

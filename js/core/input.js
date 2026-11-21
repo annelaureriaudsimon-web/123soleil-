@@ -44,7 +44,7 @@ window.addEventListener('keydown', e => {
   }
   if (pauseKey && !e.repeat && S.pausable()) { e.preventDefault(); S.pauseGame('clavier'); return; }   // pendant la partie : pause
   if (e.code === 'Escape') {                          // hors partie : comme avant
-    if (S.panelOpen) { closePanel(); return; }
+    if (S.panelOpen) { if (S.ficheOpen && S.ficheOpen()) S.closeFiche(); else closePanel(); return; }   // la fiche d'une tenue, puis le casier
     if (S.state === 'duo' || S.state === 'over') { S.goHome(); return; }
     if (S.state === 'level') { S.Levels.toMap(); return; }       // niveau → carte
   }

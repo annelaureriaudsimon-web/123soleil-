@@ -2,7 +2,7 @@
 (function (S) {
 'use strict';
 const { L, tr, MEDALS, OUTFITS, RANKS, $, clamp, vibrate, store, DAY, streakAlive, todayMissions, Sound, panel,
-  rankIndex, rankLabel, statValue, drawRunnerFig, toast, icon, setIcon } = S;   // déjà chargés
+  rankIndex, rankLabel, statValue, drawRunnerFig, toast, icon, setIcon, esc } = S;   // déjà chargés
 
 // Infos d'accueil, bouton casier et pastille « nouveauté »
 const canAfford = () => OUTFITS.some(o => !S.owned.includes(o.id) && o.price <= S.stars);
@@ -14,7 +14,7 @@ function openPanel() {
   panel.classList.remove('hide');
   panel.querySelector('.sheet').scrollTop = 0;
 }
-function closePanel() { S.panelOpen = false; panel.classList.add('hide'); S.refreshUI(); }
+function closePanel() { closeFiche(); S.panelOpen = false; panel.classList.add('hide'); S.refreshUI(); }
 function renderPanel() {
   const ri = rankIndex(S.best);
   let next = `<div class="next">${L.maxRank}</div>`;
@@ -51,7 +51,9 @@ function renderPanel() {
     b.appendChild(c);
     const n = document.createElement('span'); n.className = 'on'; n.textContent = tr(o); b.appendChild(n);
     const p = document.createElement('span'); p.className = 'op';
-    if (eq || has) p.textContent = eq ? L.equipped : L.equip; else p.innerHTML = icon('star') + o.price;   // le prix : ⭐ dessinée + nombre
+    const trying = !!S.trial && S.trial.id === o.id;   // tenue d'essai (pub récompensée) : badge « Essai »
+    if (trying) { p.textContent = L.trialBadge; b.classList.add('trying'); }
+    else if (eq || has) p.textContent = eq ? L.equipped : L.equip; else p.innerHTML = icon('star') + o.price;   // le prix : ⭐ dessinée + nombre
     b.setAttribute('aria-label', `${tr(o)} : ${eq ? L.equipped : has ? L.equip : L.price(o.price)}`);
     b.appendChild(p);
     b.addEventListener('click', () => pickOutfit(o, b));
@@ -72,12 +74,49 @@ function drawStage(g, w, h) {
 function pickOutfit(o, el) {
   Sound.unlock();
   if (S.owned.includes(o.id)) { S.outfit = o.id; store.set('outfit', S.outfit); Sound.star(); renderPanel(); return; }
+  openFiche(o);                                    // pas encore à toi : la fiche (Acheter, et 🎬 Essayer si une vidéo est possible)
+}
+// ---------- La fiche d'une tenue verrouillée : Acheter (vert) + 🎬 Essayer (pub récompensée, js/ui/reward.js) ----------
+const fiche = document.createElement('div');
+fiche.id = 'ofiche'; fiche.className = 'hide'; fiche.setAttribute('role', 'dialog');
+panel.appendChild(fiche);
+let ficheOutfit = null;
+function openFiche(o) {
+  ficheOutfit = o;
+  const can = S.Reward.canTrial(o.id), short = Math.max(0, o.price - S.stars);
+  const buy = { act: 'buy', label: L.buyBtn(o.price), icon: 'star' };
+  fiche.innerHTML = `<div class="ofiche"><button class="x" type="button" data-act="close" aria-label="${esc(L.close)}">${icon('close')}</button>`
+    + `<canvas width="200" height="230"></canvas><div class="on">${esc(tr(o))}</div>`
+    + (short ? `<div class="miss">${esc(L.missing(short))}</div>` : '')
+    + (can ? S.Reward.pairHTML(buy, { kind: 'trial', token: 'trial:' + o.id, label: L.tryBtn, cap: L.tryCap })
+           : `<div class="rpair"><button class="btn c-green rnorm" type="button" data-act="buy">${icon('star')}${esc(buy.label)}</button></div>`)
+    + `</div>`;
+  const g = fiche.querySelector('canvas').getContext('2d');
+  drawStage(g, 200, 230);
+  drawRunnerFig(g, 100, 216, 124, { sp: 0, ph: 0, st: 0, t: 0 }, o, false, String(DAY));
+  fiche.classList.remove('hide');
+  setTimeout(() => fiche.classList.add('armed'), 250);   // pas de clic par erreur sur la fiche qui s'ouvre
+}
+const ficheOpen = () => !fiche.classList.contains('hide');
+function closeFiche() { fiche.classList.add('hide'); fiche.classList.remove('armed'); ficheOutfit = null; }
+fiche.addEventListener('click', e => {
+  e.stopPropagation();
+  if (e.target === fiche) { closeFiche(); return; }
+  const b = e.target.closest ? e.target.closest('button[data-act]') : null;
+  if (!b || !fiche.classList.contains('armed')) return;
+  if (b.dataset.act === 'close') closeFiche();
+  else if (b.dataset.act === 'buy' && ficheOutfit) buyOutfit(ficheOutfit, b);
+});
+function buyOutfit(o, el) {
+  Sound.unlock();
+  if (S.owned.includes(o.id)) { closeFiche(); return; }
   if (S.stars < o.price) { Sound.nope(); toast(L.missing(o.price - S.stars), true); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); return; }
   S.stars -= o.price; store.set('stars', S.stars);
   S.owned.push(o.id); store.set('owned', S.owned);
   S.outfit = o.id; store.set('outfit', S.outfit);
+  if (S.trial && S.trial.id === o.id) { S.trial = null; S.syncTrialTag(); }   // achetée pendant l'essai : elle est à toi
   Sound.buy(); vibrate(30); toast(L.unlocked(tr(o)), true);
-  renderPanel(); S.refreshUI();
+  closeFiche(); renderPanel(); S.refreshUI();
 }
 setIcon('locker', 'shirt'); setIcon('lock2', 'shirt');
 $('pClose').innerHTML = icon('close');
@@ -89,5 +128,5 @@ panel.addEventListener('pointerdown', e => e.stopPropagation());
   $(id).addEventListener('pointerdown', e => e.stopPropagation());
 });
 
-Object.assign(S, { canAfford, openPanel, closePanel, renderPanel, pickOutfit });
+Object.assign(S, { canAfford, openPanel, closePanel, renderPanel, pickOutfit, openFiche, closeFiche, ficheOpen, buyOutfit });
 })(window.Soleil);

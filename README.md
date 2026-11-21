@@ -1,4 +1,4 @@
-# 1, 2, 3… SOLEIL ! — v2.2
+# 1, 2, 3… SOLEIL ! — v2.3
 
 Maintiens pour courir vers le soleil, et lâche avant qu'il se retourne. S'il te voit bouger, tu es **GRILLÉ**.
 
@@ -12,12 +12,14 @@ La course infinie, le défi du jour, le mode 2 joueurs, le casier, les tenues, l
 
 **Prêt pour Poki** (v2.2) : SDK Poki branché, vraie pause, premiers pas sans menu (on joue en moins de 3 secondes), et un build Poki vérifié automatiquement. Voir `docs/POKI_INTEGRATION.md`.
 
+**Pubs récompensées** (v2.3) : 🎬 2e chance (niveaux et course infinie), 🎬 ×2 ⭐ sur les résultats, 🎬 essayer une tenue dans le casier, en respectant toutes les règles de Poki. Elles n'apparaissent qu'avec le SDK Poki (en dev : `index.html?debug=1&fakead=1`).
+
 ## Jouer
 
 - **Ouvrir :** double-clique sur `index.html`. Ça marche sans Internet et sans serveur : tout est dessiné et joué dans le navigateur, sans aucune image, police ou librairie téléchargée. Le seul fichier externe est le SDK Poki : sans lui (hors ligne, bloqueur de pub), le jeu marche pareil.
 - **Téléphone :** maintiens le doigt sur l'écran pour courir, lâche pour t'arrêter. Pause : ⏸ en haut à droite.
 - **PC :** maintiens Espace (ou ↑, W, Entrée), ou le clic. Sur la carte : ← → et Entrée. Pendant une partie, **Échap ou P : pause**. Ailleurs, Échap : retour. M : son.
-- **Mode debug :** `index.html?debug=1` affiche chaque événement envoyé à Poki ; `index.html?debug=1&fakead=1` simule une pub de 2 secondes.
+- **Mode debug :** `index.html?debug=1` affiche chaque événement envoyé à Poki ; `index.html?debug=1&fakead=1` simule une pub de 2 secondes (et montre les boutons 🎬) ; `&pill=1` dessine la zone de la pilule Poki (`&pillside=right` pour l'autre côté).
 - **Les étoiles d'un niveau :**
   - ★ finir ;
   - ★★ l'objectif ;

@@ -31,6 +31,7 @@ const duoScore = () => `${L.pName[0]} ${S.duo.wins[0]} – ${S.duo.wins[1]} ${L.
 const endLen = () => (S.duo.wins[S.duo.winner] >= DUO_WIN ? 1.6 : 2.6);   // durée de l'écran de fin de manche
 function startDuo() {                              // nouveau match (ou revanche)
   Sound.unlock();
+  S.trialEnd();                                    // une tenue d'essai ne dure qu'une partie (elle n'est pas pour le mode 2 joueurs)
   S.mode = 'duo'; S.state = 'duo';
   S.duo = { round: 0, wins: [0, 0], phase: 'intro', t: 0, racers: [newRacer(0), newRacer(1)], winner: -1, tips: [] };
   clearTimeout(S.armTimer); clearTimeout(S.deTimer);
@@ -229,7 +230,7 @@ function drawDuoBeams() {                          // le regard qui grille, vers
   }
 }
 function drawDuoHUD() {                            // distances, barres jusqu'à l'arrivée, score
-  const fs = Math.min(Lt.U * 0.052, 26), left = 14 + safe.l + S.pillX, right = S.W - 122 - safe.r;   // pillX : la pilule Poki
+  const fs = Math.min(Lt.U * 0.052, 26), left = 14 + safe.l + S.pillX, right = S.W - 122 - safe.r - S.pillR;   // pillX : la pilule Poki
   const bw = Math.max(70, Math.min(190, (right - left) / 2 - 14));
   const rowY = safe.t + 12 + (Lt.land ? 0 : fs * 1.35);
   for (const r of S.duo.racers) {

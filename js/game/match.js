@@ -392,7 +392,7 @@ function win(m) {
   const pl = m.player;
   pl.state = 'done'; pl.finishT = m.t;
   m.result = { win: true, time: m.t, place: m.finishers.length + 1, total: m.rivals.length + 1, stats: m.stats,
-               beaten: m.rivals.filter(r => r.state !== 'done').map(r => r.id) };
+               beaten: m.rivals.filter(r => r.state !== 'done').map(r => r.id), revived: !!m.revived };
   emit(m, 'finish', { place: m.result.place });
 }
 function lose(m, why, val) {
@@ -403,7 +403,27 @@ function lose(m, why, val) {
   emit(m, 'grilled', { why, val });
 }
 
-// Les étoiles d'un essai gagné : [finir, objectif, défi]
+// ---------- 2e chance (pub récompensée, js/ui/reward.js) ----------
+// On reprend EXACTEMENT là où on a été grillé : le joueur est à l'arrêt (et doit d'abord lâcher s'il maintenait),
+// le soleil se remet de dos, et un nouveau cycle commence après une petite pause. Les rivaux continuent leur
+// course là où ils étaient. Une seule 2e chance par essai ; ensuite, le défi (★★★) n'est plus possible.
+// La simulation ne l'utilise jamais : ses résultats ne bougent pas.
+const REVIVE_PAUSE = 1.2;                          // s : la pause du soleil avant le prochain chant
+function revive(m) {
+  if (!m.result || m.result.win || m.revived || m.level.soft) return false;
+  const pl = m.player, w = m.sun;
+  m.revived = true; m.result = null; m.look = null; m.trapTrack = null; m.quickT = -1;
+  pl.v = 0; pl.press = false; pl.stopT = m.t; pl.lock = true; pl.knock = null;
+  m.stats.combo = 0;
+  Object.assign(w, { state: 'pause', t: 0, turnP: 0, text: '', textKind: '', second: false, retTo: 0, shut: 0, spotted: false });
+  m.cc = cycleConfig(m, m.cycle + 1);
+  w.pauseDur = Math.max(m.cc.pause, REVIVE_PAUSE);
+  feed(m, 'return');                               // les rivaux savent qu'ils peuvent repartir
+  emit(m, 'revive');
+  return true;
+}
+
+// Les étoiles d'un essai gagné : [finir, objectif, défi] — après une 2e chance, pas de défi
 function goalMet(g, res) {
   if (!g || !res.win) return false;
   switch (g.type) {
@@ -420,7 +440,7 @@ function goalMet(g, res) {
     default: return false;
   }
 }
-const starsOf = (L, res) => [!!res.win, goalMet(L.goal, res), goalMet(L.challenge, res)];
+const starsOf = (L, res) => [!!res.win, goalMet(L.goal, res), !res.revived && goalMet(L.challenge, res)];
 
-S.Match = { create, step, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET, KNOCK };
+S.Match = { create, step, revive, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET, KNOCK };
 })(window.Soleil);

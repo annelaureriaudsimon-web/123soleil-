@@ -57,17 +57,20 @@ function caught(reason, val) {
   S.timeScale = 0.18;                                          // petit ralenti dramatique
   Sound.busted(); Sound.wind(0);
   Voice.quip(SAY.grilled, w.type === 'moon');                // « Bien cuit ! »
-  const dist = Math.floor(r.z), prev = Math.floor(S.best);
+  // Après une 2e chance (pub récompensée), la 1re défaite a déjà été comptée (partie, distance, bonus) : on ne
+  // compte que ce qui est nouveau, et le record se compare à celui d'AVANT la partie.
+  const R0 = S.reviveFrom;
+  const dist = Math.floor(r.z), prev = R0 ? R0.prevBest : Math.floor(S.best);
   const rankBefore = rankIndex(prev), rankAfter = rankIndex(Math.max(prev, dist));
-  if (dist > prev) {
+  if (dist > Math.floor(S.best)) {
     S.best = dist; store.set('best', S.best);
     S.ghostRec.push(Math.round(r.z * 10));
     if (S.ghostRec.length > 1) { S.ghost = S.ghostRec.slice(0, 6000); store.set('ghost', S.ghost); }
   }
-  if (dist > prev && prev > 0) addStars(3);                  // bonus record
-  if (rankAfter > rankBefore && prev > 0) addStars(5);       // bonus nouveau rang
-  S.plays++; store.set('plays', S.plays);
-  S.mstate.runs++; S.mstate.total += dist;
+  if (dist > prev && prev > 0 && !(R0 && R0.recBonus)) addStars(3);          // bonus record (une fois par partie)
+  if (rankAfter > (R0 ? R0.rankAfter : rankBefore) && prev > 0) addStars(5); // bonus nouveau rang (seulement les nouveaux)
+  if (!R0) { S.plays++; store.set('plays', S.plays); S.mstate.runs++; S.mstate.total += dist; }
+  else S.mstate.total += Math.max(0, dist - R0.dist);
   const bs = S.mstate.bestStat;
   ['oufs', 'combo', 'sprint', 'mud', 'ice', 'traps', 'bosses', 'hops', 'looks', 'catches', 'big', 'slope'].forEach(k => { bs[k] = Math.max(bs[k] || 0, Math.floor(S.RS[k])); });
   bs.dist = Math.max(bs.dist || 0, dist);
@@ -101,7 +104,9 @@ function startRun(m = 'free') {
     if (dailyState()) return;                                   // un seul essai par jour
     store.set('daily', { day: DAY, used: true, done: false });  // compté dès le départ : recharger ne redonne pas d'essai
   }
+  S.trialEnd();                                                 // une tenue d'essai ne dure qu'une partie (js/ui/reward.js)
   S.mode = m; S.duo = null;
+  S.runNo = (S.runNo || 0) + 1; S.revivedRun = false; S.reviveFrom = null;   // 2e chance : une par partie
   setRunSeed(m === 'daily' ? SEED : randomSeed());              // défi : même graine pour tous ; libre : graine au hasard
   S.state = 'play';
   S.rng = mulberry32(S.runSeed);
@@ -122,9 +127,35 @@ function startRun(m = 'free') {
   if (S.mstate.day !== DAY) S.mstate = { day: DAY, done: {}, runs: 0, total: 0, bestStat: {} };
   const bonus = touchStreak();
   if (bonus) { addStars(bonus); S.toast(L.streakToast(S.streak.n, bonus)); }
+  S.trialBegin();
   S.refreshUI();
   Sound.start();
 }
 
-Object.assign(S, { updateTrapWatch, updateProgress, caught, updateCaught, startRun });
+// 2e chance (pub récompensée vue jusqu'au bout, js/ui/reward.js) : la course continue là où on a été grillé.
+// Une seule par partie, jamais dans le défi du jour. Le coureur est à l'arrêt, le soleil se remet de dos,
+// puis 1 s de protection. Distance, record, fantôme, missions : tout continue.
+const REVIVE_PAUSE = 1.2;                                      // s : la pause du soleil avant le prochain chant
+function reviveRun() {
+  if (S.state !== 'over' || S.mode !== 'free' || S.revivedRun || !S.lastRun) return false;
+  const R = S.lastRun;
+  S.reviveFrom = { prevBest: R.prevBest, dist: R.dist, recBonus: R.isRec, rankAfter: R.rankAfter };
+  S.revivedRun = true;
+  const ev = S.events;                                         // la grille garde la trace honnête de la 2e chance
+  if (ev.length && ev[ev.length - 1].s === '🔥') ev[ev.length - 1].s = '🎬';
+  over.classList.remove('show', 'armed');
+  S.state = 'play'; S.caughtT = 0; S.timeScale = 1; S.shake = 0; S.flash = 0;
+  Object.assign(S.runner, { v: 0, toast: 0, statue: 0, jx: 0, pressed: false, stopT: S.runT, sprintFrom: null, slide: 0 });
+  Object.assign(S.watcher, { state: 'pause', t: 0, turnP: 0, text: '', textKind: '', angry: false, laugh: 0, angryUntil: 0,
+    second: false, retTo: 0, spotted: false, faux: false, rest: 0, pauseDur: REVIVE_PAUSE, textFadeT: 0 });
+  S.trapWatch = null; S.combo = 0;
+  S.releaseAll();
+  S.grace = S.GRACE;                                           // l'anneau qui se remplit : le monde reste figé 1 s
+  S.popup(L.revived, Lt.cx, Lt.chantY, '#C77DFF', S.fit(L.revived, Lt.chantSize, S.W * 0.85), 1.2);
+  S.sparks(24, Lt.cx, Lt.yFeet - Lt.s * 1.2, '#E0AAFF'); Sound.start(); vibrate([20, 30, 40]);
+  S.syncTrialTag(); S.refreshUI();
+  return true;
+}
+
+Object.assign(S, { updateTrapWatch, updateProgress, caught, updateCaught, startRun, reviveRun });
 })(window.Soleil);

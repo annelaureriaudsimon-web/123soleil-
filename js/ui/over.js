@@ -58,7 +58,7 @@ function placeOver() {
   const h = over.offsetHeight || 230, w = over.offsetWidth || 260;
   let top;
   if (Lt.land && S.W > S.H * 1.2) {                // paysage : à droite du soleil, sans jamais dépasser du bord (640×360 sur Poki)
-    over.style.left = Math.round(Math.min(S.W * 0.76, S.W - safe.r - w / 2 - 8)) + 'px'; top = (S.H - h) / 2;
+    over.style.left = Math.round(Math.min(S.W * 0.76, S.W - safe.r - S.pillR - w / 2 - 8)) + 'px'; top = (S.H - h) / 2;
   } else { over.style.left = '50%'; top = Lt.sunY + Lt.R * 0.78; }
   over.style.top = Math.round(clamp(top, safe.t + 64, S.H - h - 70 - safe.b)) + 'px';
 }
@@ -72,6 +72,9 @@ function showOver() {
   $('ovSub').textContent = subMsg(R);
   $('ovGrid').textContent = phaseLines(R.events, 4).join('\n');
   $('ovRew').textContent = `+${R.stars} ⭐ · 🎯 ${missionsDone()}/3${R.catches ? ` · ✨ ${R.catches}` : ''}`;
+  $('ovPair').innerHTML = S.Reward.canRevive()      // 🎬 Continuer (pub récompensée), avec son bouton normal « Rejouer »
+    ? S.Reward.pairHTML({ act: 'replay', label: L.retryBtn, icon: 'restart' }, { kind: 'revive', token: S.Reward.reviveToken(), label: L.continueBtn, cap: L.continueCap })
+    : '';
   $('share').innerHTML = S.icon('share') + S.esc(L.share); $('imgBtn').innerHTML = S.icon('camera') + S.esc(L.image);
   $('homeBtn2').setAttribute('aria-label', L.home); $('homeBtn2').title = L.home;
   over.classList.remove('armed');
@@ -83,6 +86,15 @@ function showOver() {
   S.storyFile = null; S.storyPromise = null;
   setTimeout(() => { if (S.state === 'over' && S.lastRun === R) S.prepareStory(); }, 450);   // l'image est prête avant le clic
 }
+
+// « Rejouer » (le bouton vert à côté de 🎬 Continuer) : comme toucher l'écran
+$('ovPair').addEventListener('click', e => {
+  const b = e.target.closest ? e.target.closest('button[data-act="replay"]') : null;
+  if (!b || !over.classList.contains('armed') || S.state !== 'over') return;
+  e.stopPropagation(); S.Sound.unlock(); b.blur();
+  S.afterBreak(() => S.startRun('free'));
+});
+$('ovPair').addEventListener('pointerdown', e => e.stopPropagation());
 
 Object.assign(S, { PH_EMO, SUP, phaseEmoji, SYMS, summarize, phaseLines, whereText, howLine, rankShareLine,
   subMsg, placeOver, showOver });
