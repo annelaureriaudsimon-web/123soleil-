@@ -2,7 +2,10 @@
 (function (S) {
 'use strict';
 const { L, $, esc, dailyState, DAY, missionsDone, streakAlive, todayNumber, untilMidnight, Sound, Lt, over,
-  newRunner, newWatcher, rankIndex, rankLabel, startRun, shareTextNow, canAfford, releaseAll } = S;   // déjà chargés
+  newRunner, newWatcher, rankIndex, rankLabel, startRun, shareTextNow, canAfford, releaseAll, icon, setIcon } = S;   // déjà chargés
+
+// Le contenu d'un gros bouton de l'accueil : une pastille ronde avec l'icône, le titre, et une petite ligne dessous
+const hb = (ic, title, hint) => `<span class="bi">${icon(ic)}</span><span class="bt"><b>${esc(title)}</b><small>${esc(hint)}</small></span>`;
 
 function refreshUI() {
   const showMeta = S.state === 'title';
@@ -10,9 +13,16 @@ function refreshUI() {
   meta.classList.toggle('hide', !showMeta);
   if (showMeta) {
     const lines = [];
-    if (S.best > 0) lines.push(`<span class="g">${L.meta2(rankLabel(rankIndex(S.best)), Math.floor(S.best))}</span>`);
-    if (S.plays > 0) lines.push(L.meta3(missionsDone(), S.stars, streakAlive()));
-    meta.innerHTML = lines.join('<br>');
+    if (S.best > 0) lines.push(`<div class="mrow"><span class="pill g">${esc(rankLabel(rankIndex(S.best)))}</span></div>`);   // des pastilles : rang,
+    const row = [];                                // puis record, missions, étoiles et série du jour
+    if (S.best > 0) row.push(`<span class="pill" title="${esc(L.meta2('', Math.floor(S.best)).replace(/^ · /, ''))}">${icon('trophy')}${Math.floor(S.best)}\u00A0m</span>`);
+    if (S.plays > 0) {
+      const n = streakAlive();
+      row.push(`<span class="pill">${icon('target')}${missionsDone()}/3</span>`, `<span class="pill">${icon('star', 'gold')}${S.stars}</span>`);
+      if (n) row.push(`<span class="pill">🔥\u00A0${n}</span>`);
+    }
+    if (row.length) lines.push(`<div class="mrow">${row.join('')}</div>`);
+    meta.innerHTML = lines.join('');
   }
   $('home').classList.toggle('hide', !showMeta);
   if (showMeta) { renderHome(); layoutHome(); }
@@ -27,17 +37,17 @@ function renderHome() {
   const d = dailyState(), box = $('dailyBox');
   $('home').classList.toggle('done', !!d);
   if (!d) {                                        // pas encore joué : le gros bouton du défi
-    box.innerHTML = `<button id="dailyBtn" class="hbtn daily" type="button">${esc(L.dailyBtn(DAY))}<small>${esc(L.dailyHint)}</small></button>`;
+    box.innerHTML = `<button id="dailyBtn" class="hbtn daily c-orange" type="button">${hb('sun', L.dailyBtn(DAY), L.dailyHint)}</button>`;
   } else {                                         // déjà joué : résultat, grille, compte à rebours, repartage
     const grid = d.done && Array.isArray(d.lines) && d.lines.length ? `<div class="g">${esc(d.lines.join('\n'))}</div>` : '';
-    const again = d.done && d.share ? `<button id="reshare" type="button">${esc(L.reshare)}</button>` : '';
+    const again = d.done && d.share ? `<button id="reshare" type="button">${icon('share')}${esc(L.reshare)}</button>` : '';
     box.innerHTML = `<div class="dcard"><div class="t">${esc(d.done ? L.dailyDone(DAY, d.dist) : L.dailyLost(DAY))}</div>${grid}`
                   + `<div class="r"><span class="c" id="countdown">${esc(L.nextIn(untilMidnight()))}</span>${again}</div></div>`;
   }
   const lastWorld = S.WORLDS.filter(w => w.levels.length && S.Levels.worldOpen(w)).pop() || S.WORLDS[0];   // le monde ouvert le plus loin
-  $('lvBtn').innerHTML = `${esc(L.levelsBtn)}<small>${esc(L.levelsHint(S.Levels.totalStars(), S.Levels.maxStars(), S.tr(lastWorld.name)))}</small>`;   // le mode principal
-  $('freeBtn').innerHTML = `${esc(L.endlessBtn)}<small>${esc(L.freeHint)}</small>`;
-  $('duoBtn').innerHTML = `${esc(L.duoBtn)}<small>${esc(L.duoHint)}</small>`;
+  $('lvBtn').innerHTML = hb('play', L.levelsBtn, L.levelsHint(S.Levels.totalStars(), S.Levels.maxStars(), S.tr(lastWorld.name)));   // le mode principal
+  $('freeBtn').innerHTML = hb('infinity', L.endlessBtn, L.freeHint);
+  $('duoBtn').innerHTML = hb('duo', L.duoBtn, L.duoHint);
   $('rules').textContent = L.rules;
 }
 function layoutHome() {                            // boutons en bas (portrait) ou en bas à droite (paysage)
@@ -72,6 +82,7 @@ $('home').addEventListener('click', e => {
   else if (b.id === 'duoBtn') S.startDuo();
   else if (b.id === 'reshare') { const d = dailyState(); if (d && d.share) shareTextNow(d.share); }
 });
+setIcon('homeBtn', 'home'); setIcon('homeBtn2', 'home');
 ['homeBtn', 'homeBtn2', 'deHome'].forEach(id => {
   $(id).addEventListener('click', e => { e.stopPropagation(); Sound.unlock(); $(id).blur(); goHome(); });
   $(id).addEventListener('pointerdown', e => e.stopPropagation());

@@ -2,7 +2,7 @@
    et écran de résultats (classement, étoiles qui s'allument une par une, Suivant / Rejouer / Carte). */
 (function (S) {
 'use strict';
-const { L, tr, esc, fmt, Sound, PROFILES, lvCard, goalText, confetti, vibrate } = S;
+const { L, tr, esc, fmt, Sound, PROFILES, lvCard, goalText, confetti, vibrate, icon } = S;
 
 // ---------- Réglages ----------
 const STAR_DELAY = 0.45;       // une étoile s'allume toutes les 0,45 s
@@ -24,7 +24,7 @@ function showLevelFail(info) {
   el.innerHTML = `<div class="why">${esc(info.why)}</div><div class="almost">${esc(info.almost)}</div>`
     + (info.tip ? `<div class="tipx">${esc(info.tip)}</div>` : '')
     + `<div class="tap">👆 ${esc(L.failTap)}</div>`
-    + `<div class="btns"><button class="btn sm" type="button" data-act="map">${esc(L.mapBtn)}</button></div>`;
+    + `<div class="btns"><button class="btn sm c-white" type="button" data-act="map">${icon('grid')}${esc(L.mapBtn)}</button></div>`;
   el.classList.add('show');
   later(() => el.classList.add('armed'), 0.25);
 }
@@ -53,9 +53,9 @@ function showLevelResults(info) {
     + (info.ranking.length > 1 ? `<div class="rank">${rows}</div>` : '')
     + (extra ? `<div class="extra">${esc(extra)}</div>` : '')
     + (lv.boss && info.firstWin ? `<div class="extra">${esc(lv.world === 2 ? L.worldDone2 : L.worldDone)}</div>` : '')
-    + `<div class="btns">${info.next ? `<button class="btn" type="button" data-act="next">${esc(L.nextBtn)}</button>` : ''}`
-    + `<button class="btn alt" type="button" data-act="retry">${esc(L.retryBtn)}</button>`
-    + `<button class="btn alt" type="button" data-act="map">${esc(L.mapBtn)}</button></div>`;
+    + `<div class="btns">${info.next ? `<button class="btn c-green" type="button" data-act="next">${esc(L.nextBtn)}${icon('play')}</button>` : ''}`
+    + `<button class="btn c-orange" type="button" data-act="retry">${icon('restart')}${esc(L.retryBtn)}</button>`
+    + `<button class="btn c-white" type="button" data-act="map">${icon('grid')}${esc(L.mapBtn)}</button></div>`;
   el.classList.add('show');
   info.stars.forEach((ok, i) => later(() => {           // les étoiles s'allument une par une
     const st = el.querySelector(`.stars span[data-i="${i}"]`), g = el.querySelector(`.goals div[data-g="${i}"]`);

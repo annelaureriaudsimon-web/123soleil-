@@ -29,7 +29,7 @@ const TXT = {
     toRank: (m, r) => `Plus que ${m}\u00A0m pour devenir ${r}`,
     newRank: r => `Nouveau rang : ${r} !`,
     newRecord: 'NOUVEAU RECORD !',
-    share: '📋 Partager',
+    share: 'Partager',
     copied: 'Copié ! Colle-le à tes potes 😉', copyFail: 'Copie impossible… fais une capture 📸',
     replayTouch: 'Touche l’écran pour rejouer', replayKey: 'Clic ou Espace pour rejouer',
     ouf: 'OUF !', letGo: 'LÂCHE !', flag: 'RECORD', hmm: 'HMM…', heh: 'HÉ HÉ !',
@@ -61,16 +61,16 @@ const TXT = {
     voiceNone: 'Pas de voix française sur cet appareil 😕', voiceLag: 'La voix a trop de retard sur cet appareil : sons 8-bit à la place',
     // accueil et défi du jour
     freeRun: 'Partie libre',
-    dailyBtn: n => `☀️ Défi du jour #${n}`, dailyHint: 'Un seul essai par jour !',
+    dailyBtn: n => `Défi du jour #${n}`, dailyHint: 'Un seul essai par jour !',
     freeBtn: '🔁 Partie libre', freeHint: 'Parcours au hasard',
-    duoBtn: '👥 2 joueurs', duoHint: 'Sur le même écran',
+    duoBtn: '2 joueurs', duoHint: 'Sur le même écran',
     rules: 'Maintiens pour courir · fige-toi quand il se retourne',
     dailyDone: (n, d) => `☀️ Défi #${n} : ${d}\u00A0m`, dailyLost: n => `☀️ Défi #${n} : essai utilisé`,
-    nextIn: t => `Prochain défi dans ${t}`, reshare: '📋 Repartager',
+    nextIn: t => `Prochain défi dans ${t}`, reshare: 'Repartager',
     meta2: (r, b) => `${r} · Record ${b}\u00A0m`, meta3: (d, s, n) => `🎯 Missions ${d}/3 · ⭐ ${s}${n ? ' · 🔥 ' + n : ''}`,
     replayHome: 'Touche l’écran pour revenir à l’accueil', home: 'Accueil',
     // partage
-    image: '📸 Image', imgSaved: 'Image enregistrée 📸', imgFail: 'Image impossible… fais une capture 📸',
+    image: 'Image', imgSaved: 'Image enregistrée 📸', imgFail: 'Image impossible… fais une capture 📸',
     storyDaily: n => `Défi du jour #${n}`,
     where: ['le matin', 'à midi', 'le soir', 'la nuit'], dayTag: d => ` (jour ${d})`,
     howLate: (w, s, g) => `Grillé ${w} : lâché ${s} s trop tard${g === 'ice' ? ' sur le verglas' : g === 'slope' ? ' dans la descente' : ''} 😭`,
@@ -82,7 +82,7 @@ const TXT = {
     pName: ['J1', 'J2'], zone: p => `${p} : maintiens ici`, zoneSub: 'maintiens ici', keyHint: k => `(touche ${k})`, ready: 'PRÊT !',
     round: n => `MANCHE ${n}`, go: 'GO !', burnt: p => `${p} GRILLÉ !`, back: p => `${p} : retour au départ`,
     roundWin: p => `${p} GAGNE LA MANCHE !`, matchWin: p => `${p} GAGNE ! 🏆`,
-    rematch: '🔁 Revanche', duoHomeBtn: '🏠 Accueil', finish: 'ARRIVÉE', ahead: (p, m) => `${p} ▲ +${m}\u00A0m`,
+    rematch: 'Revanche', duoHomeBtn: 'Accueil', finish: 'ARRIVÉE', ahead: (p, m) => `${p} ▲ +${m}\u00A0m`,
     title2: 'SOLEIL !'
   },
   en: {
@@ -108,7 +108,7 @@ const TXT = {
     toRank: (m, r) => `${m}\u00A0m to become ${r}`,
     newRank: r => `New rank: ${r}!`,
     newRecord: 'NEW RECORD!',
-    share: '📋 Share',
+    share: 'Share',
     copied: 'Copied! Send it to your friends 😉', copyFail: 'Couldn’t copy… take a screenshot 📸',
     replayTouch: 'Tap to play again', replayKey: 'Click or Space to play again',
     ouf: 'PHEW!', letGo: 'LET GO!', flag: 'BEST', hmm: 'HMM…', heh: 'HEH HEH!',
@@ -140,16 +140,16 @@ const TXT = {
     voiceNone: 'No French voice on this device 😕', voiceLag: 'The voice lags too much on this device: 8-bit sounds instead',
     // home and daily challenge
     freeRun: 'Free run',
-    dailyBtn: n => `☀️ Daily challenge #${n}`, dailyHint: 'Only one try per day!',
+    dailyBtn: n => `Daily challenge #${n}`, dailyHint: 'Only one try per day!',
     freeBtn: '🔁 Free run', freeHint: 'Random course',
-    duoBtn: '👥 2 players', duoHint: 'Same screen',
+    duoBtn: '2 players', duoHint: 'Same screen',
     rules: 'Hold to run · freeze when it turns around',
     dailyDone: (n, d) => `☀️ Daily #${n}: ${d}\u00A0m`, dailyLost: n => `☀️ Daily #${n}: try used`,
-    nextIn: t => `Next challenge in ${t}`, reshare: '📋 Share again',
+    nextIn: t => `Next challenge in ${t}`, reshare: 'Share again',
     meta2: (r, b) => `${r} · Best ${b}\u00A0m`, meta3: (d, s, n) => `🎯 Missions ${d}/3 · ⭐ ${s}${n ? ' · 🔥 ' + n : ''}`,
     replayHome: 'Tap to go back home', home: 'Home',
     // sharing
-    image: '📸 Image', imgSaved: 'Image saved 📸', imgFail: 'Couldn’t make the image… take a screenshot 📸',
+    image: 'Image', imgSaved: 'Image saved 📸', imgFail: 'Couldn’t make the image… take a screenshot 📸',
     storyDaily: n => `Daily challenge #${n}`,
     where: ['in the morning', 'at noon', 'in the evening', 'at night'], dayTag: d => ` (day ${d})`,
     howLate: (w, s, g) => `Toasted ${w}: released ${s} s too late${g === 'ice' ? ' on ice' : g === 'slope' ? ' on a slope' : ''} 😭`,
@@ -161,7 +161,7 @@ const TXT = {
     pName: ['P1', 'P2'], zone: p => `${p}: hold here`, zoneSub: 'hold here', keyHint: k => `(key ${k})`, ready: 'READY!',
     round: n => `ROUND ${n}`, go: 'GO!', burnt: p => `${p} TOASTED!`, back: p => `${p}: back to the start`,
     roundWin: p => `${p} WINS THE ROUND!`, matchWin: p => `${p} WINS! 🏆`,
-    rematch: '🔁 Rematch', duoHomeBtn: '🏠 Home', finish: 'FINISH', ahead: (p, m) => `${p} ▲ +${m}\u00A0m`,
+    rematch: 'Rematch', duoHomeBtn: 'Home', finish: 'FINISH', ahead: (p, m) => `${p} ▲ +${m}\u00A0m`,
     title2: 'SOLEIL !'
   }
 };

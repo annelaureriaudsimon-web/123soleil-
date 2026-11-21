@@ -4,7 +4,7 @@
 #         (le dossier qui contient l'ancien index.html, par exemple le zip de la phase précédente décompressé)
 # Variable CHROME=/chemin/vers/chrome pour utiliser un autre navigateur.
 # Les deux versions reçoivent la même graine, le même hasard visuel et une horloge figée. Seul le canvas est
-# comparé (pas les messages HTML, qui ont des animations CSS). Le son reste coupé : l'horloge audio est réelle.
+# comparé (pas les messages HTML, qui ont des animations CSS). Le son est désactivé : son horloge est réelle.
 import asyncio, hashlib, os, sys
 from playwright.async_api import async_playwright
 
@@ -13,6 +13,7 @@ INIT = """
 (() => { let s = 12345; Math.random = () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
   const T0 = 1763600000000; Date.now = () => T0; performance.now = () => 1000; window.requestAnimationFrame = () => 0;
   let c = 777; crypto.getRandomValues = a => { for (let i = 0; i < a.length; i++) a[i] = (c = (c * 69069 + 1) >>> 0); return a; };
+  window.AudioContext = undefined; window.webkitAudioContext = undefined;   // pas de son : son horloge est réelle (la musique du boss tirerait du hasard visuel)
   window.BOT = () => { const S = Soleil, L = S.Levels, m = L.m;          // robot « bon joueur » du monde 1
     if (L.phase === 'intro' || L.phase === 'boss') L.press();
     if (m && L.phase === 'play') { const w = m.sun;

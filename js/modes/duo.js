@@ -139,7 +139,7 @@ function showDuoEnd() {                            // « J2 GAGNE ! 🏆 », sco
   $('deTitle').textContent = L.matchWin(L.pName[i]);
   $('deTitle').style.color = DUO_TXT[i];
   $('deScore').innerHTML = `<span style="color:${DUO_TXT[0]}">${esc(L.pName[0])}</span> ${d.wins[0]} – ${d.wins[1]} <span style="color:${DUO_TXT[1]}">${esc(L.pName[1])}</span>`;
-  $('rematch').textContent = L.rematch; $('deHome').textContent = L.duoHomeBtn;
+  $('rematch').innerHTML = S.icon('restart') + S.esc(L.rematch); $('deHome').innerHTML = S.icon('home') + S.esc(L.duoHomeBtn);
   el.classList.remove('armed'); el.classList.add('show');
   confetti(110); Sound.mission(); vibrate([60, 40, 60, 40, 120]);
   clearTimeout(S.deTimer);

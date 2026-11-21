@@ -106,6 +106,40 @@ function drawHUD() {
   }
 }
 
+// ---------- Le logo « 1, 2, 3… SOLEIL ! » : lettres bombées, gros contour bleu, relief bleu nuit ----------
+const LOGO_BLUE = '#3B49F0', LOGO_NAVY = '#141A6E';
+const logoCache = new Map();
+function logoSprite(t, size, top, bot) {           // dessiné une seule fois par taille, puis recopié à chaque image
+  const key = `${t}|${Math.round(size * 2)}|${top}|${S.DPR}`;
+  let c = logoCache.get(key);
+  if (c) return c;
+  if (logoCache.size > 12) logoCache.clear();
+  c = document.createElement('canvas');
+  const g = c.getContext('2d'), font = `900 ${size}px ${FONT}`;
+  g.font = font;
+  const tw = g.measureText(t).width, rim = size * 0.17, depth = size * 0.13, pad = rim + 4;
+  c.w = tw + pad * 2; c.h = size * 1.25 + depth + pad * 2;
+  c.width = Math.ceil(c.w * S.DPR); c.height = Math.ceil(c.h * S.DPR);
+  g.scale(S.DPR, S.DPR);
+  g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.miterLimit = 2;
+  const x = c.w / 2, y = pad + size * 0.62;
+  g.strokeStyle = LOGO_NAVY; g.lineWidth = rim * 2;              // le relief : le bord bleu nuit, recopié vers le bas
+  for (let d = depth; d >= 0; d -= Math.max(1, depth / 7)) g.strokeText(t, x, y + d);
+  g.strokeText(t, x, y);
+  g.strokeStyle = LOGO_BLUE; g.lineWidth = size * 0.2;            // le contour bleu vif
+  g.strokeText(t, x, y);
+  const grd = g.createLinearGradient(0, y - size * 0.45, 0, y + size * 0.45);   // les lettres : plus claires en haut
+  grd.addColorStop(0, top); grd.addColorStop(1, bot);
+  g.fillStyle = grd; g.fillText(t, x, y);
+  c.cx = x; c.cy = y;
+  logoCache.set(key, c);
+  return c;
+}
+function drawLogo(t, size, top, bot) {             // centré sur (0, 0)
+  const c = logoSprite(t, size, top, bot);
+  S.ctx.drawImage(c, -c.cx, -c.cy, c.w, c.h);
+}
+
 function drawTitle() {                     // le titre se cale au-dessus des boutons de l'accueil
   const side = Lt.land && S.W > S.H * 1.2;
   let cx, midY, s2;
@@ -118,10 +152,9 @@ function drawTitle() {                     // le titre se cale au-dessus des bou
     s2 = Math.min(fit(L.title2, Math.min(Lt.U * 0.18, 110), S.W * 0.86), Math.max(20, (bottom - top) / 1.75));
   }
   const s1 = s2 * 0.6, wob = Math.sin(S.gtime * 2.4);
-  S.ctx.textAlign = 'center'; S.ctx.textBaseline = 'middle';
-  S.ctx.save(); S.ctx.translate(cx, midY - s2 * 0.62); S.ctx.rotate(-0.05 + wob * 0.012); otext('1, 2, 3…', 0, 0, s1, '#FFFFFF'); S.ctx.restore();
+  S.ctx.save(); S.ctx.translate(cx, midY - s2 * 0.62); S.ctx.rotate(-0.05 + wob * 0.012); drawLogo('1, 2, 3…', s1, '#FFFFFF', '#D6DDFF'); S.ctx.restore();
   S.ctx.save(); S.ctx.translate(cx, midY + s2 * 0.18); S.ctx.rotate(-0.035); const k = 1 + wob * 0.025; S.ctx.scale(k, k);
-  otext(L.title2, 0, 0, s2, '#FFD166'); S.ctx.restore();
+  drawLogo(L.title2, s2, '#FFF27A', '#FFAE1A'); S.ctx.restore();
 }
 
 function drawReplayHint() {
@@ -134,5 +167,5 @@ function drawReplayHint() {
   S.ctx.restore();
 }
 
-Object.assign(S, { drawChant, drawGrille, drawBanner, drawHUD, drawTitle, drawReplayHint });
+Object.assign(S, { drawChant, drawGrille, drawBanner, drawHUD, drawTitle, drawLogo, drawReplayHint });
 })(window.Soleil);

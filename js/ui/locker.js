@@ -2,7 +2,7 @@
 (function (S) {
 'use strict';
 const { L, tr, MEDALS, OUTFITS, RANKS, $, clamp, vibrate, store, DAY, streakAlive, todayMissions, Sound, panel,
-  rankIndex, rankLabel, statValue, drawRunnerFig, toast } = S;   // déjà chargés
+  rankIndex, rankLabel, statValue, drawRunnerFig, toast, icon, setIcon } = S;   // déjà chargés
 
 // Infos d'accueil, bouton casier et pastille « nouveauté »
 const canAfford = () => OUTFITS.some(o => !S.owned.includes(o.id) && o.price <= S.stars);
@@ -46,14 +46,28 @@ function renderPanel() {
     const c = document.createElement('canvas');
     c.width = 160; c.height = 190;
     const g = c.getContext('2d');
-    g.fillStyle = '#FFE9C9'; g.fillRect(0, 0, 160, 190);
+    drawStage(g, 160, 190);
     drawRunnerFig(g, 80, 178, 100, { sp: 0, ph: 0, st: 0, t: 0 }, o, false, String(DAY));
     b.appendChild(c);
     const n = document.createElement('span'); n.className = 'on'; n.textContent = tr(o); b.appendChild(n);
-    const p = document.createElement('span'); p.className = 'op'; p.textContent = eq ? L.equipped : has ? L.equip : L.price(o.price); b.appendChild(p);
+    const p = document.createElement('span'); p.className = 'op';
+    if (eq || has) p.textContent = eq ? L.equipped : L.equip; else p.innerHTML = icon('star') + o.price;   // le prix : ⭐ dessinée + nombre
+    b.setAttribute('aria-label', `${tr(o)} : ${eq ? L.equipped : has ? L.equip : L.price(o.price)}`);
+    b.appendChild(p);
     b.addEventListener('click', () => pickOutfit(o, b));
     box.appendChild(b);
   });
+}
+// La petite scène derrière chaque tenue : ciel violet, ville au loin, sol
+function drawStage(g, w, h) {
+  const sky = g.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, '#9B7BFF'); sky.addColorStop(0.65, '#6A45F0'); sky.addColorStop(1, '#4B2BC8');
+  g.fillStyle = sky; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(255,255,255,0.13)';                       // immeubles au loin
+  [[8, 70, 26], [38, 52, 22], [64, 84, 30], [98, 60, 24], [126, 76, 30]].forEach(([x, y, bw]) => g.fillRect(x, y, bw, h - y));
+  g.fillStyle = 'rgba(255,255,255,0.18)'; g.beginPath(); g.arc(w * 0.78, h * 0.2, 13, 0, Math.PI * 2); g.fill();   // la lune
+  g.fillStyle = '#3A1E9E'; g.fillRect(0, h - 26, w, 26);           // le sol de la scène
+  g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(0, h - 26, w, 3);
 }
 function pickOutfit(o, el) {
   Sound.unlock();
@@ -65,6 +79,8 @@ function pickOutfit(o, el) {
   Sound.buy(); vibrate(30); toast(L.unlocked(tr(o)), true);
   renderPanel(); S.refreshUI();
 }
+setIcon('locker', 'shirt'); setIcon('lock2', 'shirt');
+$('pClose').innerHTML = icon('close');
 $('pClose').addEventListener('click', closePanel);
 panel.addEventListener('click', e => { if (e.target === panel) closePanel(); });
 panel.addEventListener('pointerdown', e => e.stopPropagation());

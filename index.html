@@ -17,16 +17,16 @@
 <body>
 <canvas id="c" role="img" aria-label="1, 2, 3… SOLEIL ! Maintiens pour courir, lâche quand le soleil se retourne."></canvas>
 <div id="meta"></div>
-<button id="mute" class="round" type="button" aria-label="Son">🔊</button>
-<button id="voice" class="round" type="button" aria-label="Voix">🗣️</button>
-<button id="locker" class="round" type="button" aria-label="Casier">🎒<span class="dot hide" id="dot1"></span></button>
-<button id="homeBtn" class="round hide" type="button" aria-label="Accueil">🏠</button>
+<button id="mute" class="round" type="button" aria-label="Son"></button>
+<button id="voice" class="round" type="button" aria-label="Voix"></button>
+<button id="locker" class="round" type="button" aria-label="Casier"><span class="dot hide" id="dot1"></span></button>
+<button id="homeBtn" class="round hide" type="button" aria-label="Accueil"></button>
 <div id="home" class="hide">
-  <button id="lvBtn" class="hbtn main lv" type="button"></button>
+  <button id="lvBtn" class="hbtn main lv c-blue" type="button"></button>
   <div id="dailyBox"></div>
   <div class="row">
-    <button id="freeBtn" class="hbtn" type="button"></button>
-    <button id="duoBtn" class="hbtn" type="button"></button>
+    <button id="freeBtn" class="hbtn c-purple" type="button"></button>
+    <button id="duoBtn" class="hbtn c-pink" type="button"></button>
   </div>
   <div id="rules" class="rules"></div>
 </div>
@@ -38,23 +38,23 @@
   <div id="ovGrid"></div>
   <div id="ovRew"></div>
   <div class="btns">
-    <button id="share" class="btn" type="button">📋 Partager</button>
-    <button id="imgBtn" class="btn" type="button">📸 Image</button>
-    <button id="lock2" class="btn" type="button" aria-label="Casier">🎒<span class="dot hide" id="dot2"></span></button>
-    <button id="homeBtn2" class="btn" type="button" aria-label="Accueil">🏠</button>
+    <button id="share" class="btn c-green" type="button"></button>
+    <button id="imgBtn" class="btn c-orange" type="button"></button>
+    <button id="lock2" class="btn icon c-white" type="button" aria-label="Casier"><span class="dot hide" id="dot2"></span></button>
+    <button id="homeBtn2" class="btn icon c-white" type="button" aria-label="Accueil"></button>
   </div>
 </div>
 <div id="duoEnd" role="dialog" aria-live="polite">
   <div id="deTitle"></div>
   <div id="deScore"></div>
   <div class="btns">
-    <button id="rematch" class="btn" type="button"></button>
-    <button id="deHome" class="btn" type="button"></button>
+    <button id="rematch" class="btn c-green" type="button"></button>
+    <button id="deHome" class="btn c-white" type="button"></button>
   </div>
 </div>
 <div id="panel" class="hide" role="dialog" aria-modal="true">
   <div class="sheet">
-    <button id="pClose" class="x" type="button" aria-label="Fermer">✕</button>
+    <button id="pClose" class="x" type="button" aria-label="Fermer"></button>
     <div id="pHead"></div>
     <h3 id="hMis"></h3><div id="pMis"></div><div id="pMisFoot" class="foot"></div>
     <h3 id="hMed"></h3><div id="pMed" class="medals"></div>
@@ -106,6 +106,7 @@
 <script src="js/render/hud.js"></script>
 <script src="js/render/levelhud.js"></script>
 <script src="js/render/scene.js"></script>
+<script src="js/ui/icons.js"></script>
 <script src="js/ui/over.js"></script>
 <script src="js/ui/share.js"></script>
 <script src="js/ui/toast.js"></script>

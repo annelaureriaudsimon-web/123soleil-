@@ -8,7 +8,11 @@ const { INK, TAU, clamp, lerp, css, L, tr, Lt, safe, rrp, otext, fit, drawStarSh
 // ---------- Réglages ----------
 const PORTRAIT = [[0.28, 0.9], [0.7, 0.8], [0.34, 0.69], [0.68, 0.58], [0.3, 0.47], [0.66, 0.37], [0.36, 0.27], [0.62, 0.15]];
 const LANDSCAPE = [[0.07, 0.78], [0.2, 0.5], [0.33, 0.76], [0.45, 0.46], [0.57, 0.74], [0.69, 0.44], [0.8, 0.7], [0.92, 0.42]];
-const COL = { open: '#FFFFFF', done: '#FFD166', locked: '#9AA3B2', boss: '#FF4D6D' };
+// Les niveaux sont des tuiles en relief : [reflet, face, bas, contour]
+const TILE = { open: ['#FFD27F', '#FFA62B', '#E57F00', '#7A3B00'], locked: ['#D3A77A', '#A8754A', '#86562F', '#4A2C14'],
+               boss: ['#FF9BBE', '#FF4F8B', '#D42A66', '#7A0F37'] };
+const NAVY = '#141A6E', BLUE = ['#7F8BFF', '#3B49F0', '#2733C4'];   // le bleu des boutons (reflet, face, bas)
+const STONE = 26;              // un pavé blanc tous les 26 px sur le chemin entre deux niveaux
 
 const UNLOCK_DUR = 2.6;        // animation de déblocage d'un monde (s)
 const MAP = { world: 1, sel: 0, nodes: [], tabs: [], shakeI: -1, shakeT: 0, area: null, unlock: null };
@@ -64,21 +68,9 @@ function draw() {
     drawDoodles(g, A);
     drawMapTrees(g, A);
   }
-  // le chemin à la craie entre les niveaux
+  // le chemin entre les niveaux : des petits pavés blancs
   const N = MAP.nodes;
-  g.lineCap = 'round'; g.lineJoin = 'round';
-  for (const pass of [0, 1]) {
-    g.strokeStyle = pass ? 'rgba(255,255,255,0.95)' : 'rgba(43,45,66,0.18)';
-    g.lineWidth = pass ? 5 : 9; g.setLineDash(pass ? [12, 12] : []);
-    g.beginPath();
-    N.forEach((n, i) => {
-      if (!i) { g.moveTo(n.x, n.y); return; }
-      const p = N[i - 1], mx = (p.x + n.x) / 2, my = (p.y + n.y) / 2, k = i % 2 ? 1 : -1;
-      g.quadraticCurveTo(mx + k * (A.land ? 0 : 30), my + k * (A.land ? 30 : 0), n.x, n.y);
-    });
-    g.stroke();
-  }
-  g.setLineDash([]);
+  drawStones(g, N, A);
   // les niveaux
   const cur = S.Levels.lastUnlocked(world());
   N.forEach((n, i) => drawNode(g, n, i, n.lv === cur));
@@ -134,8 +126,8 @@ function drawUnlock(g) {
   if (u.step === 2 && t > 1.0) { u.step = 3; selectWorld(u.id); }
   const cx = tab.x, cy = tab.y + 18;
   if (t < 0.75) {                                   // le badge tremble, le cadenas est encore là
-    g.save(); g.translate(cx + Math.sin(t * 60) * 4 * (t / 0.75), cy); g.font = `${tab.r * 1.2}px ${S.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText('🔒', 0, 0); g.restore();
+    const sx = cx + Math.sin(t * 60) * 4 * (t / 0.75);
+    drawRoundBtn(g, sx, cy, tab.r, ['#C9CEE0', '#9AA1BE', '#7A819F']); drawPadlock(g, sx, cy + 1, tab.r * 0.8);
   } else {                                          // il saute : éclats et étoiles
     const k = clamp((t - 0.75) / 0.9, 0, 1);
     g.save(); g.globalAlpha = 1 - k;
@@ -143,7 +135,7 @@ function drawUnlock(g) {
       const a = i * TAU / 12, d = tab.r * (1.2 + k * 4);
       drawStarShape(cx + Math.cos(a) * d, cy + Math.sin(a) * d, tab.r * 0.3 * (1 - k * 0.5), ['#FFD166', '#06D6A0', '#EF476F', '#4CC9F0'][i % 4], a);
     }
-    g.font = `${tab.r * 1.2}px ${S.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🔓', cx, cy - k * 60);
+    drawPadlock(g, cx + k * 14, cy - k * 70, tab.r * 0.9, true);   // le cadenas ouvert s'envole
     g.restore();
   }
   if (t > 0.75) drawBanner(L.worldUnlocked(u.id), L.worldUnlockedSub, '', t - 0.75, UNLOCK_DUR - 0.75, '#06D6A0');
@@ -183,27 +175,87 @@ function drawDoodles(g, A) {                       // dessins à la craie sur le
   for (let i = 0; i < 4; i++) g.strokeRect(hx, hy + i * 26, 26, 26);
 }
 
+// Les pavés du chemin : le long de la même courbe qu'avant, sans recouvrir les tuiles
+function drawStones(g, N, A) {
+  for (let i = 1; i < N.length; i++) {
+    const p = N[i - 1], n = N[i], k = i % 2 ? 1 : -1;
+    const qx = (p.x + n.x) / 2 + k * (A.land ? 0 : 30), qy = (p.y + n.y) / 2 + k * (A.land ? 30 : 0);
+    const len = Math.hypot(qx - p.x, qy - p.y) + Math.hypot(n.x - qx, n.y - qy), steps = Math.max(2, Math.round(len / STONE));
+    const st = clamp(Math.min(p.r, n.r) * 0.36, 7, 13);
+    for (let j = 1; j < steps; j++) {
+      const t = j / steps, u = 1 - t;
+      const x = u * u * p.x + 2 * u * t * qx + t * t * n.x, y = u * u * p.y + 2 * u * t * qy + t * t * n.y;
+      if (Math.hypot(x - p.x, y - p.y) < p.r * 1.35 || Math.hypot(x - n.x, y - n.y) < n.r * 1.35) continue;
+      g.fillStyle = 'rgba(20,26,110,0.22)'; rrp(g, x - st, y - st + 3, st * 2, st * 2, st * 0.45); g.fill();
+      g.fillStyle = '#FFFFFF'; rrp(g, x - st, y - st, st * 2, st * 2, st * 0.45); g.fill();
+      g.fillStyle = '#E3E8F5'; rrp(g, x - st, y + st * 0.35, st * 2, st * 0.65, st * 0.3); g.fill();
+    }
+  }
+}
+// Une tuile en relief (carré arrondi) : tranche sombre dessous, face dégradée, reflet en haut
+function drawTile(g, x, y, r, c) {
+  const rad = r * 0.42, h = Math.max(4, r * 0.2);
+  g.fillStyle = c[3]; rrp(g, x - r, y - r + h, r * 2, r * 2, rad); g.fill();
+  const grd = g.createLinearGradient(0, y - r, 0, y + r);
+  grd.addColorStop(0, c[0]); grd.addColorStop(0.5, c[1]); grd.addColorStop(1, c[2]);
+  g.fillStyle = grd; g.strokeStyle = c[3]; g.lineWidth = Math.max(3, r * 0.11);
+  rrp(g, x - r, y - r, r * 2, r * 2, rad); g.fill(); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,0.38)'; rrp(g, x - r * 0.68, y - r * 0.8, r * 1.36, r * 0.3, r * 0.15); g.fill();
+}
+// Un cadenas doré (open : l'anse sort, il est ouvert)
+function drawPadlock(g, x, y, sz, open = false) {
+  const ink = '#4A2C14', lift = open ? sz * 0.32 : 0;
+  g.lineCap = 'round'; g.strokeStyle = ink; g.lineWidth = sz * 0.3;
+  g.beginPath();
+  if (open) { g.moveTo(x + sz * 0.3, y); g.lineTo(x + sz * 0.3, y - sz * 0.22 - lift); g.arc(x, y - sz * 0.22 - lift, sz * 0.3, 0, Math.PI, true); g.lineTo(x - sz * 0.3, y - sz * 0.12 - lift); }
+  else { g.moveTo(x - sz * 0.3, y); g.lineTo(x - sz * 0.3, y - sz * 0.22); g.arc(x, y - sz * 0.22, sz * 0.3, Math.PI, 0); g.lineTo(x + sz * 0.3, y); }
+  g.stroke();
+  g.strokeStyle = '#FFE7A8'; g.lineWidth = sz * 0.12; g.stroke();
+  const grd = g.createLinearGradient(0, y - sz * 0.05, 0, y + sz * 0.7);
+  grd.addColorStop(0, '#FFE07A'); grd.addColorStop(1, '#F0A300');
+  g.fillStyle = grd; g.strokeStyle = ink; g.lineWidth = sz * 0.12;
+  rrp(g, x - sz * 0.5, y - sz * 0.05, sz, sz * 0.75, sz * 0.16); g.fill(); g.stroke();
+  g.fillStyle = ink; g.beginPath(); g.arc(x, y + sz * 0.27, sz * 0.1, 0, TAU); g.fill();
+  g.fillRect(x - sz * 0.045, y + sz * 0.3, sz * 0.09, sz * 0.2);
+}
+// Un texte blanc à gros contour d'une couleur choisie (le numéro des niveaux)
+function inkText(g, t, x, y, size, ink) {
+  g.font = `900 ${size}px ${S.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+  g.strokeStyle = ink; g.lineWidth = Math.max(3, size * 0.24);
+  g.strokeText(t, x, y + size * 0.06); g.strokeText(t, x, y);
+  g.fillStyle = '#FFFFFF'; g.fillText(t, x, y);
+}
+// Un bouton rond bleu, comme ceux de l'interface (onglets des mondes)
+function drawRoundBtn(g, x, y, r, face) {
+  g.fillStyle = NAVY; g.beginPath(); g.arc(x, y + 4, r, 0, TAU); g.fill();
+  const grd = g.createRadialGradient(x, y - r * 0.5, r * 0.1, x, y, r * 1.05);
+  grd.addColorStop(0, face[0]); grd.addColorStop(0.55, face[1]); grd.addColorStop(1, face[2]);
+  g.fillStyle = grd; g.strokeStyle = NAVY; g.lineWidth = 3;
+  g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.stroke();
+}
+
 function drawNode(g, n, i, current) {
-  const lv = n.lv, open = S.Levels.unlocked(lv), stars = S.Levels.starsOf(lv.id), done = !!S.Levels.peek(lv.id).done;
+  const lv = n.lv, open = S.Levels.unlocked(lv), stars = S.Levels.starsOf(lv.id);
   let x = n.x;
   if (MAP.shakeI === i && S.gtime - MAP.shakeT < 0.35) x += Math.sin((S.gtime - MAP.shakeT) * 60) * 5;
-  const pulse = current ? 1 + Math.sin(S.gtime * 5) * 0.06 : 1, r = n.r * pulse;
-  if (current) { g.fillStyle = 'rgba(255,209,102,0.35)'; g.beginPath(); g.arc(x, n.y, r * 1.45, 0, TAU); g.fill(); }
-  if (MAP.sel === i && S.mapKeys) { g.strokeStyle = '#FFFFFF'; g.lineWidth = 4; g.beginPath(); g.arc(x, n.y, r * 1.28, 0, TAU); g.stroke(); }
-  g.fillStyle = 'rgba(43,45,66,0.25)'; g.beginPath(); g.ellipse(x, n.y + r * 0.95, r * 0.95, r * 0.28, 0, 0, TAU); g.fill();
-  g.fillStyle = !open ? COL.locked : lv.boss ? COL.boss : done ? COL.done : COL.open;
-  g.strokeStyle = INK; g.lineWidth = Math.max(3, r * 0.12);
-  g.beginPath(); g.arc(x, n.y, r, 0, TAU); g.fill(); g.stroke();
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  if (!open) { g.font = `${r * 0.9}px ${S.FONT}`; g.fillText('🔒', x, n.y + 2); }
+  const pulse = current ? 1 + Math.sin(S.gtime * 5) * 0.05 : 1, r = n.r * 1.06 * pulse;
+  if (current) {                                   // le niveau à jouer : un halo qui respire
+    const glow = g.createRadialGradient(x, n.y, r * 0.6, x, n.y, r * 2);
+    glow.addColorStop(0, 'rgba(255,240,150,0.85)'); glow.addColorStop(1, 'rgba(255,240,150,0)');
+    g.fillStyle = glow; g.beginPath(); g.arc(x, n.y, r * 2, 0, TAU); g.fill();
+  }
+  if (MAP.sel === i && S.mapKeys) { g.strokeStyle = '#FFFFFF'; g.lineWidth = 4; rrp(g, x - r * 1.3, n.y - r * 1.3, r * 2.6, r * 2.6 + r * 0.2, r * 0.6); g.stroke(); }
+  g.fillStyle = 'rgba(20,26,110,0.25)'; g.beginPath(); g.ellipse(x, n.y + r * 1.25, r * 1.05, r * 0.26, 0, 0, TAU); g.fill();
+  drawTile(g, x, n.y, r, !open ? TILE.locked : lv.boss ? TILE.boss : TILE.open);
+  if (!open) drawPadlock(g, x, n.y + r * 0.02, r * 0.85);
   else if (lv.boss && lv.bossKind === 'farceur') { g.fillStyle = '#FFD23A'; g.beginPath(); g.arc(x, n.y, r * 0.62, 0, TAU); g.fill(); S.drawGroucho(x, n.y, r * 0.62, 1, 1); }
   else if (lv.boss) drawBossFace(g, x, n.y, r * 0.78);
-  else { g.font = `900 ${r * 0.95}px ${S.FONT}`; g.fillStyle = INK; g.fillText(String(lv.num), x, n.y + r * 0.06); }
-  for (let k = 0; k < 3; k++) {                    // 3 petites étoiles sous chaque rond
-    const sx = x + (k - 1) * r * 0.62, sy = n.y + r * 1.22 + (k === 1 ? r * 0.12 : 0);
-    drawStarShape(sx, sy, r * 0.28, k < stars ? '#FFD166' : 'rgba(255,255,255,0.55)', 0);
+  else inkText(g, String(lv.num), x, n.y + r * 0.04, r * 1.05, TILE.open[3]);
+  for (let k = 0; k < 3; k++) {                    // 3 étoiles au-dessus, en arc
+    const sx = x + (k - 1) * r * 0.7, sy = n.y - r * 1.16 - (k === 1 ? r * 0.2 : 0);
+    drawStarShape(sx, sy, r * 0.34, k < stars ? '#FFD23A' : 'rgba(255,255,255,0.8)', (k - 1) * 0.25);
   }
-  if (lv.boss) { g.font = `900 ${r * 0.36}px ${S.FONT}`; otext(L.bossTag, x, n.y - r * 1.28, r * 0.36, '#FF4D6D'); }
+  if (lv.boss) inkText(g, L.bossTag, x, n.y + r * 1.42, r * 0.38, TILE.boss[3]);
 }
 function drawBossFace(g, x, y, R) {                // un petit soleil à lunettes
   g.fillStyle = '#FFD23A'; g.beginPath(); g.arc(x, y, R * 0.8, 0, TAU); g.fill();
@@ -215,21 +267,31 @@ function drawBossFace(g, x, y, R) {                // un petit soleil à lunette
 }
 function drawHeader(g) {
   const w = world(), tot = S.Levels.worldStars(w), max = w.levels.length * 3;
-  const x = safe.l + 14, y = safe.t + 22, fs = clamp(Lt.U * 0.052, 16, 24);
-  g.fillStyle = 'rgba(43,45,66,0.72)'; rrp(g, safe.l + 6, safe.t + 4, S.W - safe.l - safe.r - 76, MAP.area.head - safe.t - 6, 18); g.fill();
+  const x = safe.l + 16, y = safe.t + 22, fs = clamp(Lt.U * 0.05, 15, 23);
+  const hx = safe.l + 6, hy = safe.t + 4, hw = S.W - safe.l - safe.r - 80, hh = MAP.area.head - safe.t - 12;
+  g.fillStyle = NAVY; rrp(g, hx, hy + 5, hw, hh, 20); g.fill();               // panneau bleu, tranche en bas
+  const grd = g.createLinearGradient(0, hy, 0, hy + hh);
+  grd.addColorStop(0, '#5965FF'); grd.addColorStop(1, '#2F3BD6');
+  g.fillStyle = grd; g.strokeStyle = NAVY; g.lineWidth = 3; rrp(g, hx, hy, hw, hh, 20); g.fill(); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,0.22)'; rrp(g, hx + 10, hy + 4, hw - 20, 5, 3); g.fill();
   g.textAlign = 'left'; g.textBaseline = 'middle';
   g.font = `900 ${fs}px ${S.FONT}`;
-  otext(`${L.worldN(w.id)} · ${tr(w.name)}`, x, y, fit(`${L.worldN(w.id)} · ${tr(w.name)}`, fs, S.W - 150 - safe.r - x), '#FFFFFF');
+  const title = `${L.worldN(w.id)} · ${tr(w.name)}`;
+  otext(title, x, y, fit(title, fs, S.W - 160 - safe.r - x), '#FFFFFF');
   g.textAlign = 'right';
-  otext(`★ ${tot}/${max}`, S.W - safe.r - 84, y, fs * 0.9, '#FFD166');
-  for (const t of MAP.tabs) {                       // les 5 mondes : 2 à 5 « Bientôt »
-    const on = t.w.id === MAP.world, soon = t.w.soon || !S.Levels.worldOpen(t.w);
+  const sx = S.W - safe.r - 90;                    // compteur d'étoiles du monde
+  otext(`${tot}/${max}`, sx, y, fs * 0.9, '#FFE066');
+  g.font = `900 ${fs * 0.9}px ${S.FONT}`;
+  drawStarShape(sx - g.measureText(`${tot}/${max}`).width - fs * 0.62, y, fs * 0.5, '#FFD23A', 0);
+  for (const t of MAP.tabs) {                       // les 5 mondes : ronds bleus (le monde affiché en jaune)
+    const on = t.w.id === MAP.world, soon = t.w.soon || !S.Levels.worldOpen(t.w), cy = t.y + 18;
     if (MAP.unlock && MAP.unlock.id === t.w.id && S.gtime - MAP.unlock.t0 < 0.75) continue;   // l'animation le dessine
-    g.fillStyle = soon ? '#8D99AE' : on ? t.w.color : '#FFFFFF'; g.strokeStyle = INK; g.lineWidth = 3;
-    g.beginPath(); g.arc(t.x, t.y + 18, t.r, 0, TAU); g.fill(); g.stroke();
-    g.textAlign = 'center'; g.font = `${t.r * 1.0}px ${S.FONT}`; g.fillText(soon ? '🔒' : t.w.emoji, t.x, t.y + 19);
-    if (soon) { const lab = t.w.soon ? L.soon : `★ ${t.w.need.stars}`; g.font = `900 ${Math.max(9, t.r * 0.42)}px ${S.FONT}`; otext(lab, t.x, t.y + 18 + t.r + 9, Math.max(9, t.r * 0.42), t.w.soon ? '#FFFFFF' : '#FFD166'); }
-    else { g.font = `900 ${t.r * 0.55}px ${S.FONT}`; otext(String(t.w.id), t.x + t.r * 0.75, t.y + 18 - t.r * 0.7, t.r * 0.55, '#FFFFFF'); }
+    drawRoundBtn(g, t.x, cy, t.r, soon ? ['#C9CEE0', '#9AA1BE', '#7A819F'] : on ? ['#FFF1A6', '#FFD23A', '#F2A900'] : BLUE);
+    g.textAlign = 'center';
+    if (soon) drawPadlock(g, t.x, cy + 1, t.r * 0.8);
+    else { g.font = `${t.r * 0.95}px ${S.FONT}`; g.fillText(t.w.emoji, t.x, cy + 1); }
+    if (soon) { const lab = t.w.soon ? L.soon : `★ ${t.w.need.stars}`; otext(lab, t.x, cy + t.r + 11, Math.max(9, t.r * 0.42), t.w.soon ? '#FFFFFF' : '#FFE066'); }
+    else inkText(g, String(t.w.id), t.x + t.r * 0.78, cy - t.r * 0.72, t.r * 0.55, NAVY);
   }
 }
 

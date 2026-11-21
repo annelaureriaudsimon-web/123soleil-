@@ -9,8 +9,8 @@ const ordEn = n => `${n}${n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !=
 
 Object.assign(TXT.fr, {
   ord: ordFr,
-  levelsBtn: '▶ NIVEAUX', levelsHint: (n, t, w) => `★ ${n}/${t} · ${w}`,
-  endlessBtn: '♾️ Course infinie',
+  levelsBtn: 'NIVEAUX', levelsHint: (n, t, w) => `★ ${n}/${t} · ${w}`,
+  endlessBtn: 'Course infinie',
   worldN: n => `Monde ${n}`, soon: 'Bientôt', soonToast: 'Ce monde arrive bientôt ! 🔒', lockedToast: 'Finis le niveau d’avant pour le débloquer 🔒',
   mapHint: 'Touche un niveau pour jouer', levelN: n => `Niveau ${n}`, bossTag: 'BOSS',
   goalDone: 'Finis le niveau',
@@ -25,7 +25,7 @@ Object.assign(TXT.fr, {
   failAlmost: m => `À ${m} m de l’arrivée !`, failPlace: p => `Tu étais ${ordFr(p)} !`, failTap: 'Touche pour réessayer',
   failTipTrap: 'Il t’a eu juste après un mot piège 😏',
   winTitle: 'BRAVO !', bossWinTitle: 'SOLEIL COOL BATTU ! 😎', you: 'Toi', notIn: 'pas arrivé',
-  nextBtn: 'Suivant ▶', retryBtn: '↻ Rejouer', mapBtn: '🗺️ Carte', bestTime: s => `Meilleur temps : ${s} s`,
+  nextBtn: 'Suivant', retryBtn: 'Rejouer', mapBtn: 'Carte', bestTime: s => `Meilleur temps : ${s} s`,
   coins: n => `+${n} ⭐ pour le casier`, worldDone: 'Monde 1 terminé ! La suite arrive bientôt 🎉',
   rivalBurnt: p => `${p} GRILLÉ !`, rivalBack: p => `${p} repart du début`, rivalDone: (p, n) => `🏁 ${p} ${ordFr(n)}`,
   haha: 'HA HA !', passed: p => `▲ ${ordFr(p)}`, passedBy: p => `▼ ${ordFr(p)}`,
@@ -55,8 +55,8 @@ Object.assign(TXT.fr, {
 
 Object.assign(TXT.en, {
   ord: ordEn,
-  levelsBtn: '▶ LEVELS', levelsHint: (n, t, w) => `★ ${n}/${t} · ${w}`,
-  endlessBtn: '♾️ Endless run',
+  levelsBtn: 'LEVELS', levelsHint: (n, t, w) => `★ ${n}/${t} · ${w}`,
+  endlessBtn: 'Endless run',
   worldN: n => `World ${n}`, soon: 'Soon', soonToast: 'This world is coming soon! 🔒', lockedToast: 'Finish the previous level to unlock it 🔒',
   mapHint: 'Tap a level to play', levelN: n => `Level ${n}`, bossTag: 'BOSS',
   goalDone: 'Finish the level',
@@ -71,7 +71,7 @@ Object.assign(TXT.en, {
   failAlmost: m => `${m} m from the finish!`, failPlace: p => `You were ${ordEn(p)}!`, failTap: 'Tap to try again',
   failTipTrap: 'He got you right after a trap word 😏',
   winTitle: 'WELL DONE!', bossWinTitle: 'COOL SUN BEATEN! 😎', you: 'You', notIn: 'not in',
-  nextBtn: 'Next ▶', retryBtn: '↻ Replay', mapBtn: '🗺️ Map', bestTime: s => `Best time: ${s} s`,
+  nextBtn: 'Next', retryBtn: 'Replay', mapBtn: 'Map', bestTime: s => `Best time: ${s} s`,
   coins: n => `+${n} ⭐ for the locker`, worldDone: 'World 1 complete! More coming soon 🎉',
   rivalBurnt: p => `${p} TOASTED!`, rivalBack: p => `${p} starts over`, rivalDone: (p, n) => `🏁 ${p} ${ordEn(n)}`,
   haha: 'HA HA!', passed: p => `▲ ${ordEn(p)}`, passedBy: p => `▼ ${ordEn(p)}`,

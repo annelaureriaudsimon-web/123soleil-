@@ -1,4 +1,4 @@
-# 1, 2, 3… SOLEIL ! — v2 (phase 2)
+# 1, 2, 3… SOLEIL ! — v2.1
 
 Maintiens pour courir vers le soleil, et lâche avant qu'il se retourne. S'il te voit bouger, tu es **GRILLÉ**.
 
@@ -32,7 +32,7 @@ js/audio/         sons 8-bit, voix (course infinie), musiques des boss
 js/game/          logique sans affichage : chant, soleil, coureur, physique, rivaux, moteur d'un niveau (match.js)
 js/render/        dessin : ciel, soleil, sol, coureurs, rivaux, décor de la cour et du parc, tentations, HUD
 js/modes/         course infinie, défi du jour, 2 joueurs, niveaux
-js/ui/            accueil, carte du monde, intro, résultats, casier, partage
+js/ui/            accueil, carte du monde, intro, résultats, casier, partage, icônes (SVG)
 levels/           les mondes et leurs niveaux (données)
 tools/            simulation (simulate.js) et tests automatiques
 docs/             design des mondes 1 et 2, résultats de la simulation, tests, notes pour la suite

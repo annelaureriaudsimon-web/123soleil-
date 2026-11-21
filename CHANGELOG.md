@@ -1,5 +1,25 @@
 # Journal des versions
 
+## v2.1 — nouveau look « jeu mobile »
+
+### Changé
+- **Boutons** : couleurs vives, gros contours, relief en bas et icônes blanches dessinées en SVG (aucune image téléchargée). Les boutons ronds (son, voix, casier, accueil) sont bleus.
+- **Accueil** : logo « 1, 2, 3… SOLEIL ! » en relief (contour bleu, ombre bleu nuit), gros bouton bleu « NIVEAUX » avec un rond ▶, « Défi du jour » orange, « Course infinie » violet, « 2 joueurs » rose. Les infos du haut deviennent des pastilles (rang, record, missions, étoiles, série).
+- **Casier** : panneau turquoise, rang dans un bandeau bleu, missions et médailles sur des cartes blanches, tenues sur une petite scène violette avec leur prix (⭐).
+- **Carte des niveaux** : tuiles orange en relief avec leur numéro et 3 étoiles au-dessus, tuiles marron avec un cadenas doré pour les niveaux fermés, chemin de pavés blancs, bandeau bleu et onglets ronds pour les mondes.
+- **Cartes** (intro, défaite, victoire, fin de partie, 2 joueurs) : panneau bleu en relief (rose pour les boss). Gros bouton vert « Suivant », « Rejouer » orange, « Carte » blanc ; « Partager » vert et « Image » orange en fin de partie.
+- Petits téléphones et paysage : les boutons de l'accueil se compactent pour laisser de la place au logo et ne pas passer sous les boutons ronds.
+
+### Architecture
+- Nouveau fichier `js/ui/icons.js` : les icônes en SVG (`S.icon(nom)`, `S.setIcon(bouton, nom)`), chargé avant les écrans.
+- `css/style.css` : couleurs de boutons en classes (`c-blue`, `c-green`, `c-orange`, `c-purple`, `c-pink`, `c-white`), chacune avec 4 teintes (reflet, face, bas, contour).
+- `js/render/hud.js` : `drawLogo()` dessine le logo une fois par taille, puis le recopie (rapide).
+- Les textes des boutons n'ont plus d'emoji devant (l'icône est dessinée à côté), en français et en anglais.
+
+### Inchangé (vérifié)
+- Le jeu lui-même se dessine exactement comme avant : 94 images sur 94 identiques (course infinie et monde 1, `tools/tests/compare_frames.py`). L'outil de comparaison coupe maintenant le son, pour que le boss donne toujours les mêmes images.
+- Tests du mode Niveaux 66/66, anciennes suites vertes, aucune erreur JavaScript.
+
 ## v2 — phase 2 : le monde 2 « Le parc » et les tentations
 
 ### Nouveau

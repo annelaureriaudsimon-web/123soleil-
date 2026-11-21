@@ -43,6 +43,14 @@ Monde 2 (phase 2) :
 | Niveaux 1, 3, 5, 7 et 8 du monde 1, comparés image par image à la phase 1 (`compare_frames.py`) | 80 images sur 80 identiques au pixel près (portrait et paysage, boss compris). |
 | Simulation du monde 1 | Mêmes chiffres qu'en phase 1, à 0 point près, sur les 24 lignes du tableau. |
 
+## Le nouveau look (v2.1) : 5 vérifications rapides sur ton téléphone
+
+1. **Accueil** : le logo en relief, les 4 gros boutons colorés et les pastilles du haut se lisent bien, en portrait et en paysage. Rien ne passe sous les boutons ronds (son, voix, casier).
+2. **Appui** : chaque bouton s'enfonce quand on appuie (le relief disparaît), puis fait son travail.
+3. **Casier** : les tenues sur la scène violette, les prix avec ⭐, « Portée ✓ » en vert ; une tenue trop chère tremble.
+4. **Carte** : les tuiles orange avec leur numéro et leurs étoiles, les cadenas dorés, le chemin de pavés, les onglets des mondes ; toucher une tuile fermée la fait trembler.
+5. **Fin de niveau** : gros bouton vert « Suivant », « Rejouer » orange, « Carte » blanc ; fin de partie : « Partager » vert, « Image » orange.
+
 ## Les 10 tests manuels les plus importants de la phase 2 (sur ton téléphone)
 
 1. **Le parc se débloque.** Avant 12 ★ dans la cour : touche l'onglet « 2 » de la carte, le message « Gagne 12 ★ dans le monde 1 pour le débloquer 🔒 » s'affiche. Gagne la 12e étoile, puis reviens sur la carte :

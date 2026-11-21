@@ -18,6 +18,13 @@ Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout reli
   - Pour une nouvelle mécanique, **ajoutez des dés à la fin** d'une suite (ou créez une 3e suite avec un autre décalage, par exemple `6000 + n`), sans décaler les autres : les niveaux existants gardent exactement le même comportement. C'est ce qui garantit que le monde 1 n'a pas bougé d'un chiffre en phase 2.
   - `Math.random()` est réservé aux effets visuels (particules, bulles des rivaux, ordre des moqueries).
 
+## Le look (v2.1)
+
+- **Couleurs des boutons** : une classe par couleur dans `css/style.css` (`c-blue`, `c-green`, `c-orange`, `c-purple`, `c-pink`, `c-white`). Un nouveau bouton prend `class="btn c-green"` (ou `hbtn` pour l'accueil) et a tout de suite le relief et le contour.
+- **Icônes** : `js/ui/icons.js`. `S.icon('play')` donne le SVG à glisser dans un bouton ; `S.setIcon(id, 'home')` change l'icône d'un bouton fixe. Pour une nouvelle icône, ajoutez son dessin (carré de 24 × 24) dans `ICONS`.
+- **Logo** : `drawLogo(texte, taille, couleurHaut, couleurBas)` dans `js/render/hud.js`.
+- **Carte** : `drawTile`, `drawPadlock`, `drawStones`, `drawRoundBtn` dans `js/ui/worldmap.js` servent pour les mondes suivants.
+
 ## Le cycle de vie d'un niveau
 
 1. La carte (`ui/worldmap.js`) appelle `Levels.open(id)`.

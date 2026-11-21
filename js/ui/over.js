@@ -71,7 +71,7 @@ function showOver() {
   $('ovSub').textContent = subMsg(R);
   $('ovGrid').textContent = phaseLines(R.events, 4).join('\n');
   $('ovRew').textContent = `+${R.stars} ⭐ · 🎯 ${missionsDone()}/3${R.catches ? ` · ✨ ${R.catches}` : ''}`;
-  $('share').textContent = L.share; $('imgBtn').textContent = L.image;
+  $('share').innerHTML = S.icon('share') + S.esc(L.share); $('imgBtn').innerHTML = S.icon('camera') + S.esc(L.image);
   $('homeBtn2').setAttribute('aria-label', L.home); $('homeBtn2').title = L.home;
   over.classList.remove('armed');
   S.refreshUI();
