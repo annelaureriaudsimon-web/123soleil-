@@ -1,5 +1,50 @@
 # Journal des versions
 
+## v2.2 — étape Poki 1 : les fondations
+
+Retours de la phase 2 : rien à signaler (la section était vide), donc rien à corriger avant de commencer.
+
+### Nouveau
+- **SDK Poki** branché proprement : `js/platform/poki.js` est le seul fichier qui lui parle (`init`, `loadingFinished`, `gameplayStart`, `gameplayStop`, `commercialBreak`, `rewardedBreak` prête mais pas utilisée, `movePill`). Il retient l'état (chargement, arrêté, en jeu, pub), ignore les événements en double ou pendant une pub, et a un **mode de secours** : sans SDK (double-clic hors ligne, bloqueur de pub, SDK qui ne répond pas), tout se passe comme si tout allait bien, sans erreur ni attente (2,5 s au plus au chargement).
+- **Les événements partent tout seuls, au bon moment, dans tous les modes** (`js/platform/flow.js`) : `gameplayStart` au premier appui (jamais au chargement, jamais à l'affichage de la carte d'intro), `gameplayStop` à chaque arrêt (grillé, victoire, pause, fin de manche, onglet caché), `commercialBreak` avant Rejouer, Suivant, Recommencer, Reprendre et la Revanche du mode 2 joueurs. Une pub ne peut ni coûter ni donner un essai du défi du jour. Le tableau complet est dans `docs/POKI_INTEGRATION.md`.
+- **Pendant une pub** : le jeu est figé, tout le son est coupé (effets, musique du boss, voix), l'écran et le clavier sont bloqués et tout est relâché. Après : le son revient (s'il était coupé par le joueur, il le reste), les entrées aussi, sans appui fantôme.
+- **Vraie pause** : bouton ⏸ à côté du bouton son pendant la partie, **Échap** ou **P**. Menu dans le style du jeu : Reprendre, Recommencer (le niveau), Carte (ou Accueil), Son. Défi du jour : pas de Recommencer, « Abandonner le défi ». Pause automatique si l'onglet est caché ou si la fenêtre perd le focus. À la reprise : 1 seconde de grâce (le monde reste figé, un anneau se remplit, le joueur repart à l'arrêt et ne peut pas être grillé).
+- **La page ne défile jamais** : Espace, flèches, Page suivante et la molette sont bloqués (sauf dans le casier, qui défile à l'intérieur).
+- **Première expérience** :
+  - 1re visite : ni titre, ni accueil, ni carte. Le niveau 1 s'affiche « prêt » et attend : une **main animée** montre le geste sur téléphone et tablette, une **touche Espace dessinée** sur PC. Un appui et on joue (moins de 3 secondes après l'ouverture).
+  - **Niveau 1 en douceur** : si le soleil te voit bouger, pas de défaite : « OUPS ! », tu recules de 6 m en faisant la toupie, le soleil rigole (« VU ! »), puis la main lève le doigt : « LÂCHE ! ». Tutoriel visuel presque sans texte (« MAINTIENS », « LÂCHE ! », « REPARS ! »).
+  - Après le niveau 1 : petite célébration avec les étoiles gagnées, puis directement la petite carte d'intro du niveau 2.
+  - Après le niveau 2 : écran de résultats, puis Suivant → **la carte se présente** (les niveaux apparaissent un par un, « TA CARTE ! », une main montre ton niveau : « À toi ! »).
+  - **Joueur qui revient** : accueil express avec un gros « CONTINUER – Niveau X » (un appui), et les autres modes plus petits (Niveaux, Infini, 2 joueurs).
+- **Consignes selon l'appareil** : « Touche pour commencer » sur téléphone, « Clic ou Espace pour commencer » sur PC (cartes d'intro, de défaite, fin du défi). La 1re course infinie montre aussi la main (ou la touche Espace).
+- **Zone de la pilule Poki** : sur téléphone, dans l'iframe de Poki, le coin en haut à gauche reste libre (les textes du haut à gauche se décalent de 56 px). Les boutons sont tous à droite.
+- **Build Poki** : `node tools/build-poki.js` fabrique `dist/poki/` (index.html, un seul `game.js`, style.css) et `dist/soleil-poki.zip`, sans le mode debug, et vérifie tout (adresses externes, liens sortants, `localStorage` dans un try/catch, `console.log`, taille, `node --check`, fichiers entiers après le retrait du debug).
+- **Mode debug** (version dev seulement) : `index.html?debug=1` affiche à l'écran chaque événement SDK avec son heure, les enchaînements interdits en rouge ; `&fakead=1` simule une pub de 2 s.
+
+### Changé
+- **La carte d'intro d'un niveau attend un appui** (avant : elle partait toute seule après 1,9 s). C'est cet appui qui lance la partie et envoie `gameplayStart`.
+- **Partage sans adresse** : le texte et l'image de partage ne contiennent plus l'adresse de la page. Dans une iframe (Poki), le bouton « Image » est caché (le téléchargement y est bloqué) et le partage copie le texte.
+- **Accueil** : « CONTINUER » (vert) remplace le gros « NIVEAUX » ; « Niveaux », « Infini » et « 2 joueurs » sont de petits boutons sur une ligne.
+- **Échap** : pendant une partie, il ouvre le menu pause (qui a « Carte »). Ailleurs, il fait comme avant (carte → accueil, casier → fermé, fin de partie → accueil, niveau hors partie → carte).
+- Pendant une partie, ⏸ prend la place de 🗣️ (et de 🏠 en mode Niveaux : le menu pause a « Carte »).
+
+### Architecture
+- Nouveaux fichiers : `js/platform/poki.js` (couche SDK), `js/platform/debug.js` (dev seulement, retiré du build), `js/platform/flow.js` (quand on est « en jeu », pauses pub, démarrage, appareil, pilule), `js/ui/pause.js` (pause), `js/ui/onboard.js` (premiers pas, « Continuer »), `js/render/tuto.js` (main et touche Espace dessinées). 63 scripts dans `index.html` (62 dans le build).
+- `js/game/match.js` : niveau « en douceur » (`soft: { back: 6 }` dans les données du niveau) : événement `oops` au lieu de la défaite, recul animé, il faut lâcher pour repartir. Les autres niveaux suivent exactement le même code qu'avant.
+- `js/audio/sounds.js` : `Sound.silence(raison, oui/non)` coupe tout le son pour le jeu (pub, pause, onglet caché) sans toucher au choix 🔊 du joueur (`Sound.quiet`).
+- `js/main.js` : la boucle ne fait plus avancer le monde pendant une pause ou une pub ; elle synchronise `gameplayStart` / `gameplayStop` à chaque image.
+- Nouvelle sauvegarde `soleil.onboard` (0 → 3). Les anciennes sauvegardes (record, parties, niveaux) passent directement à 3 : aucun ancien joueur ne revoit les premiers pas.
+- Nouveaux textes en français et en anglais dans `js/core/i18n.js`.
+
+### Simulation : le niveau 1 change, rien d'autre
+- `REF_W1`, niveau 1 : le débutant le finit maintenant **100 %** du temps (avant : 66 %), car il ne peut plus perdre. Il prend en moyenne 0,4 « OUPS ! » par essai et finit en 27 s. Le contrôle « le débutant réussit le niveau 1 à 40-70 % » devient « au moins 90 % » et « en moins de 45 s ».
+- Les 7 autres niveaux du monde 1 et tout le monde 2 n'ont pas bougé d'un chiffre (même sortie de `node tools/simulate.js` qu'en v2.1, à part la ligne du niveau 1).
+
+### Inchangé (vérifié)
+- Le jeu se dessine exactement comme avant : **94 images sur 94 identiques** contre la v2.1 (course infinie et monde 1, boss compris, `tools/tests/compare_frames.py`). Le niveau 1 aussi pour un bon joueur ; seuls changent ses nouveautés (main, « OUPS ! »), qui n'apparaissent pas dans ces images.
+- Tests du mode Niveaux 66/66, anciennes suites vertes (V4 30/30, V3 55/55, mode solo V2 et test rapide V4 sans erreur), aucune erreur JavaScript.
+- Nouveau : `tools/tests/test_poki.py`, 76/76 (tous les moments du tableau, tous les cas limites, avec et sans SDK, et le build Poki lui-même).
+
 ## v2.1 — nouveau look « jeu mobile »
 
 ### Changé

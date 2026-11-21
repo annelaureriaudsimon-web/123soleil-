@@ -4,16 +4,17 @@
 const { $, Sound, Voice, cv, duoPtr, pointers, startRun, closePanel, toggleMute } = S;   // déjà chargés
 
 /* ---------- 24. Contrôles : un seul geste, maintenir / lâcher ---------- */
-function syncPress() { S.pressing = !S.panelOpen && (pointers.size > 0 || S.keyDown); }
+function syncPress() { S.pressing = !S.panelOpen && !S.paused && (pointers.size > 0 || S.keyDown); }
 function onPress() {
   Sound.unlock();
-  if (S.panelOpen) return;
+  if (S.panelOpen || S.paused || S.booting) return;
   if (S.state === 'title') startRun('free');          // maintenir sur le décor (ou Espace) : partie libre, comme avant
   else if (S.state === 'over' && S.gtime - S.overT > 0.3) {
-    if (S.mode === 'daily') S.goHome();                 // après le défi : retour à l'accueil
-    else startRun('free');                          // partie libre : on relance en moins d'une seconde
-  } else if (S.state === 'level') S.Levels.press();   // niveau : passer l'intro, ou réessayer après « GRILLÉ ! »
+    if (S.mode === 'daily') S.goHome();                 // après le défi : retour à l'accueil (pas de « Rejouer »)
+    else S.afterBreak(() => startRun('free'));      // Rejouer : pause pub (si Poki le décide), puis on relance
+  } else if (S.state === 'level') S.Levels.press();   // niveau : commencer, passer la cinématique, ou réessayer après « GRILLÉ ! »
   syncPress();
+  S.syncGameplay();                                   // gameplayStart part à l'appui, pas à l'image d'après
 }
 cv.addEventListener('pointerdown', e => {
   if (e.button > 0) return;
@@ -34,12 +35,19 @@ cv.addEventListener('pointercancel', ptrUp);
 cv.addEventListener('lostpointercapture', ptrUp);
 const KEYS = new Set(['Space', 'ArrowUp', 'KeyW', 'Enter', 'NumpadEnter']);
 window.addEventListener('keydown', e => {
-  if (e.code === 'Escape') {
+  const k = (e.key || '').toLowerCase(), pauseKey = e.code === 'Escape' || k === 'p';
+  if (S.paused) {                                     // menu pause : Échap / P / Entrée reprennent, M coupe le son
+    if (e.repeat) return;
+    if (pauseKey || ((e.code === 'Enter' || e.code === 'NumpadEnter') && !(e.target && e.target.tagName === 'BUTTON'))) { e.preventDefault(); S.resumeGame(); }
+    else if (k === 'm' && !e.ctrlKey && !e.metaKey) { toggleMute(); S.soundLabel(); }
+    return;
+  }
+  if (pauseKey && !e.repeat && S.pausable()) { e.preventDefault(); S.pauseGame('clavier'); return; }   // pendant la partie : pause
+  if (e.code === 'Escape') {                          // hors partie : comme avant
     if (S.panelOpen) { closePanel(); return; }
     if (S.state === 'duo' || S.state === 'over') { S.goHome(); return; }
     if (S.state === 'level') { S.Levels.toMap(); return; }       // niveau → carte
   }
-  const k = (e.key || '').toLowerCase();
   if (k === 'm' && !e.repeat && !e.ctrlKey && !e.metaKey) { toggleMute(); return; }
   if (S.state === 'map') { if (!S.panelOpen && !e.repeat) S.WorldMap.key(e); return; }   // carte : flèches + Entrée
   if (S.state === 'level' && S.Levels.phase === 'results') {    // résultats : Entrée = Suivant, R = Rejouer
@@ -51,7 +59,7 @@ window.addEventListener('keydown', e => {
   if (S.state === 'duo') {                            // J1 = A, J2 = L (e.key : marche en AZERTY comme en QWERTY)
     if (k === 'a' || k === 'l') { e.preventDefault(); S.duoKeys[k === 'a' ? 0 : 1] = true; Sound.unlock(); }
     else if (KEYS.has(e.code) && !e.repeat && !(e.target && e.target.tagName === 'BUTTON')
-             && S.duo && S.duo.phase === 'over' && $('duoEnd').classList.contains('armed')) { e.preventDefault(); S.startDuo(); }   // revanche
+             && S.duo && S.duo.phase === 'over' && $('duoEnd').classList.contains('armed')) { e.preventDefault(); S.rematch(); }   // revanche
     return;
   }
   if (!KEYS.has(e.code) || S.panelOpen) return;

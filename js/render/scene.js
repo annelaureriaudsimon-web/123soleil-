@@ -1,7 +1,7 @@
 /* js/render/scene.js — Composition d’une image (render) */
 (function (S) {
 'use strict';
-const { CAM_BACK, L, drawBeam, drawParticles, drawVignette, drawCloud, drawHills, drawSky, drawWatcher,
+const { CAM_BACK, L, Lt, drawBeam, drawParticles, drawVignette, drawCloud, drawHills, drawSky, drawWatcher,
   drawDecor, drawGround, drawMarkers, drawPatches, drawRecord, drawGhost, drawRunner, ghostPos, drawStarItem,
   drawBanner, drawChant, drawGrille, drawHUD, drawReplayHint, drawTitle } = S;   // déjà chargés
 
@@ -29,8 +29,11 @@ function render() {
     S.drawFinish(camZ, S.Levels.m.level.length);
     S.drawRivals(false);
     S.drawTemptStar(camZ);                                           // l'étoile tentatrice, devant toi
-    const jy = S.Levels.jump;
-    if (jy) { S.ctx.save(); S.ctx.translate(0, -jy); drawRunner(); S.ctx.restore(); } else drawRunner();
+    const jy = S.Levels.jump, sp = S.Levels.spin;
+    if (sp) {                                                        // niveau en douceur : la toupie du « OUPS ! »
+      const py = Lt.yFeet - Lt.s * 0.8 - jy;
+      S.ctx.save(); S.ctx.translate(Lt.cx, py); S.ctx.rotate(sp); S.ctx.translate(-Lt.cx, -py - jy); drawRunner(); S.ctx.restore();
+    } else if (jy) { S.ctx.save(); S.ctx.translate(0, -jy); drawRunner(); S.ctx.restore(); } else drawRunner();
     S.drawRivals(true);
     S.drawFly();                                                     // la mouche, par-dessus le coureur
   }
@@ -55,6 +58,7 @@ function render() {
     drawHUD(); drawReplayHint();
   }
   drawParticles(true);
+  if (S.grace > 0) S.drawGrace();                                    // reprise après une pause : 1 s de grâce
 }
 
 Object.assign(S, { render });

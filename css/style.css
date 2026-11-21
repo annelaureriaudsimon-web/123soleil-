@@ -156,6 +156,7 @@
     #home.side .row .hbtn small { display:none; }
   }
   #homeBtn { top:calc(env(safe-area-inset-top,0px) + 68px); }
+  #pauseBtn { top:calc(env(safe-area-inset-top,0px) + 10px); right:calc(env(safe-area-inset-right,0px) + 68px); }   /* à la place de 🗣️ pendant la partie */
 
   /* Fin de match à 2 joueurs */
   #duoEnd { position:fixed; z-index:3; left:50%; top:50%; transform:translate(-50%,-50%) scale(.85); opacity:0; visibility:hidden;
@@ -256,3 +257,40 @@
 .lvcard .extra { margin-top:7px; font-weight:800; font-size:13.5px; color:#FFE066; }
 @media (max-height:600px) { #home .rules { display:none; } .lvcard .kids, .lvcard .rank { display:none; } }
 .st-map #locker { top:calc(env(safe-area-inset-top,0px) + 126px); }
+
+/* ---------- Poki (v2.2) : pause, pub, premiers pas, accueil express, zone de la pilule ---------- */
+/* Le menu pause : le même panneau bleu que les fins de partie, quatre gros boutons */
+#pause { position:fixed; inset:0; z-index:7; display:flex; align-items:center; justify-content:center; background:rgba(15,15,40,.5);
+         padding:calc(env(safe-area-inset-top,0px) + 12px) 12px calc(env(safe-area-inset-bottom,0px) + 12px); }
+#pause .pcard { --edge:#141A6E; color:#fff; text-align:center; width:min(92vw,340px); border-radius:26px; padding:12px 18px 18px;
+         background:linear-gradient(180deg,#4B57F7 0%,#3440D8 55%,#2A35C2 100%); border:4px solid var(--edge);
+         box-shadow:0 7px 0 var(--edge), 0 16px 34px rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.28); animation:pausePop .25s cubic-bezier(.2,1.6,.4,1); }
+@keyframes pausePop { from { transform:scale(.85); opacity:.4; } }
+#pause .ttl { font-weight:900; font-size:clamp(30px,8vmin,42px); letter-spacing:.06em; line-height:1.15;
+              text-shadow:0 3px 0 var(--edge),2px 0 0 var(--edge),-2px 0 0 var(--edge),0 -2px 0 var(--edge); }
+#pause .pbtns { display:flex; flex-direction:column; gap:12px; margin-top:12px; }
+#pause .btn { justify-content:center; width:100%; font-size:18px; padding:10px 14px 11px; border-radius:18px; }
+#pause #pResume { font-size:23px; padding:12px 14px 13px; border-radius:20px; }
+#pause.armed .btn { pointer-events:auto; opacity:1; }
+@media (max-height:440px) {                      /* téléphone en paysage, petite fenêtre : boutons sur deux lignes */
+  #pause .pcard { width:min(92vw,560px); padding:8px 14px 14px; }
+  #pause .ttl { font-size:28px; }
+  #pause .pbtns { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:8px; }
+  #pause #pResume { grid-column:1 / -1; font-size:20px; padding:9px 12px 10px; }
+  #pause .btn { font-size:15px; padding:8px 8px 9px; white-space:normal; line-height:1.1; }
+}
+/* Pendant une pub (ou sa demande) : rien n'est cliquable */
+#adShield { position:fixed; inset:0; z-index:40; background:transparent; }
+/* Petite carte d'intro des premiers pas : nom et idée seulement */
+.lvcard.intro.mini { min-width:220px; padding:12px 18px 14px; }
+.lvcard.intro.mini .goals, .lvcard.intro.mini .kids { display:none; }
+/* Accueil : le gros « Continuer », puis les autres modes plus petits, sur une ligne (icône + nom) */
+#home .row { gap:8px; }
+#home .row .hbtn, #home.side .row .hbtn { flex-direction:row; justify-content:center; text-align:left; gap:6px; padding:6px 6px 8px; border-radius:16px; }
+#home .row .hbtn .bi, #home.side .row .hbtn .bi { width:30px; height:30px; font-size:17px; border-width:2.5px; }
+#home .row .hbtn .bt, #home.side .row .hbtn .bt { width:auto; text-align:left; }
+#home .row .hbtn b, #home.side .row .hbtn b { font-size:clamp(14px,4vmin,17px); white-space:nowrap; }
+#home .row .hbtn small { display:none; }
+@media (max-width:360px), (orientation:landscape) and (max-width:760px) { #home .row .hbtn .bi { display:none; } }   /* petit écran : le nom seul */
+/* Zone protégée de la pilule Poki (mobile, dans l'iframe) : rien en haut à gauche */
+body.pill-zone #meta { left:calc(env(safe-area-inset-left,0px) + 66px); max-width:calc(100vw - 196px); }

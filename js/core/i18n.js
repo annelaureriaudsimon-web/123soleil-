@@ -7,7 +7,6 @@ const LANG = /^fr/i.test(navigator.language || 'fr') ? 'fr' : 'en';
 document.documentElement.lang = LANG;
 const TXT = {
   fr: {
-    playHint: 'Maintiens = cours · Lâche = stop',
     best: m => `Record ${m} m`, bestLive: 'RECORD BATTU !',
     caught: 'GRILLÉ !',
     late: s => `Lâché ${s} s trop tard !`,
@@ -83,10 +82,16 @@ const TXT = {
     round: n => `MANCHE ${n}`, go: 'GO !', burnt: p => `${p} GRILLÉ !`, back: p => `${p} : retour au départ`,
     roundWin: p => `${p} GAGNE LA MANCHE !`, matchWin: p => `${p} GAGNE ! 🏆`,
     rematch: 'Revanche', duoHomeBtn: 'Accueil', finish: 'ARRIVÉE', ahead: (p, m) => `${p} ▲ +${m}\u00A0m`,
-    title2: 'SOLEIL !'
+    title2: 'SOLEIL !',
+    // pause, consignes selon l'appareil, premiers pas, accueil (v2.2)
+    pause: 'Pause', pauseTitle: 'PAUSE', resume: 'Reprendre', restart: 'Recommencer', restartLevel: 'Recommencer le niveau',
+    giveUp: 'Abandonner le défi', soundOn: 'Son : oui', soundOff: 'Son : non',
+    spaceKey: 'ESPACE', holdWord: 'MAINTIENS', oops: 'OUPS !', oopsSun: 'VU !',
+    keyStart: 'Clic ou Espace pour commencer', keyRetry: 'Clic ou Espace pour réessayer', keyHome: 'Clic ou Espace pour revenir à l’accueil',
+    contBtn: 'CONTINUER', playBtn: 'JOUER', contHint: (n, w) => `Niveau ${n} · ${w}`, levelsShort: 'Niveaux', endlessShort: 'Infini',
+    mapIntro: 'TA CARTE !', mapIntroSub: 'Choisis ton prochain niveau', yourTurn: 'À toi !'
   },
   en: {
-    playHint: 'Hold = run · Release = stop',
     best: m => `Best ${m} m`, bestLive: 'NEW BEST!',
     caught: 'TOASTED!',
     late: s => `Released ${s} s too late!`,
@@ -162,7 +167,14 @@ const TXT = {
     round: n => `ROUND ${n}`, go: 'GO!', burnt: p => `${p} TOASTED!`, back: p => `${p}: back to the start`,
     roundWin: p => `${p} WINS THE ROUND!`, matchWin: p => `${p} WINS! 🏆`,
     rematch: 'Rematch', duoHomeBtn: 'Home', finish: 'FINISH', ahead: (p, m) => `${p} ▲ +${m}\u00A0m`,
-    title2: 'SOLEIL !'
+    title2: 'SOLEIL !',
+    // pause, device-specific hints, first steps, home (v2.2)
+    pause: 'Pause', pauseTitle: 'PAUSED', resume: 'Resume', restart: 'Restart', restartLevel: 'Restart level',
+    giveUp: 'Give up the challenge', soundOn: 'Sound: on', soundOff: 'Sound: off',
+    spaceKey: 'SPACE', holdWord: 'HOLD', oops: 'OOPS!', oopsSun: 'SEEN!',
+    keyStart: 'Click or Space to start', keyRetry: 'Click or Space to try again', keyHome: 'Click or Space to go back home',
+    contBtn: 'CONTINUE', playBtn: 'PLAY', contHint: (n, w) => `Level ${n} · ${w}`, levelsShort: 'Levels', endlessShort: 'Endless',
+    mapIntro: 'YOUR MAP!', mapIntroSub: 'Pick your next level', yourTurn: 'Your turn!'
   }
 };
 const L = TXT[LANG];

@@ -40,15 +40,16 @@ Les « taux visés » sont les objectifs fixés avant le réglage. Les taux obte
 - **Menace (moins de 10 s) :**
   - 1er « SOLEIL ! » vers 3,9 s, avec un demi-tour exceptionnellement lent (1 s) ;
   - au 2e cycle (vers 9 s), un mot piège forcé, avec la bannière « PIÈGE ! Il n'a pas dit SOLEIL 😏 ».
-- **Indications à l'écran :**
-  - « MAINTIENS pour courir 👆 » reste affiché tant qu'on n'a pas maintenu ;
-  - « LÂCHE ! » au premier « SO » ;
-  - « Il se remet de dos : REPARS ! » ;
+- **Indications à l'écran** (v2.2 : dessinées, une main sur téléphone et tablette, la touche Espace sur PC) :
+  - « MAINTIENS » et la main qui appuie, tant qu'on n'a pas maintenu (1re visite : le niveau attend ce premier appui) ;
+  - « LÂCHE ! » et le doigt qui se lève, au premier « SO » ;
+  - « REPARS ! » et la main qui appuie, quand il se remet de dos ;
   - « Touche le soleil ! » à 15 m de l'arrivée.
+- **Départ en douceur (v2.2) :** vu en train de bouger, on n'est pas grillé : « OUPS ! », 6 m en arrière en faisant la toupie, le soleil rigole, et il faut lâcher pour repartir.
 - **★★ :** Arrive dans le top 2.
 - **★★★ :** Ne tombe dans aucun piège.
 - **Rivaux :** Léo 🐢 et Zoé 🐢.
-- **Taux visés :** débutant 40 à 70 %, moyen environ 100 %, expert 100 %.
+- **Taux visés :** débutant presque toujours (au moins 90 %, depuis la v2.2 ; avant : 40 à 70 %), moyen environ 100 %, expert 100 %.
 
 ### 2. Les hésitations 😶
 - **Idée :** le soleil fait durer le « SOOOO… ».

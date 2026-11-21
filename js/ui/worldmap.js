@@ -15,7 +15,8 @@ const NAVY = '#141A6E', BLUE = ['#7F8BFF', '#3B49F0', '#2733C4'];   // le bleu d
 const STONE = 26;              // un pavé blanc tous les 26 px sur le chemin entre deux niveaux
 
 const UNLOCK_DUR = 2.6;        // animation de déblocage d'un monde (s)
-const MAP = { world: 1, sel: 0, nodes: [], tabs: [], shakeI: -1, shakeT: 0, area: null, unlock: null };
+const INTRO = { pop: 0.12, grow: 0.4, banner: 2.4, hand: 2.5, end: 7 };   // 1re carte : les niveaux apparaissent un par un, la bannière, puis une main montre le tien (s)
+const MAP = { world: 1, sel: 0, nodes: [], tabs: [], shakeI: -1, shakeT: 0, area: null, unlock: null, intro: null };
 const world = () => WORLDS.find(w => w.id === MAP.world);
 
 function open() {
@@ -27,6 +28,8 @@ function open() {
   const shown = store.get('worldsShown', []);                  // un monde vient de s'ouvrir ? petite animation
   const fresh = WORLDS.find(w => w.need && S.Levels.worldOpen(w) && !shown.includes(w.id));
   if (fresh) { MAP.unlock = { id: fresh.id, t0: S.gtime, step: 0 }; store.set('worldsShown', shown.concat(fresh.id)); }
+  MAP.intro = null;
+  if (S.Onboard.wantsMapIntro()) { MAP.intro = { t0: S.gtime }; S.Onboard.mapShown(); Sound.levelWin(); }   // la 1re fois : la carte se présente
   selectWorld(MAP.world);
   S.refreshUI();
 }
@@ -45,8 +48,8 @@ function layout() {
   const base = land ? LANDSCAPE : PORTRAIT, pts = MAP.world % 2 ? base : base.map(([x, y]) => [1 - x, y]);   // le parc : chemin en miroir
   const r = clamp(Math.min(S.W, S.H) * (land ? 0.062 : 0.058), 20, 40);
   MAP.nodes = world().levels.map((lv, i) => ({ lv, x: lerp(left + r, right - r, pts[i][0]), y: lerp(top + r * 1.2, bot - r * 1.6, pts[i][1]), r: lv.boss ? r * 1.32 : r }));
-  const tw = Math.min(62, (S.W - safe.l - safe.r - 96) / WORLDS.length);
-  MAP.tabs = WORLDS.map((w, i) => ({ w, x: safe.l + 14 + tw * (i + 0.5), y: safe.t + 48, r: tw * 0.36 }));
+  const tw = Math.min(62, (S.W - safe.l - safe.r - 96 - S.pillX) / WORLDS.length);   // pillX : la pilule Poki
+  MAP.tabs = WORLDS.map((w, i) => ({ w, x: safe.l + S.pillX + 14 + tw * (i + 0.5), y: safe.t + 48, r: tw * 0.36 }));
 }
 
 // ---------- Dessin ----------
@@ -69,17 +72,43 @@ function draw() {
     drawMapTrees(g, A);
   }
   // le chemin entre les niveaux : des petits pavés blancs
-  const N = MAP.nodes;
-  drawStones(g, N, A);
-  // les niveaux
+  const N = MAP.nodes, it = MAP.intro ? S.gtime - MAP.intro.t0 : -1;
+  if (it > INTRO.end) MAP.intro = null;
+  if (it < 0 || it > 0.6) drawStones(g, N, A);
+  else { g.save(); g.globalAlpha = it / 0.6; drawStones(g, N, A); g.restore(); }
+  // les niveaux (1re carte : ils apparaissent un par un en rebondissant)
   const cur = S.Levels.lastUnlocked(world());
-  N.forEach((n, i) => drawNode(g, n, i, n.lv === cur));
+  N.forEach((n, i) => {
+    const k = it < 0 ? 1 : popIn(it - 0.3 - i * INTRO.pop);
+    if (k <= 0) return;
+    if (k === 1) { drawNode(g, n, i, n.lv === cur); return; }
+    g.save(); g.translate(n.x, n.y); g.scale(k, k); g.translate(-n.x, -n.y); drawNode(g, n, i, n.lv === cur); g.restore();
+  });
   // ton personnage, sur le dernier niveau débloqué
   const cn = N.find(n => n.lv === cur) || N[0];
   const s = n2s(cn.r), bob = Math.abs(Math.sin(S.gtime * 3.2)) * 4;
-  drawRunnerFig(g, cn.x + cn.r * 1.6, cn.y + cn.r * 0.9 - bob, s, { sp: 0, ph: 0, st: 0, t: S.gtime, breathe: Math.sin(S.gtime * 3) * 0.02 }, outfitById(S.outfit), false, '');
+  if (it < 0 || it > 0.3 + N.length * INTRO.pop) drawRunnerFig(g, cn.x + cn.r * 1.6, cn.y + cn.r * 0.9 - bob, s, { sp: 0, ph: 0, st: 0, t: S.gtime, breathe: Math.sin(S.gtime * 3) * 0.02 }, outfitById(S.outfit), false, '');
   drawHeader(g);
   if (MAP.unlock) drawUnlock(g);
+  if (it >= 0) drawIntro(g, it, cn);
+}
+// Un rond qui apparaît en rebondissant (0 → 1, un peu plus grand au passage)
+function popIn(t) {
+  if (t <= 0) return 0;
+  const u = Math.min(1, t / INTRO.grow) - 1;
+  return t >= INTRO.grow ? 1 : 1 + 2.7 * u * u * u + 1.7 * u * u;
+}
+// 1re carte : bannière « TA CARTE ! », puis une main qui montre ton niveau : « À toi ! »
+function drawIntro(g, t, cn) {
+  if (t > 0.2 && t < 0.2 + INTRO.banner) drawBanner(L.mapIntro, L.mapIntroSub, '', t - 0.2, INTRO.banner, '#FFD166');
+  if (t < INTRO.hand) return;
+  const a = Math.min(1, (t - INTRO.hand) / 0.3) * Math.min(1, (INTRO.end - t) / 0.4), size = clamp(cn.r * 1.5, 40, 72);
+  const bob = Math.abs(Math.sin(S.gtime * 4)) * size * 0.18, tip = cn.y - cn.r * 1.55 - bob;
+  g.save(); g.globalAlpha = Math.max(0, a);
+  S.drawHand(g, cn.x, tip, size, 0);
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  otext(L.yourTurn, cn.x, tip - size * 1.5, fit(L.yourTurn, Math.min(Lt.U * 0.06, 30), S.W * 0.5), '#FFD166');
+  g.restore();
 }
 
 // Le parc, vu du ciel : pelouse, allées, étang, fontaine, massifs de fleurs, arbres (monde 2)
@@ -267,8 +296,8 @@ function drawBossFace(g, x, y, R) {                // un petit soleil à lunette
 }
 function drawHeader(g) {
   const w = world(), tot = S.Levels.worldStars(w), max = w.levels.length * 3;
-  const x = safe.l + 16, y = safe.t + 22, fs = clamp(Lt.U * 0.05, 15, 23);
-  const hx = safe.l + 6, hy = safe.t + 4, hw = S.W - safe.l - safe.r - 80, hh = MAP.area.head - safe.t - 12;
+  const x = safe.l + S.pillX + 16, y = safe.t + 22, fs = clamp(Lt.U * 0.05, 15, 23);
+  const hx = safe.l + S.pillX + 6, hy = safe.t + 4, hw = S.W - safe.l - S.pillX - safe.r - 80, hh = MAP.area.head - safe.t - 12;
   g.fillStyle = NAVY; rrp(g, hx, hy + 5, hw, hh, 20); g.fill();               // panneau bleu, tranche en bas
   const grd = g.createLinearGradient(0, hy, 0, hy + hh);
   grd.addColorStop(0, '#5965FF'); grd.addColorStop(1, '#2F3BD6');

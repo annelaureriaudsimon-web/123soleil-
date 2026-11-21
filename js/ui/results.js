@@ -23,7 +23,7 @@ function showLevelFail(info) {
   el.className = 'lvcard fail';
   el.innerHTML = `<div class="why">${esc(info.why)}</div><div class="almost">${esc(info.almost)}</div>`
     + (info.tip ? `<div class="tipx">${esc(info.tip)}</div>` : '')
-    + `<div class="tap">👆 ${esc(L.failTap)}</div>`
+    + `<div class="tap">${S.touchUI ? '👆 ' : ''}${esc(S.forDevice(L.failTap, L.keyRetry))}</div>`
     + `<div class="btns"><button class="btn sm c-white" type="button" data-act="map">${icon('grid')}${esc(L.mapBtn)}</button></div>`;
   el.classList.add('show');
   later(() => el.classList.add('armed'), 0.25);

@@ -1,6 +1,6 @@
 /* js/audio/music.js — Musique 8-bit du boss et petits jingles du mode Niveaux, générés en Web Audio (aucun fichier).
    La musique passe par sa propre « prise » de volume (baissée pendant le chant, pour bien entendre les mots)
-   et respecte le bouton 🔊 (Sound.muted). */
+   et respecte le bouton 🔊 (Sound.muted) et les silences du jeu : pub, pause, onglet caché (Sound.quiet). */
 (function (S) {
 'use strict';
 const { Sound } = S;
@@ -67,7 +67,7 @@ const Music = {
   },
   tick() {                            // appelée à chaque image : programme les prochaines notes
     if (!this.on || !Sound.ctx) return;
-    if (Sound.muted) { this.next = Sound.ctx.currentTime + 0.1; return; }
+    if (Sound.quiet) { this.next = Sound.ctx.currentTime + 0.1; return; }
     const T = this.T || TRACKS.cool, st = 60 / T.bpm / 2;   // une croche
     if (this.next < Sound.ctx.currentTime - 0.1) this.next = Sound.ctx.currentTime + 0.05;   // retour d'arrière-plan : pas de rafale de notes
     while (this.next < Sound.ctx.currentTime + AHEAD) {
@@ -114,7 +114,7 @@ Object.assign(Sound, {
   zip() { this.tone(600, 0.12, 'square', 0.07, 1400); },
   buzz(on) {                                        // la mouche : un bourdonnement qui tourne en boucle
     if (!this.ctx) return;
-    if (on && !this.fly && !this.muted) {
+    if (on && !this.fly && !this.quiet) {
       const o = this.ctx.createOscillator(), l = this.ctx.createOscillator(), lg = this.ctx.createGain(), g = this.ctx.createGain();
       o.type = 'sawtooth'; o.frequency.value = 210; l.frequency.value = 17; lg.gain.value = 40;
       l.connect(lg); lg.connect(o.frequency); g.gain.value = 0.0001; g.gain.setTargetAtTime(0.025, this.ctx.currentTime, 0.05);

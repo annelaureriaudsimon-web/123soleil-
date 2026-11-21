@@ -33,11 +33,13 @@ window.LVBOT = (mode, frames, stopAt) => {
 """
 async def new_page(b, locale='fr-FR', w=390, h=844):
     ctx = await b.new_context(viewport={'width': w, 'height': h}, device_scale_factor=1, locale=locale, has_touch=True)
+    await ctx.route('**/poki-sdk.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body='window.PokiSDKfailed = true;'))   # pas de SDK : mode de secours (v2.2)
+    await ctx.add_init_script("localStorage.setItem('soleil.onboard', '3')")   # joueur qui revient : pas de premiers pas (test_poki.py les teste)
     page = await ctx.new_page()
     page.errs = []
     page.on('pageerror', lambda e: page.errs.append(str(e)))
     page.on('console', lambda m: page.errs.append(m.text) if m.type == 'error' else None)
-    await page.goto(URL); await page.wait_for_timeout(300)
+    await page.goto(URL); await page.wait_for_function("Soleil.Poki && Soleil.Poki.loaded"); await page.wait_for_timeout(100)
     await page.evaluate(FAST)
     return ctx, page
 ERRS = []
@@ -52,7 +54,9 @@ async def t_flow(b):
     intro = await page.evaluate("[Soleil.Levels.phase, document.getElementById('lvIntro').classList.contains('show'), document.getElementById('lvIntro').innerText]")
     check('carte d’intro : nom, objectif, défi', intro[0] == 'intro' and intro[1] and 'Premiers pas' in intro[2] and 'top 2' in intro[2] and 'piège' in intro[2], intro[2].replace('\n', ' / ')[:90])
     await page.wait_for_timeout(2100)
-    check('l’intro se passe toute seule en 1 à 2 s', await page.evaluate("Soleil.Levels.phase") == 'play')
+    ph = await page.evaluate("Soleil.Levels.phase")
+    await page.keyboard.press('Space'); await page.wait_for_timeout(50)
+    check('l’intro attend un appui (v2.2 : gameplayStart à l’appui), puis la partie démarre', ph == 'intro' and await page.evaluate("Soleil.Levels.phase") == 'play')
     f = await page.evaluate("LVBOT('good', 60 * 90, () => Soleil.Levels.phase === 'results')")
     r = await page.evaluate("({ ph: Soleil.Levels.phase, t: Soleil.Levels.m.result && Soleil.Levels.m.result.time, win: Soleil.Levels.m.result && Soleil.Levels.m.result.win, txt: document.getElementById('lvEnd').innerText, sv: Soleil.store.get('levels', {}) })")
     check('le robot prudent finit le niveau 1 et voit les résultats', r['ph'] == 'results' and r['win'], f"{r['t']:.1f} s" if r['t'] else r['ph'])
@@ -66,9 +70,9 @@ async def t_flow(b):
     ERRS.extend(page.errs); await ctx.close()
 
 async def t_fail(b):
-    print('\n2) Défaite : raison exacte, « presque », relance en moins d’une seconde')
+    print('\n2) Défaite : raison exacte, « presque », relance en moins d’une seconde (niveau 2 : le niveau 1 est en douceur depuis la v2.2)')
     ctx, page = await new_page(b)
-    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-1', false)")
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-2', false)")
     await page.evaluate("LVBOT('greedy', 60 * 30, () => Soleil.Levels.phase === 'fail')")
     r = await page.evaluate("({ ph: Soleil.Levels.phase, txt: document.getElementById('lvFail').innerText, why: Soleil.Levels.m.result.why })")
     check('grillé en courant tout le temps → carte de défaite', r['ph'] == 'fail', r['why'])
@@ -196,15 +200,15 @@ async def t_boss(b):
 async def t_english(b):
     print('\n9) Anglais, paysage, petit écran')
     ctx, page = await new_page(b, 'en-US', 844, 390)
-    t = await page.evaluate("document.getElementById('lvBtn').innerText")
-    check('accueil en anglais : LEVELS', 'LEVELS' in t, t.replace('\n', ' / '))
+    t = await page.evaluate("document.getElementById('contBtn').innerText + ' / ' + document.getElementById('lvBtn').innerText")
+    check('accueil en anglais : PLAY, Levels', 'PLAY' in t and 'Levels' in t and 'Level 1' in t, t.replace('\n', ' / '))
     await page.click('#lvBtn'); await page.wait_for_timeout(150)
     await page.evaluate("Soleil.Levels.open('w1-4', false)")
     t = await page.evaluate("document.getElementById('lvIntro').innerText")
     check('carte d’intro en anglais, sans « undefined »', 'Beat Max' in t and 'undefined' not in t, t.replace('\n', ' / ')[:100])
     await page.evaluate("LVBOT('greedy', 60 * 30, () => Soleil.Levels.phase === 'fail')")
     t = await page.evaluate("document.getElementById('lvFail').innerText")
-    check('carte de défaite en anglais', 'Tap to try again' in t and 'undefined' not in t, t.replace('\n', ' / ')[:100])
+    check('carte de défaite en anglais', ('Tap to try again' in t or 'Click or Space to try again' in t) and 'undefined' not in t, t.replace('\n', ' / ')[:100])
     ctx2, page2 = await new_page(b, 'fr-FR', 320, 568)
     await page2.click('#lvBtn'); await page2.wait_for_timeout(150)
     ok = await page2.evaluate("Soleil.WorldMap.nodes.every(n => n.x - n.r >= 0 && n.x + n.r <= innerWidth && n.y + n.r * 1.5 <= innerHeight && n.y - n.r > 100)")

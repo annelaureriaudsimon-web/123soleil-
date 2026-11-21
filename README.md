@@ -1,4 +1,4 @@
-# 1, 2, 3… SOLEIL ! — v2.1
+# 1, 2, 3… SOLEIL ! — v2.2
 
 Maintiens pour courir vers le soleil, et lâche avant qu'il se retourne. S'il te voit bouger, tu es **GRILLÉ**.
 
@@ -10,11 +10,14 @@ Le jeu se joue en **niveaux**, avec d'autres enfants qui courent contre toi :
 
 La course infinie, le défi du jour, le mode 2 joueurs, le casier, les tenues, les rangs et le fantôme sont toujours là, depuis l'écran d'accueil.
 
+**Prêt pour Poki** (v2.2) : SDK Poki branché, vraie pause, premiers pas sans menu (on joue en moins de 3 secondes), et un build Poki vérifié automatiquement. Voir `docs/POKI_INTEGRATION.md`.
+
 ## Jouer
 
-- **Ouvrir :** double-clique sur `index.html`. Ça marche sans Internet et sans serveur : tout est dessiné et joué dans le navigateur, sans aucune image, police ou librairie téléchargée.
-- **Téléphone :** maintiens le doigt sur l'écran pour courir, lâche pour t'arrêter.
-- **PC :** maintiens Espace (ou ↑, W, Entrée), ou le clic. Sur la carte : ← → et Entrée. Échap : retour. M : son.
+- **Ouvrir :** double-clique sur `index.html`. Ça marche sans Internet et sans serveur : tout est dessiné et joué dans le navigateur, sans aucune image, police ou librairie téléchargée. Le seul fichier externe est le SDK Poki : sans lui (hors ligne, bloqueur de pub), le jeu marche pareil.
+- **Téléphone :** maintiens le doigt sur l'écran pour courir, lâche pour t'arrêter. Pause : ⏸ en haut à droite.
+- **PC :** maintiens Espace (ou ↑, W, Entrée), ou le clic. Sur la carte : ← → et Entrée. Pendant une partie, **Échap ou P : pause**. Ailleurs, Échap : retour. M : son.
+- **Mode debug :** `index.html?debug=1` affiche chaque événement envoyé à Poki ; `index.html?debug=1&fakead=1` simule une pub de 2 secondes.
 - **Les étoiles d'un niveau :**
   - ★ finir ;
   - ★★ l'objectif ;
@@ -28,13 +31,14 @@ La course infinie, le défi du jour, le mode 2 joueurs, le casier, les tenues, l
 index.html        la page : charge les scripts dans l'ordre
 css/style.css     styles des boutons, cartes et écrans
 js/core/          réglages, textes FR/EN, outils, hasard avec graine, sauvegarde, contrôles
+js/platform/      Poki : la couche SDK (poki.js), le fil du jeu et les pauses pub (flow.js), le mode debug (debug.js, dev seulement)
 js/audio/         sons 8-bit, voix (course infinie), musiques des boss
 js/game/          logique sans affichage : chant, soleil, coureur, physique, rivaux, moteur d'un niveau (match.js)
-js/render/        dessin : ciel, soleil, sol, coureurs, rivaux, décor de la cour et du parc, tentations, HUD
+js/render/        dessin : ciel, soleil, sol, coureurs, rivaux, décor de la cour et du parc, tentations, HUD, main du tutoriel
 js/modes/         course infinie, défi du jour, 2 joueurs, niveaux
-js/ui/            accueil, carte du monde, intro, résultats, casier, partage, icônes (SVG)
+js/ui/            accueil, premiers pas, carte du monde, intro, résultats, pause, casier, partage, icônes (SVG)
 levels/           les mondes et leurs niveaux (données)
-tools/            simulation (simulate.js) et tests automatiques
+tools/            simulation (simulate.js), build Poki (build-poki.js) et tests automatiques
 docs/             design des mondes 1 et 2, résultats de la simulation, tests, notes pour la suite
 ```
 
@@ -56,6 +60,14 @@ node tools/simulate.js --md docs/LEVELS.md     # réécrit le tableau des résul
 ```
 
 Elle fait tourner le **même code** que le navigateur (moteur, chant, physique, rivaux, niveaux), sans affichage. Elle vérifie les objectifs de difficulté. Elle a besoin de Node.js, qui est gratuit.
+
+## Le build Poki
+
+```
+node tools/build-poki.js
+```
+
+Il fabrique `dist/poki/` (`index.html`, un seul `game.js`, `style.css`) et `dist/soleil-poki.zip`, le fichier à envoyer à Poki, sans le mode debug ni les outils. Puis il vérifie tout et affiche un rapport : il doit finir par « TOUT EST OK ». Il a seulement besoin de Node.js (gratuit), sans rien installer d'autre. Ensuite, teste le ZIP dans le Poki Inspector (liste pas à pas dans `docs/POKI_INTEGRATION.md`).
 
 ## Mettre le jeu en ligne gratuitement
 

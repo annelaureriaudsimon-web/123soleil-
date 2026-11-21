@@ -15,6 +15,7 @@ function resize() {
   S.DPR = Math.min(window.devicePixelRatio || 1, 2);
   S.W = Math.max(1, window.innerWidth); S.H = Math.max(1, window.innerHeight);
   cv.width = Math.round(S.W * S.DPR); cv.height = Math.round(S.H * S.DPR);
+  S.dirty = true;                                                 // jeu figé (pause, pub) : on le redessine à la nouvelle taille
   const land = S.W > S.H * 1.05;
   Lt.U = Math.min(S.W, S.H); Lt.land = land; Lt.cx = S.W / 2;
   Lt.hy = Math.round(S.H * (land ? 0.47 : 0.43));                 // ligne d'horizon

@@ -36,7 +36,7 @@ const Voice = {
     try { speechSynthesis.addEventListener('voiceschanged', pick); } catch (e) { speechSynthesis.onvoiceschanged = pick; }
   },
   ready() { return this.ok && !!this.voice && !this.broken; },
-  active() { return this.pref && this.unlocked && this.ready() && !Sound.muted; },
+  active() { return this.pref && this.unlocked && this.ready() && !Sound.quiet; },
   unlock() {                                     // au premier appui du joueur
     if (this.unlocked || !this.ready()) return;
     this.unlocked = true;

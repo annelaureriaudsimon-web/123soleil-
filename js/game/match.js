@@ -27,6 +27,9 @@ const TEMPT = {
 };
 const TEMPT_ORDER = ['star', 'fakeRet', 'sneeze', 'taunt', 'fly', 'crack'];   // ordre fixe des dés (ne pas changer)
 const CRACK_RANGE = [-1, 30];  // rival qui craque : entre 1 m derrière toi et 30 m devant
+// Niveau « en douceur » (champ « soft » d'un niveau, le niveau 1) : vu en train de bouger, tu n'es pas grillé,
+// tu recules de soft.back mètres (« OUPS ! ») en KNOCK s, puis il faut lâcher avant de repartir.
+const KNOCK = 0.5;
 
 // Réglages du soleil par défaut (chaque niveau peut les changer dans levels/*.js, champ « sun »)
 const SUN_BASE = {
@@ -85,7 +88,7 @@ function create(def, attempt, opts = {}) {
         { idx: i, def: rd, kind: rd.kind, name: rd.name, brain, resp: 0, burnT: 9, grills: 0, anim: '', forced: false });
     }),
     finishers: [],
-    stats: { oufs: 0, combo: 0, comboMax: 0, trapsFell: 0, trapsAvoided: 0, looks: 0, cycles: 0, resisted: 0, quick: 0 },
+    stats: { oufs: 0, combo: 0, comboMax: 0, trapsFell: 0, trapsAvoided: 0, looks: 0, cycles: 0, resisted: 0, quick: 0, oops: 0 },
     look: null, quickT: -1          // tentations du regard en cours ; instant du dernier vrai « ding »
   };
   if (opts.playerBrain) m.player.brain = newBrain(opts.playerBrain, mulberry32(mixSeed(seed, 999)), opts.brainOver, opts.brainSeen);
@@ -168,7 +171,9 @@ function step(m, dt, input) {
   if (!m.started) { m.started = true; feed(m, 'start'); }
   m.t += dt;
   const pl = m.player;
-  move(m, pl, pl.brain ? brainTick(pl.brain, m.t, soLong(m)) : !!input, dt);
+  const press = pl.brain ? brainTick(pl.brain, m.t, soLong(m)) : !!input;
+  if (pl.knock) knockStep(pl, dt);                 // niveau en douceur : il recule après un « OUPS ! »
+  else move(m, pl, unlocked(pl, press), dt);
   if (pl.z >= m.level.length) { win(m); return; }   // ligne franchie : gagné, même s'il finit de se retourner
   if (m.quickT >= 0 && pl.press) {                 // départ éclair : reparti juste après le vrai « ding »
     if (m.t - m.quickT <= QUICK) { m.stats.quick++; emit(m, 'quick', { n: m.stats.quick }); }
@@ -177,6 +182,30 @@ function step(m, dt, input) {
   trackTrap(m);
   for (const r of m.rivals) stepRival(m, r, dt);
   stepSun(m, dt);
+}
+
+// Niveau en douceur : après un « OUPS ! », il faut d'abord lâcher pour repartir
+function unlocked(pl, press) {
+  if (pl.lock) { if (!press) pl.lock = false; return false; }
+  return press;
+}
+function knockStep(pl, dt) {                       // le recul : rapide au début, puis il s'arrête (immobile pour le soleil)
+  const k = pl.knock;
+  k.t += dt;
+  const u = Math.min(1, k.t / KNOCK);
+  pl.z = k.from + (k.to - k.from) * (1 - (1 - u) * (1 - u));
+  pl.v = 0; pl.phase -= dt * 9;
+  if (u >= 1) pl.knock = null;
+}
+// Le soleil te voit bouger : grillé… sauf dans un niveau en douceur (« OUPS ! », tu recules et tu continues)
+function seen(m, why, val) {
+  if (!m.level.soft) { lose(m, why, val); return; }
+  const pl = m.player, back = m.level.soft.back || 6;
+  m.stats.oops++; m.stats.combo = 0;
+  pl.knock = { from: pl.z, to: Math.max(0, pl.z - back), t: 0 };
+  pl.v = 0; pl.press = false; pl.stopT = m.t; pl.lock = true;
+  if (pl.brain) brainReset(pl.brain, m.t, safeToRun(m));   // simulation : le cerveau repart quand c'est sûr
+  emit(m, 'oops', { why, val, back: pl.knock.from - pl.knock.to });
 }
 
 function stepRival(m, r, dt) {
@@ -217,7 +246,7 @@ function stepSun(m, dt) {
       break;
     case 'look':
       if (m.look && !w.second) lookTimeline(m);
-      if (m.player.v > V_EPS) { lose(m, w.second ? 'hop' : 'early', w.lookDur - w.t); return; }   // reparti trop tôt
+      if (m.player.v > V_EPS) { seen(m, w.second ? 'hop' : 'early', w.lookDur - w.t); return; }   // reparti trop tôt
       for (const r of m.rivals) if (r.state === 'race' && r.v > V_EPS) grillRival(m, r, 'early');
       if (w.t >= w.lookDur) {
         w.turnP = 1; w.shut = 0;
@@ -235,7 +264,7 @@ function stepSun(m, dt) {
       if (w.t >= HOP_DUR) {
         w.turnP = 1; w.state = 'look'; w.t = 0; w.second = true; w.lookDur = m.cc.look2;
         for (const r of m.rivals) if (r.state === 'race' && r.v > V_EPS) grillRival(m, r, 'hop');
-        if (m.player.v > V_EPS) { lose(m, 'hop', w.lookDur); return; }
+        if (m.player.v > V_EPS) { seen(m, 'hop', w.lookDur); return; }
         emit(m, 'look2');
       }
       break;
@@ -332,8 +361,8 @@ function lookStart(m) {
   } else m.look = null;
   for (const r of m.rivals) if (r.state === 'race' && r.v > V_EPS) grillRival(m, r, r.press ? 'running' : 'late');
   if (pl.v > V_EPS) {
-    if (pl.press) lose(m, 'running', w.turnDur);   // tu courais encore « turnDur » s après SOLEIL
-    else lose(m, 'late', pl.v / pl.dec);           // temps qu'il te restait pour t'arrêter
+    if (pl.press) seen(m, 'running', w.turnDur);   // tu courais encore « turnDur » s après SOLEIL
+    else seen(m, 'late', pl.v / pl.dec);           // temps qu'il te restait pour t'arrêter
     return;
   }
   const since = pl.v > 0 ? 0 : m.t - pl.stopT;
@@ -393,5 +422,5 @@ function goalMet(g, res) {
 }
 const starsOf = (L, res) => [!!res.win, goalMet(L.goal, res), goalMet(L.challenge, res)];
 
-S.Match = { create, step, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET };
+S.Match = { create, step, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET, KNOCK };
 })(window.Soleil);

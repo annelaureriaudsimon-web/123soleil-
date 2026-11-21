@@ -55,10 +55,11 @@ function subMsg(R) {                                 // la phrase « presque » 
   return '';
 }
 function placeOver() {
-  const h = over.offsetHeight || 230;
+  const h = over.offsetHeight || 230, w = over.offsetWidth || 260;
   let top;
-  if (Lt.land && S.W > S.H * 1.2) { over.style.left = '76%'; top = (S.H - h) / 2; }
-  else { over.style.left = '50%'; top = Lt.sunY + Lt.R * 0.78; }
+  if (Lt.land && S.W > S.H * 1.2) {                // paysage : à droite du soleil, sans jamais dépasser du bord (640×360 sur Poki)
+    over.style.left = Math.round(Math.min(S.W * 0.76, S.W - safe.r - w / 2 - 8)) + 'px'; top = (S.H - h) / 2;
+  } else { over.style.left = '50%'; top = Lt.sunY + Lt.R * 0.78; }
   over.style.top = Math.round(clamp(top, safe.t + 64, S.H - h - 70 - safe.b)) + 'px';
 }
 S.armTimer = 0;

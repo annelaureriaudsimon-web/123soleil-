@@ -1,7 +1,7 @@
 /* js/render/hud.js — Chant à l’écran, bannières, HUD de la course infinie, titre */
 (function (S) {
 'use strict';
-const { FONT, INK, L, clamp, finePointer, Lt, safe, ghostZ, drawGhostIcon, drawStar, fit, otext, otextC, rrp } = S;   // déjà chargés
+const { FONT, INK, L, clamp, Lt, safe, ghostZ, drawGhostIcon, drawStar, fit, otext, otextC, rrp } = S;   // déjà chargés
 
 function drawChant() {                               // « 1… 2… 3… SO… SOLEIL ! »
   const w = S.watcher;
@@ -64,7 +64,7 @@ function drawBanner(title, sub, sub2, t, life, col) {
 }
 
 function drawHUD() {
-  const x = 14 + safe.l, y = 12 + safe.t, fs = Math.min(Lt.U * 0.09, 52);
+  const x = 14 + safe.l + S.pillX, y = 12 + safe.t, fs = Math.min(Lt.U * 0.09, 52);   // pillX : la pilule Poki
   const shown = S.state === 'play' || !S.lastRun ? Math.floor(S.runner.z) : S.lastRun.dist;   // la glissade après « GRILLÉ » ne compte pas
   S.ctx.textAlign = 'left'; S.ctx.textBaseline = 'top';
   otext(`${shown} m`, x, y, fs, '#FFFFFF');
@@ -99,10 +99,11 @@ function drawHUD() {
       otext(`✨${S.RS.catches}`, rx, cy2, ss * 0.9, '#FFF3B0');
     }
   }
-  if (S.tutorial && S.state === 'play' && S.cycleN <= 1) {
-    S.ctx.textAlign = 'center'; S.ctx.textBaseline = 'middle';
-    const hs = fit(L.playHint, Math.min(Lt.U * 0.045, 20), S.W * 0.9);
-    otext(L.playHint, Lt.cx, Math.min(S.H - 20 - safe.b, Lt.yFeet + Lt.s * 0.45), hs, '#FFFFFF');
+  if (S.tutorial && S.state === 'play' && S.cycleN <= 1) {   // 1re course : le geste dessiné (main ou touche Espace) et un mot
+    const w = S.watcher;
+    const stop = (w.state === 'chant' && (w.textKind === 'so' || w.textKind === 'trigger')) || w.state === 'turn' || w.state === 'look';   // « SO… » : on lâche
+    S.drawTut(stop ? 'release' : 'hold');
+    S.drawTutWord(stop ? L.letGo : L.holdWord, stop ? '#FF8FA3' : '#FFD166');
   }
 }
 
@@ -159,7 +160,7 @@ function drawTitle() {                     // le titre se cale au-dessus des bou
 
 function drawReplayHint() {
   if (S.state !== 'over' || S.gtime - S.overT < 0.3 || S.panelOpen) return;
-  const txt = S.mode === 'daily' ? L.replayHome : finePointer() ? L.replayKey : L.replayTouch;   // après le défi : retour à l'accueil
+  const txt = S.mode === 'daily' ? S.forDevice(L.replayHome, L.keyHome) : S.forDevice(L.replayTouch, L.replayKey);   // après le défi : retour à l'accueil
   const size = fit(txt, Math.min(Lt.U * 0.05, 22), S.W * 0.9), k = 1 + 0.05 * Math.sin(S.gtime * 6);
   S.ctx.save(); S.ctx.translate(Lt.cx, S.H - safe.b - size * 1.4); S.ctx.scale(k, k);
   S.ctx.textAlign = 'center'; S.ctx.textBaseline = 'middle';

@@ -30,10 +30,11 @@ S.addWorld(1, [
     rivals: [kid('leo'), kid('zoe')],
     sun: { word: [0.62, 0.72], turn: [0.6, 0.66], look: [1.2, 1.7], pause: [0.6, 1.0] },
     script: { 1: { turn: 1.0, look: 1.4 }, 2: { traps: 1 } },          // 1er regard très lent ; mot piège forcé au cycle 2
-    hints: [
-      { on: 'start', text: T('MAINTIENS pour courir 👆', 'HOLD to run 👆'), until: 'press' },
-      { on: 'so', cycle: 1, text: T('LÂCHE !', 'LET GO!'), pop: true },
-      { on: 'return', cycle: 1, text: T('Il se remet de dos : REPARS !', 'He turned back: RUN!'), pop: true },
+    soft: { back: 6 },                                                    // départ en douceur : vu en train de bouger → « OUPS ! », 6 m en arrière
+    hints: [                                                              // tutoriel visuel : une main (ou la touche Espace) et un mot
+      { on: 'start', text: T('MAINTIENS', 'HOLD'), hand: 'hold', until: 'press' },
+      { on: 'so', cycle: 1, text: T('LÂCHE !', 'LET GO!'), hand: 'release' },
+      { on: 'return', cycle: 1, text: T('REPARS !', 'GO!'), hand: 'hold', until: 'press' },
       { on: 'reveal', cycle: 2, banner: 'trap' },
       { on: 'near', text: T('Touche le soleil ! ☀️', 'Touch the sun! ☀️'), pop: true }
     ],

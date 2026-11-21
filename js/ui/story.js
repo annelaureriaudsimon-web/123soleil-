@@ -55,17 +55,15 @@ function renderStory() {                           // la scène de ta défaite, 
     const dist = `${R.dist} m`;
     otext(dist, 540, 1262, fit(dist, 220, 1000), '#FFFFFF');
     // panneau : grille par phases, comment tu t'es fait griller, rang
-    const lines = phaseLines(R.events, 4), how = howLine(R), rank = rankShareLine(R);
-    const link = /^https?:$/.test(location.protocol) ? (location.host + location.pathname).replace(/\/$/, '') : '';
+    const lines = phaseLines(R.events, 4), how = howLine(R), rank = rankShareLine(R);   // pas d'adresse de page sur l'image
     const lh = 74, panelH = 34 + lines.length * lh + 66 + 62 + 24;
-    const totalH = panelH + (link ? 66 : 0), top = 1385 + Math.max(0, (1905 - 1385 - totalH) / 2);
+    const top = 1385 + Math.max(0, (1905 - 1385 - panelH) / 2);
     rrp(S.ctx, 60, top, 960, panelH, 46);
     S.ctx.fillStyle = 'rgba(43,45,66,0.88)'; S.ctx.fill(); S.ctx.lineWidth = 6; S.ctx.strokeStyle = INK; S.ctx.stroke();
     let y = top + 34 + lh / 2;
     for (const t of lines) { plainText(t, 540, y, 60, 900, '#FFFFFF', 400); y += lh; }
     y += 28; plainText(how, 540, y, 44, 900, '#FFD166', 800);
     y += 62; plainText(rank, 540, y, 46, 900, '#FFFFFF', 800);
-    if (link) otext(link, 540, top + panelH + 44, fit(link, 38, 980), '#FFFFFF');
   } finally {                                        // on remet tout comme avant pour le jeu
     S.ctx = keep.ctx; S.W = keep.W; S.H = keep.H; S.DPR = keep.DPR;
     Object.assign(Lt, keep.Lt); Object.assign(safe, keep.safe);

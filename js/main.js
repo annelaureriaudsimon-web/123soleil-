@@ -3,7 +3,7 @@
 'use strict';
 const { SLOPE_TILT, STAR_R, store, computePalette, audioOK, Sound, Voice, resize, viewZ, anyMoving, patchAt,
   updateWatcher, updateRunner, catchStar, updateCaught, updateProgress, updateTrapWatch, updateParticles, render,
-  refreshMute, refreshUI, tickHome, updateDuo } = S;   // déjà chargés
+  refreshMute, tickHome, updateDuo } = S;   // déjà chargés
 
 /* ---------- 18. Boucle de mise à jour ---------- */
 function update(dt) {
@@ -77,15 +77,21 @@ function frame(now) {
   S.last = now;
   if (!(dt > 0)) dt = 0;
   if (dt > 0.05) dt = 0.05;                         // évite les sauts après un ralentissement
-  update(dt);
-  render();
+  if (S.halted()) {                                 // pause ou pub : le monde est figé (on redessine seulement si l'écran a changé)
+    if (S.dirty) { S.dirty = false; render(); }
+  } else if (S.grace > 0) {                         // reprise : 1 s de grâce, le monde reste figé, l'anneau se remplit
+    S.grace = Math.max(0, S.grace - dt);
+    render();
+  } else { update(dt); render(); }
+  S.syncGameplay();                                 // gameplayStart / gameplayStop si « en jeu » a changé
+  S.syncButtons();
   requestAnimationFrame(frame);
 }
 resize();
 computePalette(0);
 Voice.init();
 refreshMute();
-refreshUI();
+S.boot();                                           // le titre tout de suite, pendant que le SDK Poki s'initialise
 requestAnimationFrame(frame);
 
 

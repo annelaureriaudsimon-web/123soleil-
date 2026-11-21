@@ -120,12 +120,22 @@ La clé est le numéro du cycle (1 = le premier chant). Valeurs possibles :
 
 Chaque indication s'affiche une fois par essai :
 - `{ on: 'start', text: T(…), until: 'press' }` : le texte reste tant que le joueur n'a pas maintenu ;
+- `{ on: 'so', cycle: 1, text: T('LÂCHE !', 'LET GO!'), hand: 'release' }` : consigne **dessinée** (v2.2) : une main qui
+  lève le doigt (téléphone, tablette) ou la touche Espace qui remonte (clavier), avec un mot au-dessus du coureur.
+  `hand: 'hold'` montre le doigt qui appuie. Elle disparaît quand le geste est fait (`until: 'press'` : dès qu'on
+  appuie ; par défaut, dès qu'on a fait le geste montré), ou au bout de 2,4 s ;
 - `{ on: 'so', cycle: 1, text: T('LÂCHE !', 'LET GO!'), pop: true }` : petit texte au moment du « SO » du cycle 1.
   - Les autres moments possibles sont `trigger`, `reveal` (mot piège démasqué), `return` (il se remet de dos) et `near` (à 15 m de l'arrivée).
 - `{ on: 'reveal', cycle: 2, banner: 'trap' }` : bannière.
   - Bannières disponibles : `trap`, `hes`, `stutter`, `express`, `mud`.
   - `{ on: 'hes' | 'stutter' | 'express' | 'mud', banner: … }` affiche la bannière la première fois que la mécanique apparaît.
 - Les tentations et le faux dos ont leur propre indication, affichée une seule fois dans tout le jeu (la toute première rencontre) : rien à écrire dans `hints`.
+
+## Niveau en douceur (`soft`)
+
+`soft: { back: 6 }` (le niveau 1) : si le soleil te voit bouger, tu n'es pas grillé. « OUPS ! » : tu recules de
+`back` mètres en faisant la toupie, le soleil rigole, et la main montre « LÂCHE ! ». Il faut lâcher pour repartir.
+Le moteur (`game/match.js`) le gère : la simulation en tient donc compte toute seule.
 
 ## Les rivaux
 

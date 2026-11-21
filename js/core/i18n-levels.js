@@ -9,10 +9,8 @@ const ordEn = n => `${n}${n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !=
 
 Object.assign(TXT.fr, {
   ord: ordFr,
-  levelsBtn: 'NIVEAUX', levelsHint: (n, t, w) => `★ ${n}/${t} · ${w}`,
-  endlessBtn: 'Course infinie',
   worldN: n => `Monde ${n}`, soon: 'Bientôt', soonToast: 'Ce monde arrive bientôt ! 🔒', lockedToast: 'Finis le niveau d’avant pour le débloquer 🔒',
-  mapHint: 'Touche un niveau pour jouer', levelN: n => `Niveau ${n}`, bossTag: 'BOSS',
+  levelN: n => `Niveau ${n}`, bossTag: 'BOSS',
   goalDone: 'Finis le niveau',
   goal: (g, who) => g.type === 'top' ? `Arrive dans le top ${g.n}` : g.type === 'first' ? 'Arrive 1er'
     : g.type === 'oufs' ? `Fais ${g.n} OUF` : g.type === 'combo' ? `Fais un combo OUF ×${g.n}`
@@ -55,10 +53,8 @@ Object.assign(TXT.fr, {
 
 Object.assign(TXT.en, {
   ord: ordEn,
-  levelsBtn: 'LEVELS', levelsHint: (n, t, w) => `★ ${n}/${t} · ${w}`,
-  endlessBtn: 'Endless run',
   worldN: n => `World ${n}`, soon: 'Soon', soonToast: 'This world is coming soon! 🔒', lockedToast: 'Finish the previous level to unlock it 🔒',
-  mapHint: 'Tap a level to play', levelN: n => `Level ${n}`, bossTag: 'BOSS',
+  levelN: n => `Level ${n}`, bossTag: 'BOSS',
   goalDone: 'Finish the level',
   goal: (g, who) => g.type === 'top' ? `Finish in the top ${g.n}` : g.type === 'first' ? 'Finish 1st'
     : g.type === 'oufs' ? `Get ${g.n} PHEWs` : g.type === 'combo' ? `Get a ×${g.n} PHEW combo`

@@ -1,4 +1,5 @@
-/* js/ui/levelintro.js — Carte d'intro d'un niveau (1 à 2 s, passable d'un tap) : nom, idée, objectif et défi, rivaux.
+/* js/ui/levelintro.js — Carte d'intro d'un niveau (elle attend un appui : c'est lui qui lance la partie) :
+   nom, idée, objectif et défi, rivaux. « mini » : nom et idée seulement (les premiers pas).
    Les cartes du mode Niveaux sont créées ici en HTML (index.html n'a rien à prévoir). */
 (function (S) {
 'use strict';
@@ -13,10 +14,10 @@ function lvCard(id) {
 const goalText = (lv, g) => (g ? L.goal(g, ((lv.rivals || []).find(r => r.id === g.who) || {}).name || '') : '');
 const starRow = (got, n) => Array.from({ length: n }, (_, i) => `<span class="${got[i] ? 'on' : ''}">★</span>`).join('');
 
-function showLevelIntro(lv) {
+function showLevelIntro(lv, mini) {
   const el = lvCard('lvIntro'), rec = S.Levels.peek(lv.id);
   const rivals = (lv.rivals || []).map(r => `<span class="kid"><b style="color:${S.KIND_COL[r.kind]}">${(PROFILES[r.kind] || {}).emoji || ''}</b> ${esc(r.name)}</span>`).join('');
-  el.className = 'lvcard intro' + (lv.boss ? ' boss' : '');
+  el.className = 'lvcard intro' + (lv.boss ? ' boss' : '') + (mini ? ' mini' : '');
   el.innerHTML =
     `<div class="lvl">${esc(lv.boss ? L.bossTag + ' · ' + L.levelN(lv.num) : L.levelN(lv.num))}</div>`
     + `<div class="ttl">${lv.emoji} ${esc(tr(lv.name))}</div>`
@@ -24,7 +25,7 @@ function showLevelIntro(lv) {
     + `<div class="goals"><div class="${rec.s[1] ? 'got' : ''}"><b>★★</b> ${esc(goalText(lv, lv.goal))}</div>`
     + `<div class="${rec.s[2] ? 'got' : ''}"><b>★★★</b> ${esc(goalText(lv, lv.challenge))}</div></div>`
     + (rivals ? `<div class="kids">${rivals}</div>` : '')
-    + `<div class="tap">${esc(L.tapStart)}</div>`;
+    + `<div class="tap">${esc(S.forDevice(L.tapStart, L.keyStart))}</div>`;
   el.classList.add('show');
 }
 function hideLevelIntro() { const el = document.getElementById('lvIntro'); if (el) el.classList.remove('show'); }

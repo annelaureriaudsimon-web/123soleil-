@@ -8,7 +8,7 @@ const { L, $, esc, dailyState, DAY, missionsDone, streakAlive, todayNumber, unti
 const hb = (ic, title, hint) => `<span class="bi">${icon(ic)}</span><span class="bt"><b>${esc(title)}</b><small>${esc(hint)}</small></span>`;
 
 function refreshUI() {
-  const showMeta = S.state === 'title';
+  const showMeta = S.state === 'title' && !S.booting;   // pendant le chargement : le titre seul
   const meta = $('meta');
   meta.classList.toggle('hide', !showMeta);
   if (showMeta) {
@@ -26,10 +26,9 @@ function refreshUI() {
   }
   $('home').classList.toggle('hide', !showMeta);
   if (showMeta) { renderHome(); layoutHome(); }
-  $('homeBtn').classList.toggle('hide', !(S.state === 'duo' || S.state === 'map' || S.state === 'level'));
-  $('locker').classList.toggle('hide', !(S.state === 'title' || S.state === 'over' || S.state === 'map'));
-  $('voice').classList.toggle('hide', S.state === 'map' || S.state === 'level');
-  document.body.classList.toggle('st-map', S.state === 'map');   // carte : le casier passe sous le bouton 🏠   // la voix est réservée à la course infinie (monde 1)
+  $('locker').classList.toggle('hide', !(S.state === 'title' || S.state === 'over' || S.state === 'map') || !!S.booting);
+  document.body.classList.toggle('st-map', S.state === 'map');   // carte : le casier passe sous le bouton 🏠
+  if (S.syncButtons) S.syncButtons(true);          // ⏸, 🏠 et 🗣️ (ils changent aussi pendant la partie : js/ui/pause.js)
   const dot = canAfford();
   $('dot1').classList.toggle('hide', !dot); $('dot2').classList.toggle('hide', !dot);
 }
@@ -44,9 +43,10 @@ function renderHome() {
     box.innerHTML = `<div class="dcard"><div class="t">${esc(d.done ? L.dailyDone(DAY, d.dist) : L.dailyLost(DAY))}</div>${grid}`
                   + `<div class="r"><span class="c" id="countdown">${esc(L.nextIn(untilMidnight()))}</span>${again}</div></div>`;
   }
-  const lastWorld = S.WORLDS.filter(w => w.levels.length && S.Levels.worldOpen(w)).pop() || S.WORLDS[0];   // le monde ouvert le plus loin
-  $('lvBtn').innerHTML = hb('play', L.levelsBtn, L.levelsHint(S.Levels.totalStars(), S.Levels.maxStars(), S.tr(lastWorld.name)));   // le mode principal
-  $('freeBtn').innerHTML = hb('infinity', L.endlessBtn, L.freeHint);
+  const cont = S.Onboard.contLevel(), cw = S.WORLDS.find(w => w.id === cont.world) || S.WORLDS[0];   // un appui : on reprend là où on en était
+  $('contBtn').innerHTML = hb('play', S.Onboard.started() ? L.contBtn : L.playBtn, L.contHint(cont.num, S.tr(cw.name)));
+  $('lvBtn').innerHTML = hb('grid', L.levelsShort, `★ ${S.Levels.totalStars()}/${S.Levels.maxStars()}`);   // les autres modes, plus petits
+  $('freeBtn').innerHTML = hb('infinity', L.endlessShort, L.freeHint);
   $('duoBtn').innerHTML = hb('duo', L.duoBtn, L.duoHint);
   $('rules').textContent = L.rules;
 }
@@ -76,7 +76,8 @@ $('home').addEventListener('click', e => {
   const b = e.target.closest ? e.target.closest('button') : null;
   if (!b) return;
   e.stopPropagation(); Sound.unlock(); b.blur();
-  if (b.id === 'lvBtn') S.WorldMap.open();
+  if (b.id === 'contBtn') S.Levels.open(S.Onboard.contLevel().id, false);   // la carte d'intro du niveau, tout de suite
+  else if (b.id === 'lvBtn') S.WorldMap.open();
   else if (b.id === 'dailyBtn') startRun('daily');
   else if (b.id === 'freeBtn') startRun('free');
   else if (b.id === 'duoBtn') S.startDuo();

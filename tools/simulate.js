@@ -24,8 +24,9 @@ const TARGETS = {
   1: { dur: [25, 35], bossDur: 45, boss: [0.15, 0.35] },
   2: { dur: [30, 40], bossDur: 50, boss: [0.10, 0.30] }
 };
-// Résultats du monde 1 à la fin de la phase 1 (300 essais) : ils ne doivent pas bouger (à 3 points près)
-const REF_W1 = { expert: [100, 100, 100, 100, 100, 100, 100, 100], moyen: [100, 99, 92, 88, 76, 63, 50, 32], debutant: [66, 59, 35, 12, 6, 3, 3, 1] };
+// Résultats du monde 1 (300 essais) : ils ne doivent pas bouger (à 3 points près). Fixés à la fin de la phase 1,
+// sauf le niveau 1 depuis la v2.2 : départ en douceur (« OUPS ! » au lieu de « GRILLÉ ! »), le débutant le finit toujours (66 → 100).
+const REF_W1 = { expert: [100, 100, 100, 100, 100, 100, 100, 100], moyen: [100, 99, 92, 88, 76, 63, 50, 32], debutant: [100, 59, 35, 12, 6, 3, 3, 1] };
 // Fichiers du jeu chargés, dans l'ordre de index.html (seulement ceux qui ne touchent pas à l'écran)
 const FILES = ['js/core/config.js', 'js/core/rng.js', 'js/game/content.js', 'js/game/physics.js', 'js/game/chant.js',
   'js/game/rivals.js', 'js/game/match.js', 'levels/worlds.js', 'levels/world1.js', 'levels/world2.js'];
@@ -92,7 +93,8 @@ function run(def, profile) {
     win: wins.length / N, time: mean(wins.map(r => r.time)), place: mean(wins.map(r => r.place)),
     why: top ? `${label(top[0])} (${Math.round(top[1] / fails.length * 100)} %)` : '—',
     s2: wins.filter(r => r.stars[1]).length / N, s3: wins.filter(r => r.stars[2]).length / N,
-    turn: Math.max(...res.map(r => r.firstTurn)), quick: mean(wins.map(r => r.stats.quick)), resisted: mean(wins.map(r => r.stats.resisted))
+    turn: Math.max(...res.map(r => r.firstTurn)), quick: mean(wins.map(r => r.stats.quick)), resisted: mean(wins.map(r => r.stats.resisted)),
+    oops: mean(res.map(r => r.stats.oops || 0))   // niveau en douceur : « OUPS ! » par essai
   };
 }
 
@@ -111,7 +113,8 @@ for (const w of worlds) {
     console.log(`${lv.num}. ${lv.name.fr.padEnd(26)} réussite E ${pct(e.win).padStart(5)} · M ${pct(mo.win).padStart(5)} · D ${pct(d.win).padStart(5)}`
       + ` | durée E ${sec(e.time)} M ${sec(mo.time)} D ${sec(d.time)} | place M ${mo.place.toFixed(2)}`
       + ` | ★★ M ${pct(mo.s2)} ★★★ M ${pct(mo.s3)} E ${pct(e.s3)} | 1er SOLEIL ≤ ${e.turn.toFixed(1)} s`
-      + (w.id > 1 ? ` | résistées M ${mo.resisted.toFixed(1)} · éclairs M ${mo.quick.toFixed(1)}` : '') + ` | défaite M : ${mo.why}`);
+      + (w.id > 1 ? ` | résistées M ${mo.resisted.toFixed(1)} · éclairs M ${mo.quick.toFixed(1)}` : '')
+      + (lv.soft ? ` | OUPS par essai M ${mo.oops.toFixed(1)} · D ${d.oops.toFixed(1)}` : '') + ` | défaite M : ${mo.why}`);
   }
 }
 console.log(`(${N} essais par profil et par niveau, ${((Date.now() - t0) / 1000).toFixed(1)} s)`);
@@ -141,11 +144,14 @@ for (const w of worlds) {
   }
 }
 const r11 = find(1, 1), w1 = rows.filter(r => r.w.id === 1);
-if (r11) checks.push(['monde 1, niveau 1 : le débutant réussit 40 à 70 %', r11.p.debutant.win >= 0.4 && r11.p.debutant.win <= 0.7, pct(r11.p.debutant.win)]);
+if (r11) {                                         // v2.2 : le niveau 1 est un départ en douceur
+  checks.push(['monde 1, niveau 1 (en douceur) : le débutant le finit presque à chaque fois (≥ 90 %)', r11.p.debutant.win >= 0.9, pct(r11.p.debutant.win)]);
+  checks.push(['monde 1, niveau 1 (en douceur) : le débutant le finit en moins de 45 s', r11.p.debutant.time <= 45, sec(r11.p.debutant.time)]);
+}
 if (w1.length === 8 && N >= 300) {
   let worst = 0;
   w1.forEach((r, i) => PROFILES.forEach(p => { worst = Math.max(worst, Math.abs(r.p[p].win * 100 - REF_W1[p][i])); }));
-  checks.push(['monde 1 : mêmes résultats qu’à la fin de la phase 1 (à 3 points près)', worst <= 3, `plus gros écart ${Math.round(worst)} points`]);
+  checks.push(['monde 1 : mêmes résultats que la référence REF_W1 (phase 1 ; niveau 1 en douceur depuis la v2.2), à 3 points près', worst <= 3, `plus gros écart ${Math.round(worst)} points`]);
 }
 const r21 = find(2, 1), r14 = find(1, 4);
 if (r21 && r14) checks.push(['monde 2, niveau 1 : un peu plus dur que le niveau 4 du monde 1 (moyen : 2 à 15 points de moins)',

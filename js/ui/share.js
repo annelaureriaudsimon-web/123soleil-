@@ -3,14 +3,11 @@
 'use strict';
 const { L, $, DAY, howLine, phaseLines, rankShareLine } = S;   // déjà chargés
 
-function shareText() {                           // 7 lignes maximum, lisible sur WhatsApp, Discord, SMS
+function shareText() {                           // 7 lignes maximum, lisible sur WhatsApp, Discord, SMS (sans adresse de page)
   const R = S.lastRun;
   if (!R) return '';
-  const link = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : '';
   const head = `☀️ 1, 2, 3… SOLEIL ! ${R.mode === 'daily' ? '#' + DAY : L.freeRun} — ${R.dist}\u00A0m`;
-  const lines = [head, ...phaseLines(R.events, link ? 3 : 4), howLine(R), rankShareLine(R)];
-  if (link) lines.push(link);
-  return lines.join('\n');
+  return [head, ...phaseLines(R.events, 4), howLine(R), rankShareLine(R)].join('\n');
 }
 function legacyCopy(t) {
   try {
@@ -24,8 +21,8 @@ function legacyCopy(t) {
   } catch (e) { return false; }
 }
 
-function shareTextNow(text) {                     // copie le texte (+ feuille de partage sur mobile)
-  const sheet = !!navigator.share && matchMedia('(pointer: coarse)').matches;
+function shareTextNow(text) {                     // copie le texte (+ feuille de partage sur mobile, hors iframe)
+  const sheet = !!navigator.share && matchMedia('(pointer: coarse)').matches && !S.embedded;   // dans l'iframe de Poki, le partage est souvent interdit
   const done = ok => { if (!sheet) S.toast(ok ? L.copied : L.copyFail, true); };
   try {
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => done(true), () => done(legacyCopy(text)));
@@ -37,6 +34,7 @@ const shareBtn = $('share');
 shareBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); shareTextNow(shareText()); shareBtn.blur(); });
 shareBtn.addEventListener('pointerdown', e => e.stopPropagation());
 $('imgBtn').addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); S.shareImage(); $('imgBtn').blur(); });
+$('imgBtn').classList.toggle('hide', !!S.embedded);   // dans une iframe (Poki), télécharger une image est bloqué : pas de bouton Image
 
 Object.assign(S, { shareText, legacyCopy, shareTextNow, shareBtn });
 })(window.Soleil);
