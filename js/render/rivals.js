@@ -52,7 +52,8 @@ function drawRivals(near) {
       g.fillStyle = css('#FFFFFF', 0.7 * a);
       for (let i = 0; i < 2; i++) { g.beginPath(); g.arc(p.x + (i ? 0.3 : -0.3) * p.sc, p.y - (1.95 + ((S.gtime * 1.5 + i * 0.5) % 1) * 0.5) * p.sc, 0.09 * p.sc, 0, Math.PI * 2); g.fill(); }
     }
-    if (rv.say && S.gtime < rv.sayUntil && p.sc > LABEL_SC * 0.8) drawBubble(g, rv.say, p.x, p.y - 1.95 * p.sc, clamp(p.sc * 0.24, 11, 20));
+    if (S.showcase) { /* vitrine (dev) : pas de bulles ni de prénoms */ }
+    else if (rv.say && S.gtime < rv.sayUntil && p.sc > LABEL_SC * 0.8) drawBubble(g, rv.say, p.x, p.y - 1.95 * p.sc, clamp(p.sc * 0.24, 11, 20));
     else if (p.sc > LABEL_SC && m.result === null) {             // prénom + personnalité au-dessus de la tête
       const fs = clamp(p.sc * 0.26, 11, 24), emo = (PROFILES[rv.kind] || {}).emoji || '';
       g.font = `900 ${fs}px ${S.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';

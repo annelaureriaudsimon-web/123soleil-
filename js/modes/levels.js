@@ -7,7 +7,7 @@ const { CAM_BACK, PHASE_LEN, INK, L, tr, store, clamp, lerp, vibrate, fmt, Sound
   newWatcher, popup, sparks, confetti, smokeAt, dust, sweat } = S;
 
 // ---------- Réglages ----------
-const INTRO_DUR = 1.9;           // carte d'intro (s), passable d'un tap
+// La carte d'intro attend un appui (le jeu ne démarre jamais tout seul : gameplayStart part à cet appui).
 const BOSS_INTRO = 3.0;          // le soleil met ses lunettes (s), passable d'un tap
 const CAUGHT_DUR = 0.65;         // ralenti « GRILLÉ ! » avant la carte de défaite (s)
 const RETRY_ARM = 0.22;          // la carte de défaite accepte un tap après ce délai : on relance en moins d'une seconde
@@ -19,6 +19,9 @@ const HALO_LIFE = 0.7;           // anneau vert du vrai retour (s)
 const TWINKLE = 0.35;            // l'étoile tentatrice tinte toutes les 0,35 s
 const SIGNAL_WORLD = 2;          // le « ding » du vrai retour et les « DÉPART ÉCLAIR ! » : à partir de ce monde
                                  // (le monde 1 reste exactement comme avant ; mettre 1 pour les avoir aussi dans la cour)
+const HAND_LIFE = 2.4;           // une consigne dessinée (main / touche Espace) reste au plus 2,4 s
+const OOPS_SPIN = 0.6;           // niveau en douceur : la toupie du « OUPS ! » (s)
+const OOPS_WORD = 0.7;           // « OUPS ! » reste 0,7 s, puis le mot « LÂCHE ! » prend sa place
 
 // ---------- Sauvegarde : soleil.levels = { 'w1-3': { s: [true, true, false], best: 27.4, tries: 6, done: true } } ----------
 let save = (() => { const v = store.get('levels', {}); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; })();
@@ -52,7 +55,8 @@ function lastUnlocked(w) { let last = w.levels[0]; for (const lv of w.levels) if
 
 // ---------- Le niveau en cours ----------
 const LV = { def: null, m: null, phase: 'off', t: 0, attempt: 0, hints: new Set(), hold: null, banner: null,
-             lastNum: -9, placeShown: 0, placeCand: 0, placeT: 0, heartT: 0, glass: -1, info: null, jump: 0, fx: newFx() };
+             lastNum: -9, placeShown: 0, placeCand: 0, placeT: 0, heartT: 0, glass: -1, info: null, jump: 0, fx: newFx(),
+             hand: null, oops: null };
 // Ce que les tentations affichent (render/tempt.js) : étoile, mouche, bulle, éternuement, anneau du vrai retour…
 function newFx() { return { star: null, fly: null, taunt: null, sneeze: null, halo: 0, spin: 0, twT: 0, flushed: new Set(), mud: false }; }
 const seenTempt = new Set(store.get('temptSeen', []));   // tentations déjà rencontrées (indication la 1re fois seulement)
@@ -62,10 +66,13 @@ function nextTaunt() {
   return tauntDeck.pop();
 }
 
-function open(id, retry) {
+// opts.ready : le niveau s'affiche sans carte d'intro, le soleil attend le 1er appui (1re visite) ;
+// opts.mini : petite carte d'intro (nom et idée seulement : les premiers pas)
+function open(id, retry, opts = {}) {
   const def = levelById(id);
   if (!def) return;
   if (S.closeLevelCards) S.closeLevelCards();
+  S.trialEnd();                                   // une tenue d'essai ne dure qu'une partie (js/ui/reward.js)
   const r = rec(def.id);
   r.tries++; persist();
   LV.def = def; LV.attempt = r.tries;
@@ -74,13 +81,14 @@ function open(id, retry) {
   Object.assign(m.player, { jx: 0, statue: 0, toast: 0, slide: 0, step: 0, pressed: false });
   m.rivals.forEach(rv => Object.assign(rv, { jx: 0, statue: 0, toast: 0, sizzled: true, step: 0 }));
   S.mode = 'level'; S.state = 'level';
+  S.trialBegin();
   S.runner = m.player; S.watcher = m.sun;
   S.lvSkyZ = def.sky * PHASE_LEN;
   S.lvCaught = false; S.caughtT = 0; S.timeScale = 1; S.particles = []; S.shake = 0; S.flash = 0;
   S.bossBanner = null; S.trapBanner = null; S.phaseTitle = null; S.cloudK = 0;
   m.sun.state = 'pause'; m.sun.rayA = Math.random() * 6;
   LV.hints = new Set(); LV.hold = null; LV.banner = null; LV.lastNum = -9; LV.heartT = 0; LV.jump = 0; LV.info = null;
-  LV.fx = newFx(); LV.tip = null; Sound.buzz(false); m.sun.shut = 0; m.sun.bossFace = null;
+  LV.fx = newFx(); LV.tip = null; LV.hand = null; LV.oops = null; Sound.buzz(false); m.sun.shut = 0; m.sun.bossFace = null;
   LV.placeShown = LV.placeCand = Match.place(m); LV.placeT = 0;
   LV.glass = def.boss ? 0 : -1;                   // boss : il n'a pas encore ses lunettes
   if (def.boss && retry) { LV.glass = -1; dressBoss(); if (!Music.on) Music.start(def.bossKind || 'cool'); }
@@ -88,11 +96,12 @@ function open(id, retry) {
   if (!retry) S.releaseAll();                    // réessai : si tu gardes le doigt posé, tu cours tout de suite
   S.refreshUI();
   if (retry) { setPhase('play'); popup(L.go, Lt.cx, Lt.chantY, '#06D6A0', S.fit(L.go, Lt.chantSize, S.W * 0.8), 0.7); Sound.start(); }
-  else { setPhase('intro'); S.showLevelIntro(def); }
+  else if (opts.ready) { setPhase('ready'); LV.hand = { kind: 'hold', text: L.holdWord, t0: S.gtime, until: 'press', life: Infinity }; }
+  else { setPhase('intro'); S.showLevelIntro(def, opts.mini); }
 }
 function setPhase(p) { LV.phase = p; LV.t = 0; }
-function beginPlay() {                            // fin de la carte d'intro
-  S.hideLevelIntro();
+function beginPlay() {                            // fin de la carte d'intro (ou du « prêt ») : on joue
+  S.hideLevelIntro(); LV.hand = null;
   if (LV.def.boss && LV.glass >= 0) {
     setPhase('boss'); LV.m.sun.state = 'look'; LV.m.sun.turnP = 1;   // il se tourne vers toi pour mettre ses lunettes
     const taunt = LV.def.bossKind === 'farceur' ? L.bossTaunt2 : L.bossTaunt;
@@ -119,9 +128,9 @@ function putGlasses() {                           // le boss met ses lunettes : 
 
 // Un tap (ou Espace) pendant le mode Niveaux
 function press() {
-  if (LV.phase === 'intro' && LV.t > 0.15) beginPlay();
+  if ((LV.phase === 'intro' && LV.t > 0.15) || LV.phase === 'ready') beginPlay();
   else if (LV.phase === 'boss' && LV.t > 0.3) { if (LV.glass >= 0) putGlasses(); endBossIntro(); }
-  else if (LV.phase === 'fail' && LV.t > RETRY_ARM) open(LV.def.id, true);
+  else if (LV.phase === 'fail' && LV.t > RETRY_ARM) retry();          // Rejouer : pause pub (si Poki le décide), puis on relance
 }
 
 function update(dt) {
@@ -131,8 +140,8 @@ function update(dt) {
   if (LV.banner && (LV.banner.t += dt) > LV.banner.life) LV.banner = null;
   if (Music.on) { Music.tick(); Music.setDuck(m.sun.state === 'chant'); }
   switch (LV.phase) {
-    case 'intro':
-      if (LV.t >= INTRO_DUR) beginPlay();
+    case 'ready':                                 // 1re visite : le soleil attend, la main montre le geste
+      presentRivals(dt);
       break;
     case 'boss': {                                // les lunettes descendent du ciel…
       const k = (LV.t - 0.9) / 0.9;
@@ -150,6 +159,8 @@ function update(dt) {
       watchPlace(dt);
       watchPasses();
       if (LV.hold && S.pressing) LV.hold = null;  // « MAINTIENS » disparaît dès qu'on maintient
+      watchHand();
+      if (LV.oops && (LV.oops.t += dt) > 1.4) LV.oops = null;
       if (!LV.hints.has('near') && m.level.length - m.player.z < NEAR) hintsFor('near');
       if (m.sun.state === 'look' && (LV.heartT -= dt) <= 0) { Sound.heart(); LV.heartT = 0.75; }
       if (m.sun.state !== 'look') LV.heartT = 0.05;
@@ -184,7 +195,10 @@ function update(dt) {
         const x = S.W * (0.15 + Math.random() * 0.7), y = S.H * (0.1 + Math.random() * 0.3);
         sparks(26, x, y, ['#FFD166', '#EF476F', '#06D6A0', '#4CC9F0', '#FFFFFF'][Math.floor(Math.random() * 5)]); Sound.firework();
       }
-      if (LV.t >= (boss ? BOSS_WIN_DUR : WIN_DUR)) { setPhase('results'); S.showLevelResults(LV.info); }
+      if (LV.t >= (boss ? BOSS_WIN_DUR : WIN_DUR)) {
+        if (S.Onboard.afterWin(LV.def)) break;      // premiers pas : après le niveau 1, le niveau 2 tout de suite
+        setPhase('results'); S.showLevelResults(LV.info);
+      }
       break;
     }
   }
@@ -263,7 +277,7 @@ function events() {
         w.text = L.hmm; w.textKind = 'hmm'; w.textT = S.gtime; w.textFadeT = 0; Sound.hmm();
         firstTime('fakeBack');
         break;
-      case 'hop': w.text = 'HOP !'; w.textKind = 'trigger'; w.textT = S.gtime; w.bump = 1; Sound.hop(); vibrate(20); break;
+      case 'hop': w.text = S.chantW().hop; w.textKind = 'trigger'; w.textT = S.gtime; w.bump = 1; Sound.hop(); vibrate(20); break;
       case 'clear': if (LV.def.world >= SIGNAL_WORLD) onTrueEnd(e.resisted); break;
       case 'quick': {
         if (LV.def.world < SIGNAL_WORLD) break;
@@ -271,6 +285,7 @@ function events() {
         Sound.zip();
         break;
       }
+      case 'oops': onOops(e); break;                // niveau en douceur : pas grillé, on recule
       case 'grilled': onCaught(); break;
       case 'finish': onWin(); break;
     }
@@ -287,10 +302,20 @@ function hintsFor(on, cycle) {
     if (LV.hints.has(key)) continue;
     LV.hints.add(key);
     if (h.banner) showBanner(h.banner);
+    else if (h.hand) { if (!(h.until === 'press' && S.pressing)) LV.hand = { kind: h.hand, text: tr(h.text), t0: S.gtime, until: h.until || h.hand, life: HAND_LIFE }; }
     else if (h.until === 'press') { if (!S.pressing) LV.hold = { text: tr(h.text), t0: S.gtime }; }
     else { const t = tr(h.text); popup(t, Lt.cx, Lt.yFeet - Lt.s * 2.2, '#FFD166', S.fit(t, Math.min(Lt.U * 0.075, 40), S.W * 0.9), 1.3); }
   }
   LV.hints.add(on);
+}
+// La consigne dessinée disparaît quand le geste est fait (appuyé / lâché), ou au bout de HAND_LIFE s
+function watchHand() {
+  const h = LV.hand;
+  if (!h) return;
+  const age = S.gtime - h.t0;
+  if (h.until === 'press' && S.pressing && age > 0.25) LV.hand = null;
+  else if (h.until === 'release' && !S.pressing && !h.done && age > 0.5 && (!h.wordAt || S.gtime > h.wordAt + 0.5)) h.done = S.gtime;   // lâché : on la laisse voir encore un peu
+  if (LV.hand && ((h.done && S.gtime - h.done > 0.5) || age > h.life)) LV.hand = null;
 }
 function showBanner(kind) {
   const B = { trap: [L.trapTitle, L.trapSub(false), '#06D6A0'], hes: [L.hesTitle, L.hesSub, '#FFD166'], mud: [L.mudTitle, L.mudSub, '#C68B59'],
@@ -430,6 +455,24 @@ function watchPlace(dt) {
   }
 }
 
+// ---------- Niveau en douceur : « OUPS ! », tu recules en faisant la toupie, le soleil rigole ----------
+function onOops(e) {
+  const w = LV.m.sun;
+  LV.oops = { t: 0, back: e.back };
+  w.laugh = 1; w.angryUntil = S.gtime + 0.6;
+  Sound.boing(); setTimeout(() => Sound.laugh(), 280); vibrate([30, 30, 50]);
+  popup(L.oops, Lt.cx, Lt.yFeet - Lt.s * 2.5, '#FF8FA3', S.fit(L.oops, Math.min(Lt.U * 0.1, 54), S.W * 0.8), OOPS_WORD);   // puis « LÂCHE ! » à la même place
+  popup(L.oopsSun, Lt.cx + Lt.R * 1.15, Lt.sunY - Lt.R * 0.3, '#FFFFFF', Math.min(Lt.U * 0.055, 28), 0.9);
+  dust(10, 1.6);
+  LV.hand = { kind: 'release', text: L.letGo, t0: S.gtime, until: 'release', life: HAND_LIFE + OOPS_WORD, wordAt: S.gtime + OOPS_WORD };   // le doigt qui se lève : LÂCHE !
+}
+// L'angle de la toupie (dessin du coureur)
+function spin() {
+  const o = LV.oops;
+  if (!o || o.t >= OOPS_SPIN) return 0;
+  return Math.sin(Math.min(1, o.t / OOPS_SPIN) * Math.PI) * 0.5 + (o.t / OOPS_SPIN) * Math.PI * 2;
+}
+
 // ---------- Fin d'un essai ----------
 function onCaught() {
   const m = LV.m, res = m.result, w = m.sun;
@@ -456,7 +499,7 @@ function onWin() {
   Sound.buzz(false);
   const firstWin = !r.done;
   r.s = r.s.map((s, i) => s || stars[i]); r.done = true;
-  const newBest = !r.best || res.time < r.best;
+  const newBest = !res.revived && (!r.best || res.time < r.best);   // après une 2e chance : pas de meilleur temps
   if (newBest) r.best = +res.time.toFixed(2);
   persist();
   if (coins) S.addStars(coins);
@@ -471,6 +514,10 @@ function onWin() {
   }
   const t = def.boss ? (farceur ? L.bossWin2 : L.bossWinTitle) : L.winTitle;
   popup(t, Lt.cx, Lt.hy + (Lt.yFeet - Lt.hy) * 0.3, '#FFD166', S.fit(t, Math.min(Lt.U * 0.11, 58), S.W * 0.9), 1.4);
+  if (S.Onboard.chain(def)) {                     // premiers pas : pas d'écran de résultats, les étoiles gagnées ici
+    const st = stars.map(x => (x ? '★' : '☆')).join(' ');
+    popup(st, Lt.cx, Lt.hy + (Lt.yFeet - Lt.hy) * 0.55, '#FFD23A', Math.min(Lt.U * 0.12, 64), 1.5);
+  }
   m.sun.state = 'pause'; m.sun.turnP = 0; m.sun.text = ''; m.sun.laugh = 0;
   const next = (WORLDS.find(w => w.id === def.world) || WORLDS[0]).levels[def.num];
   LV.info = { def, res, stars, fresh, coins, bonus, firstWin, newBest, best: r.best, ranking: Match.ranking(m), next: next || null };
@@ -480,22 +527,46 @@ function onWin() {
 // ---------- Quitter / naviguer ----------
 function cleanup() {                              // on quitte le mode Niveaux (carte, accueil)
   if (S.closeLevelCards) S.closeLevelCards();
+  S.trialEnd();
   Music.stop(0.3); Sound.buzz(false);
   LV.m = null; LV.phase = 'off';
   S.lvCaught = false; S.lvSkyZ = null; S.timeScale = 1;
 }
 function toMap() { cleanup(); S.WorldMap.open(); }
-function next() {
+function next() {                                 // Suivant : pause pub, puis la carte d'intro du niveau d'après
   const n = LV.info && LV.info.next;
-  if (n && unlocked(n)) open(n.id, false); else toMap();
+  if (S.Onboard.mapNext(LV.def)) return;         // premiers pas : après le niveau 2, la carte se présente
+  if (!n || !unlocked(n)) { toMap(); return; }   // vers la carte : pas de pub
+  S.afterBreak(() => open(n.id, false));
 }
+// 2e chance (pub récompensée vue jusqu'au bout, js/ui/reward.js) : on reprend là où on a été grillé
+function revive() {
+  const m = LV.m;
+  if (!m || LV.phase !== 'fail' || !Match.revive(m)) return false;
+  if (S.closeLevelCards) S.closeLevelCards();
+  const p = m.player;
+  Object.assign(p, { jx: 0, statue: 0, toast: 0, slide: 0, pressed: false });
+  const w = m.sun;
+  w.angry = false; w.laugh = 0; w.angryUntil = 0; w.textFadeT = 0; w.bump = 0;
+  S.lvCaught = false; S.caughtT = 0; S.timeScale = 1; S.shake = 0; S.flash = 0;
+  if (LV.def.boss) Music.setDuck(false);
+  LV.info = null; LV.hand = null; LV.oops = null; LV.fx.star = null; LV.fx.sneeze = null; LV.fx.taunt = null;
+  setPhase('play');
+  S.releaseAll();
+  S.grace = S.GRACE;                              // 1 s de protection : le monde reste figé, l'anneau se remplit
+  popup(L.revived, Lt.cx, Lt.chantY, '#C77DFF', S.fit(L.revived, Lt.chantSize, S.W * 0.85), 1.2);
+  sparks(24, Lt.cx, Lt.yFeet - Lt.s * 1.2, '#E0AAFF'); Sound.start(); vibrate([20, 30, 40]);
+  return true;
+}
+function restart() { if (LV.def) open(LV.def.id, true); }   // le niveau repart tout de suite (sans pub : déjà demandée)
+function retry() { if (LV.def) S.afterBreak(restart); }      // Rejouer : pause pub (si Poki le décide), puis on relance
 
 S.Levels = {
-  open, press, update, toMap, next, cleanup, totalStars, maxStars, worldStars, starsOf, unlocked, lastUnlocked, rec, peek, worldOpen,
+  open, press, update, toMap, next, retry, restart, revive, cleanup, totalStars, maxStars, worldStars, starsOf, unlocked, lastUnlocked, rec, peek, worldOpen,
   get fx() { return LV.fx; },
   get m() { return LV.m; }, get phase() { return LV.phase; }, get def() { return LV.def; },
   get hold() { return LV.hold; }, get banner() { return LV.banner; }, get tip() { return LV.tip; }, get glass() { return LV.glass; }, get jump() { return LV.jump; },
-  retry() { if (LV.def) open(LV.def.id, true); },
+  get hand() { return LV.hand; }, get oops() { return LV.oops; }, get spin() { return spin(); }, get info() { return LV.info; }, get attempt() { return LV.attempt; },
   isBossLevel: () => !!(LV.def && LV.def.boss)
 };
 })(window.Soleil);

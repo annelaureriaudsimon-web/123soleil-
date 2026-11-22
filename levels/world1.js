@@ -25,15 +25,16 @@ const T = (fr, en) => ({ fr, en });
 S.addWorld(1, [
   // 1 ---------------------------------------------------------------------------------------------
   { id: 'w1-1', emoji: '👟', name: T('Premiers pas', 'First steps'),
-    tip: T('Maintiens pour courir. Lâche avant « SOLEIL ! »', 'Hold to run. Let go before “SOLEIL!”'),
+    tip: T('Maintiens pour courir. Lâche avant « SOLEIL ! »', 'Hold to run. Let go before “RED LIGHT!”'),
     length: 135, seed: 1101, sky: 0.3,
     rivals: [kid('leo'), kid('zoe')],
     sun: { word: [0.62, 0.72], turn: [0.6, 0.66], look: [1.2, 1.7], pause: [0.6, 1.0] },
     script: { 1: { turn: 1.0, look: 1.4 }, 2: { traps: 1 } },          // 1er regard très lent ; mot piège forcé au cycle 2
-    hints: [
-      { on: 'start', text: T('MAINTIENS pour courir 👆', 'HOLD to run 👆'), until: 'press' },
-      { on: 'so', cycle: 1, text: T('LÂCHE !', 'LET GO!'), pop: true },
-      { on: 'return', cycle: 1, text: T('Il se remet de dos : REPARS !', 'He turned back: RUN!'), pop: true },
+    soft: { back: 6 },                                                    // départ en douceur : vu en train de bouger → « OUPS ! », 6 m en arrière
+    hints: [                                                              // tutoriel visuel : une main (ou la touche Espace) et un mot
+      { on: 'start', text: T('MAINTIENS', 'HOLD'), hand: 'hold', until: 'press' },
+      { on: 'so', cycle: 1, text: T('LÂCHE !', 'LET GO!'), hand: 'release' },
+      { on: 'return', cycle: 1, text: T('REPARS !', 'GO!'), hand: 'hold', until: 'press' },
       { on: 'reveal', cycle: 2, banner: 'trap' },
       { on: 'near', text: T('Touche le soleil ! ☀️', 'Touch the sun! ☀️'), pop: true }
     ],
@@ -42,7 +43,7 @@ S.addWorld(1, [
 
   // 2 ---------------------------------------------------------------------------------------------
   { id: 'w1-2', emoji: '😶', name: T('Les hésitations', 'The hesitations'),
-    tip: T('Il fait durer le « SOOOO… » : ne repars pas !', 'He stretches the “SOOOO…”: don’t restart!'),
+    tip: T('Il fait durer le « SOOOO… » : ne repars pas !', 'He stretches the “REEED…”: don’t restart!'),
     length: 140, seed: 1202, sky: 0.45,
     rivals: [kid('hugo'), kid('lila')],
     sun: { word: [0.58, 0.68], turn: [0.6, 0.65], hesitate: 0.6, hesLen: [1.0, 1.8], hesOnTrap: 0.35, traps: 0.2 },
@@ -53,11 +54,11 @@ S.addWorld(1, [
 
   // 3 ---------------------------------------------------------------------------------------------
   { id: 'w1-3', emoji: '🥫', name: T('La pluie de pièges', 'Raining traps'),
-    tip: T('SOLDES, SOUPE, SOFA… Lis le mot avant de lâcher !', 'SOLDES, SOUPE, SOFA… Read the word before letting go!'),
+    tip: T('SOLDES, SOUPE, SOFA… Lis le mot avant de lâcher !', 'RED HAT, RED BUS, RED FOX… Read the word before letting go!'),
     length: 150, seed: 1303, sky: 0.6,
     rivals: [kid('jade'), kid('tom'), kid('zoe')],
     sun: { word: [0.55, 0.65], turn: [0.555, 0.605], traps: 0.8, double: 0.45,
-           words: ['SOLDES !', 'SOUPE !', 'SOFA !', 'SODA !', 'SOURIS !', 'SORBET !', 'SOLO !', 'SOUCOUPE !', 'SOMBRERO !'] },
+           words: [0, 1, 4, 2, 5, 6, 7, 8, 3] },   // les 9 premiers mots pièges de la langue (L.chant.traps), dans cet ordre
     script: { 1: { traps: 2 } },
     hints: [{ on: 'reveal', cycle: 1, banner: 'trap' }],
     goal: { type: 'avoid', n: 3 }, challenge: { type: 'noTrap' },

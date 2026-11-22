@@ -4,8 +4,12 @@
 const { PHASE_LEN, SKIN } = S;   // déjà chargés
 
 /* ---------- 3. Contenus : mots pièges, rangs, médailles, missions, tenues ---------- */
-const SUN_TRAPS = ['SOLDES !', 'SOUPE !', 'SODA !', 'SOMBRERO !', 'SOFA !', 'SOURIS !', 'SORBET !', 'SOLO !', 'SOUCOUPE !'];
+// Les mots du chant dépendent de la langue (TXT.xx.chant, js/core/i18n.js et js/core/lang/*.js) : ces listes sont
+// re-remplies sur place par js/core/i18n-apply.js. Ici, le français : c'est ce qu'utilise tools/simulate.js (pas de textes).
+const SUN_TRAPS = ['SOLDES !', 'SOUPE !', 'SODA !', 'SOMBRERO !', 'SOFA !', 'SOURIS !', 'SORBET !', 'SOLO !', 'SOUCOUPE !', 'SOLDAT !', 'SORCIÈRE !', 'SOMMET !'];
 const MOON_TRAPS = ['LUGE !', 'LUTIN !', 'LUXE !', 'LUNETTES !', 'LUMIÈRE !'];
+const CHANT_FR = { pre: 'SO', sun: 'SOLEIL !', moon: 'LUNE !', hop: 'HOP !' };
+const chantW = () => (S.L && S.L.chant) || CHANT_FR;   // « SO », « SOLEIL ! », « LUNE ! », « HOP ! » dans la langue du joueur
 const RANKS = [              // seuils en fractions de phase (avec PHASE_LEN = 60 : 0, 18, 48, 90, 150, 240 m)
   { min: 0, e: '🐌', fr: 'Escargot', en: 'Snail' },
   { min: PHASE_LEN * 0.3, e: '🐢', fr: 'Tortue', en: 'Turtle' },
@@ -55,5 +59,5 @@ const OUTFITS = [    // toutes les tenues se voient de dos (et donc sur les capt
 ];
 const outfitById = id => OUTFITS.find(o => o.id === id) || OUTFITS[0];
 
-Object.assign(S, { SUN_TRAPS, MOON_TRAPS, RANKS, MEDALS, M_HALF, M_TOTAL, MISSIONS, OUTFITS, outfitById });
+Object.assign(S, { SUN_TRAPS, MOON_TRAPS, chantW, RANKS, MEDALS, M_HALF, M_TOTAL, MISSIONS, OUTFITS, outfitById });
 })(window.Soleil);

@@ -3,7 +3,7 @@
 'use strict';
 const { SLOPE_TILT, STAR_R, store, computePalette, audioOK, Sound, Voice, resize, viewZ, anyMoving, patchAt,
   updateWatcher, updateRunner, catchStar, updateCaught, updateProgress, updateTrapWatch, updateParticles, render,
-  refreshMute, refreshUI, tickHome, updateDuo } = S;   // déjà chargés
+  refreshMute, tickHome, updateDuo } = S;   // déjà chargés
 
 /* ---------- 18. Boucle de mise à jour ---------- */
 function update(dt) {
@@ -71,21 +71,40 @@ function animWatcher(dt) {
 
 
 /* ---------- 29. C'est parti ---------- */
-S.last = performance.now();
+// PAS FIXE : le jeu avance toujours par pas de 1/120 s, quelle que soit la fluidité de l'écran (30, 60, 120 images/s).
+// Un téléphone lent fait plusieurs pas par image ; un écran à 120 Hz en fait un. Les mêmes appuis donnent donc
+// exactement la même partie partout : on n'est jamais grillé à cause des saccades. (Testé : test_poki.py, test 26.)
+const STEP = 1 / 120;
+const MAX_STEPS = 12;                               // au plus 0,1 s rattrapée d'un coup (après un gros ralentissement)
+S.last = performance.now(); S.acc = 0;
 function frame(now) {
-  let dt = (now - S.last) / 1000;
+  const raw = now - S.last;
   S.last = now;
+  S.qualityTick(raw);                               // qualité d'image automatique (js/render/quality.js)
+  let dt = raw / 1000;
   if (!(dt > 0)) dt = 0;
-  if (dt > 0.05) dt = 0.05;                         // évite les sauts après un ralentissement
-  update(dt);
-  render();
+  if (dt > MAX_STEPS * STEP) dt = MAX_STEPS * STEP;  // évite les sauts après un ralentissement
+  if (S.halted()) {                                 // pause ou pub : le monde est figé (on redessine seulement si l'écran a changé)
+    S.acc = 0;
+    if (S.dirty) { S.dirty = false; render(); }
+  } else if (S.grace > 0) {                         // reprise : 1 s de grâce, le monde reste figé, l'anneau se remplit
+    S.acc = 0;
+    S.grace = Math.max(0, S.grace - dt);
+    render();
+  } else {
+    S.acc += dt;
+    while (S.acc >= STEP - 1e-9) { update(STEP); S.acc -= STEP; }
+    render();
+  }
+  S.syncGameplay();                                 // gameplayStart / gameplayStop si « en jeu » a changé
+  S.syncButtons();
   requestAnimationFrame(frame);
 }
 resize();
 computePalette(0);
 Voice.init();
 refreshMute();
-refreshUI();
+S.boot();                                           // le titre tout de suite, pendant que le SDK Poki s'initialise
 requestAnimationFrame(frame);
 
 

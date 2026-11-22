@@ -18,7 +18,7 @@ Un niveau est un simple objet JavaScript, rangé dans `levels/worldN.js`. Pas be
     turn: [0.555, 0.605],                           // LE réglage le plus important : temps pour s'arrêter après « SOLEIL ! »
     look: [1.2, 1.9],                               // durée de son regard (s)
     traps: 0.8, double: 0.45,                       // probabilité d'un mot piège dans un chant, puis d'un deuxième
-    words: ['SOLDES !', 'SOUPE !', 'SOFA !']        // mots pièges de ce niveau (sinon ceux du jeu)
+    words: [0, 1, 4]                                // mots pièges de ce niveau : numéros dans la liste de la langue (0 = SOLDES / RED HAT…)
   },
   script: { 1: { traps: 2 } },                      // événements prévus : ici, double piège au cycle 1, à chaque essai
   hints: [{ on: 'reveal', cycle: 1, banner: 'trap' }],   // indications à l'écran (voir plus bas)
@@ -61,7 +61,7 @@ Les valeurs par défaut sont dans `js/game/match.js` (`SUN_BASE`).
 | `hesOnTrap` | probabilité que l'hésitation finisse sur un mot piège |
 | `stutter`, `stutterRush` | bégaiement « 2… 2… 3… », puis accélération (× durée) |
 | `express`, `expressK`, `expressTurn` | chant express : × durée des mots, × durée du demi-tour |
-| `words` | liste de mots pièges du niveau |
+| `words` | mots pièges du niveau : numéros (0 à 11) dans la liste de la langue (`chant.traps` de js/core/i18n.js et js/core/lang/*.js) ; ainsi chaque langue a ses mots, au même rythme |
 | `tempt` | tentations pendant le regard (monde 2) : `{ star, fakeRet, sneeze, taunt, fly, crack, max }`. Chaque nombre est la probabilité qu'elle arrive dans un regard ; `max` (1 à 3) limite leur nombre. Deux tentations qui se liraient au même endroit de l'écran ne vont jamais ensemble. |
 | `fakeBack` | probabilité d'un faux dos à la fin d'un regard (monde 2) |
 | `peek` | durée de l'œil qui dépasse pendant le faux dos (s), `[0.5, 1.1]` par défaut |
@@ -120,12 +120,22 @@ La clé est le numéro du cycle (1 = le premier chant). Valeurs possibles :
 
 Chaque indication s'affiche une fois par essai :
 - `{ on: 'start', text: T(…), until: 'press' }` : le texte reste tant que le joueur n'a pas maintenu ;
+- `{ on: 'so', cycle: 1, text: T('LÂCHE !', 'LET GO!'), hand: 'release' }` : consigne **dessinée** (v2.2) : une main qui
+  lève le doigt (téléphone, tablette) ou la touche Espace qui remonte (clavier), avec un mot au-dessus du coureur.
+  `hand: 'hold'` montre le doigt qui appuie. Elle disparaît quand le geste est fait (`until: 'press'` : dès qu'on
+  appuie ; par défaut, dès qu'on a fait le geste montré), ou au bout de 2,4 s ;
 - `{ on: 'so', cycle: 1, text: T('LÂCHE !', 'LET GO!'), pop: true }` : petit texte au moment du « SO » du cycle 1.
   - Les autres moments possibles sont `trigger`, `reveal` (mot piège démasqué), `return` (il se remet de dos) et `near` (à 15 m de l'arrivée).
 - `{ on: 'reveal', cycle: 2, banner: 'trap' }` : bannière.
   - Bannières disponibles : `trap`, `hes`, `stutter`, `express`, `mud`.
   - `{ on: 'hes' | 'stutter' | 'express' | 'mud', banner: … }` affiche la bannière la première fois que la mécanique apparaît.
 - Les tentations et le faux dos ont leur propre indication, affichée une seule fois dans tout le jeu (la toute première rencontre) : rien à écrire dans `hints`.
+
+## Niveau en douceur (`soft`)
+
+`soft: { back: 6 }` (le niveau 1) : si le soleil te voit bouger, tu n'es pas grillé. « OUPS ! » : tu recules de
+`back` mètres en faisant la toupie, le soleil rigole, et la main montre « LÂCHE ! ». Il faut lâcher pour repartir.
+Le moteur (`game/match.js`) le gère : la simulation en tient donc compte toute seule.
 
 ## Les rivaux
 

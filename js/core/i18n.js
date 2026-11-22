@@ -1,13 +1,24 @@
-/* js/core/i18n.js — Textes en français et en anglais */
+/* js/core/i18n.js — Textes en français et en anglais (les autres langues : js/core/lang/*.js, branchées par js/core/i18n-apply.js) */
 (function (S) {
 'use strict';
 
-/* ---------- 2. Textes (français, ou anglais si l'appareil n'est pas en français) ---------- */
-const LANG = /^fr/i.test(navigator.language || 'fr') ? 'fr' : 'en';
-document.documentElement.lang = LANG;
+/* ---------- 2. Textes : la langue de l'appareil (si le jeu la parle), sinon l'anglais ; ou celle choisie par le joueur ---------- */
+// Les langues du jeu, avec leur nom écrit dans leur propre langue (pas de drapeaux : une langue n'est pas un pays).
+const LANGS = [{ code: 'fr', name: 'Français' }, { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
+  { code: 'pt', name: 'Português' }, { code: 'de', name: 'Deutsch' }, { code: 'it', name: 'Italiano' }];
+const known = c => LANGS.some(l => l.code === c);
+function pickLang() {
+  const q = (location.search.match(/[?&]lang=([a-z]{2})/) || [])[1];               // ?lang=de : pour tester une langue
+  if (known(q)) return q;
+  let saved = null; try { saved = JSON.parse(localStorage.getItem('soleil.lang')); } catch (e) { saved = null; }
+  if (known(saved)) return saved;                                                     // choisie à la main (accueil)
+  const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'];
+  for (const x of list) { const c = String(x || '').slice(0, 2).toLowerCase(); if (known(c)) return c; }
+  return 'en';
+}
+S.LANG = pickLang();
 const TXT = {
   fr: {
-    playHint: 'Maintiens = cours · Lâche = stop',
     best: m => `Record ${m} m`, bestLive: 'RECORD BATTU !',
     caught: 'GRILLÉ !',
     late: s => `Lâché ${s} s trop tard !`,
@@ -29,8 +40,6 @@ const TXT = {
     toRank: (m, r) => `Plus que ${m}\u00A0m pour devenir ${r}`,
     newRank: r => `Nouveau rang : ${r} !`,
     newRecord: 'NOUVEAU RECORD !',
-    share: '📋 Partager',
-    copied: 'Copié ! Colle-le à tes potes 😉', copyFail: 'Copie impossible… fais une capture 📸',
     replayTouch: 'Touche l’écran pour rejouer', replayKey: 'Clic ou Espace pour rejouer',
     ouf: 'OUF !', letGo: 'LÂCHE !', flag: 'RECORD', hmm: 'HMM…', heh: 'HÉ HÉ !',
     trapped: 'PIÉGÉ !', notTrapped: 'PAS PIÉGÉ !',
@@ -42,7 +51,6 @@ const TXT = {
     moonCall: '« LUNE ! »', and: ' et ', bang: ' !',
     speedUp: 'Tu cours plus vite… et tu freines plus long',
     dayN: n => `JOUR ${n}`, daySub: 'Tout en même temps…',
-    streak: n => `🔥 ${n} jour${n > 1 ? 's' : ''}`,
     streakToast: (n, b) => `🔥 Série de ${n} jour${n > 1 ? 's' : ''} : +${b} ⭐`,
     missionToast: (label, r) => `🎯 ${label} : +${r} ⭐`,
     medalToast: (e, name) => `${e} Médaille gagnée : ${name} !`,
@@ -60,33 +68,40 @@ const TXT = {
     voiceOnBtn: 'Activer la voix', voiceOffBtn: 'Couper la voix', voiceNoneLbl: 'Voix indisponible',
     voiceNone: 'Pas de voix française sur cet appareil 😕', voiceLag: 'La voix a trop de retard sur cet appareil : sons 8-bit à la place',
     // accueil et défi du jour
-    freeRun: 'Partie libre',
-    dailyBtn: n => `☀️ Défi du jour #${n}`, dailyHint: 'Un seul essai par jour !',
+    dailyBtn: n => `Défi du jour #${n}`, dailyHint: 'Un seul essai par jour !',
     freeBtn: '🔁 Partie libre', freeHint: 'Parcours au hasard',
-    duoBtn: '👥 2 joueurs', duoHint: 'Sur le même écran',
+    duoBtn: '2 joueurs', duoHint: 'Sur le même écran',
     rules: 'Maintiens pour courir · fige-toi quand il se retourne',
     dailyDone: (n, d) => `☀️ Défi #${n} : ${d}\u00A0m`, dailyLost: n => `☀️ Défi #${n} : essai utilisé`,
-    nextIn: t => `Prochain défi dans ${t}`, reshare: '📋 Repartager',
+    nextIn: t => `Prochain défi dans ${t}`,
     meta2: (r, b) => `${r} · Record ${b}\u00A0m`, meta3: (d, s, n) => `🎯 Missions ${d}/3 · ⭐ ${s}${n ? ' · 🔥 ' + n : ''}`,
     replayHome: 'Touche l’écran pour revenir à l’accueil', home: 'Accueil',
-    // partage
-    image: '📸 Image', imgSaved: 'Image enregistrée 📸', imgFail: 'Image impossible… fais une capture 📸',
-    storyDaily: n => `Défi du jour #${n}`,
-    where: ['le matin', 'à midi', 'le soir', 'la nuit'], dayTag: d => ` (jour ${d})`,
-    howLate: (w, s, g) => `Grillé ${w} : lâché ${s} s trop tard${g === 'ice' ? ' sur le verglas' : g === 'slope' ? ' dans la descente' : ''} 😭`,
-    howRun: (w, s, moon) => `Grillé ${w} : je courais encore ${s} s après « ${moon ? 'LUNE' : 'SOLEIL'} ! » 🏃`,
-    howEarly: (w, s) => `Grillé ${w} : reparti ${s} s trop tôt 🤦`,
-    howHop: (w, s) => `Grillé ${w} par le faux dos : reparti ${s} s trop tôt 👁️`,
-    recShort: '🏆 record !',
     // 2 joueurs
     pName: ['J1', 'J2'], zone: p => `${p} : maintiens ici`, zoneSub: 'maintiens ici', keyHint: k => `(touche ${k})`, ready: 'PRÊT !',
     round: n => `MANCHE ${n}`, go: 'GO !', burnt: p => `${p} GRILLÉ !`, back: p => `${p} : retour au départ`,
     roundWin: p => `${p} GAGNE LA MANCHE !`, matchWin: p => `${p} GAGNE ! 🏆`,
-    rematch: '🔁 Revanche', duoHomeBtn: '🏠 Accueil', finish: 'ARRIVÉE', ahead: (p, m) => `${p} ▲ +${m}\u00A0m`,
-    title2: 'SOLEIL !'
+    rematch: 'Revanche', duoHomeBtn: 'Accueil', finish: 'ARRIVÉE', ahead: (p, m) => `${p} ▲ +${m}\u00A0m`,
+    title2: 'SOLEIL !',
+    // pause, consignes selon l'appareil, premiers pas, accueil (v2.2)
+    pause: 'Pause', pauseTitle: 'PAUSE', resume: 'Reprendre', restart: 'Recommencer', restartLevel: 'Recommencer le niveau',
+    giveUp: 'Abandonner le défi', soundOn: 'Son : oui', soundOff: 'Son : non',
+    spaceKey: 'ESPACE', holdWord: 'MAINTIENS', oops: 'OUPS !', oopsSun: 'VU !',
+    keyStart: 'Clic ou Espace pour commencer', keyRetry: 'Clic ou Espace pour réessayer', keyHome: 'Clic ou Espace pour revenir à l’accueil',
+    contBtn: 'CONTINUER', playBtn: 'JOUER', contHint: (n, w) => `Niveau ${n} · ${w}`, levelsShort: 'Niveaux', endlessShort: 'Infini',
+    mapIntro: 'TA CARTE !', mapIntroSub: 'Choisis ton prochain niveau', yourTurn: 'À toi !',
+    // v2.4 : langues. Le chant change avec la langue (même rythme partout : seuls les mots changent).
+    // pre = le début commun (« SO… », lâche dès qu'il apparaît), sun = le vrai signal, traps = 12 mots pièges
+    // qui commencent pareil, moonTraps = 5 pièges de la Lune. Toujours 12 et 5 : le défi du jour reste le même.
+    langLbl: 'Langue', title1: '1, 2, 3…', decimal: ',',
+    chant: { pre: 'SO', sun: 'SOLEIL !', moon: 'LUNE !', hop: 'HOP !',
+      traps: ['SOLDES !', 'SOUPE !', 'SODA !', 'SOMBRERO !', 'SOFA !', 'SOURIS !', 'SORBET !', 'SOLO !', 'SOUCOUPE !', 'SOLDAT !', 'SORCIÈRE !', 'SOMMET !'],
+      moonTraps: ['LUGE !', 'LUTIN !', 'LUXE !', 'LUNETTES !', 'LUMIÈRE !'] },
+    say: { num: ['Un…', 'Deux…', 'Trois…'], so: 'So…', sun: 'Soleil !', moon: 'Lune !', hop: 'Hop !',
+      heh: ['Hé hé !', 'Je t’ai eu !', 'Hi hi !'], hmm: ['Hmmm…', 'Hmm hmm…'], grilled: ['Grillé !', 'Trop lent !', 'Je t’ai vu !', 'Bien cuit !'],
+      bossSun: ['Tu vas fondre…', 'Ça va chauffer…'], bossMoon: ['Chut… la nuit est à moi…', 'La nuit est à moi…'],
+      bossBeaten: ['Pfff… la prochaine fois !', 'Pfff… coup de chance !'] }
   },
   en: {
-    playHint: 'Hold = run · Release = stop',
     best: m => `Best ${m} m`, bestLive: 'NEW BEST!',
     caught: 'TOASTED!',
     late: s => `Released ${s} s too late!`,
@@ -96,8 +111,8 @@ const TXT = {
     early: s => `Moved ${s} s too early!`,
     hopCaught: 'It was watching from the corner of its eye!',
     realOne: 'This time it was the real one!',
-    tipSo: 'Tip: let go as soon as you see “SO”',
-    tipMoon: 'The Moon turns right after “LUNE!”',
+    tipSo: 'Tip: let go as soon as you see “RED”',
+    tipMoon: 'The Moon turns right after “MOON!”',
     tipLook: 'Wait until it turns its back',
     tipHop: 'While an eye still shows, don’t move!',
     tipIce: 'On ice, let go much earlier',
@@ -108,8 +123,6 @@ const TXT = {
     toRank: (m, r) => `${m}\u00A0m to become ${r}`,
     newRank: r => `New rank: ${r}!`,
     newRecord: 'NEW RECORD!',
-    share: '📋 Share',
-    copied: 'Copied! Send it to your friends 😉', copyFail: 'Couldn’t copy… take a screenshot 📸',
     replayTouch: 'Tap to play again', replayKey: 'Click or Space to play again',
     ouf: 'PHEW!', letGo: 'LET GO!', flag: 'BEST', hmm: 'HMM…', heh: 'HEH HEH!',
     trapped: 'FOOLED!', notTrapped: 'NOT FOOLED!',
@@ -118,10 +131,9 @@ const TXT = {
     phases: ['MORNING', 'NOON', 'EVENING', 'NIGHT'],
     obst: { traps: 'trap words', stutter: 'stutters', mud: 'mud', cloud: 'clouds', fauxDos: 'fake turns',
             rush: 'express chants', slope: 'slopes', ice: 'ice' },
-    moonCall: '“LUNE!”', and: ' and ', bang: '!',
+    moonCall: '“MOON!”', and: ' and ', bang: '!',
     speedUp: 'You run faster… and brake longer',
     dayN: n => `DAY ${n}`, daySub: 'Everything at once…',
-    streak: n => `🔥 ${n} day${n > 1 ? 's' : ''}`,
     streakToast: (n, b) => `🔥 ${n}-day streak: +${b} ⭐`,
     missionToast: (label, r) => `🎯 ${label}: +${r} ⭐`,
     medalToast: (e, name) => `${e} Medal earned: ${name}!`,
@@ -133,40 +145,81 @@ const TXT = {
     maxRank: 'Top rank reached!',
     mute: 'Mute', unmute: 'Unmute', locker: 'Locker', close: 'Close',
     // V4: trap word, stars, cloud, voice
-    trapTitle: 'TRAP!', trapSub: moon => (moon ? 'It didn’t say LUNE 😏' : 'It didn’t say SOLEIL 😏'),
+    trapTitle: 'TRAP!', trapSub: moon => (moon ? 'It didn’t say MOON 😏' : 'It didn’t say RED LIGHT 😏'),
     cloudTitle: '☁️ CLOUD!', cloudSub: 'Listen carefully…',
     starDouble: '⭐ + PHEW = ×2!',
     voiceOnBtn: 'Turn voice on', voiceOffBtn: 'Turn voice off', voiceNoneLbl: 'Voice unavailable',
-    voiceNone: 'No French voice on this device 😕', voiceLag: 'The voice lags too much on this device: 8-bit sounds instead',
+    voiceNone: 'No English voice on this device 😕', voiceLag: 'The voice lags too much on this device: 8-bit sounds instead',
     // home and daily challenge
-    freeRun: 'Free run',
-    dailyBtn: n => `☀️ Daily challenge #${n}`, dailyHint: 'Only one try per day!',
+    dailyBtn: n => `Daily challenge #${n}`, dailyHint: 'Only one try per day!',
     freeBtn: '🔁 Free run', freeHint: 'Random course',
-    duoBtn: '👥 2 players', duoHint: 'Same screen',
+    duoBtn: '2 players', duoHint: 'Same screen',
     rules: 'Hold to run · freeze when it turns around',
     dailyDone: (n, d) => `☀️ Daily #${n}: ${d}\u00A0m`, dailyLost: n => `☀️ Daily #${n}: try used`,
-    nextIn: t => `Next challenge in ${t}`, reshare: '📋 Share again',
+    nextIn: t => `Next challenge in ${t}`,
     meta2: (r, b) => `${r} · Best ${b}\u00A0m`, meta3: (d, s, n) => `🎯 Missions ${d}/3 · ⭐ ${s}${n ? ' · 🔥 ' + n : ''}`,
     replayHome: 'Tap to go back home', home: 'Home',
-    // sharing
-    image: '📸 Image', imgSaved: 'Image saved 📸', imgFail: 'Couldn’t make the image… take a screenshot 📸',
-    storyDaily: n => `Daily challenge #${n}`,
-    where: ['in the morning', 'at noon', 'in the evening', 'at night'], dayTag: d => ` (day ${d})`,
-    howLate: (w, s, g) => `Toasted ${w}: released ${s} s too late${g === 'ice' ? ' on ice' : g === 'slope' ? ' on a slope' : ''} 😭`,
-    howRun: (w, s, moon) => `Toasted ${w}: still running ${s} s after “${moon ? 'LUNE' : 'SOLEIL'}!” 🏃`,
-    howEarly: (w, s) => `Toasted ${w}: moved ${s} s too early 🤦`,
-    howHop: (w, s) => `Toasted ${w} by the fake turn: moved ${s} s too early 👁️`,
-    recShort: '🏆 new best!',
     // 2 players
     pName: ['P1', 'P2'], zone: p => `${p}: hold here`, zoneSub: 'hold here', keyHint: k => `(key ${k})`, ready: 'READY!',
     round: n => `ROUND ${n}`, go: 'GO!', burnt: p => `${p} TOASTED!`, back: p => `${p}: back to the start`,
     roundWin: p => `${p} WINS THE ROUND!`, matchWin: p => `${p} WINS! 🏆`,
-    rematch: '🔁 Rematch', duoHomeBtn: '🏠 Home', finish: 'FINISH', ahead: (p, m) => `${p} ▲ +${m}\u00A0m`,
-    title2: 'SOLEIL !'
+    rematch: 'Rematch', duoHomeBtn: 'Home', finish: 'FINISH', ahead: (p, m) => `${p} ▲ +${m}\u00A0m`,
+    title2: 'RED LIGHT!',
+    // pause, device-specific hints, first steps, home (v2.2)
+    pause: 'Pause', pauseTitle: 'PAUSED', resume: 'Resume', restart: 'Restart', restartLevel: 'Restart level',
+    giveUp: 'Give up the challenge', soundOn: 'Sound: on', soundOff: 'Sound: off',
+    spaceKey: 'SPACE', holdWord: 'HOLD', oops: 'OOPS!', oopsSun: 'SEEN!',
+    keyStart: 'Click or Space to start', keyRetry: 'Click or Space to try again', keyHome: 'Click or Space to go back home',
+    contBtn: 'CONTINUE', playBtn: 'PLAY', contHint: (n, w) => `Level ${n} · ${w}`, levelsShort: 'Levels', endlessShort: 'Endless',
+    mapIntro: 'YOUR MAP!', mapIntroSub: 'Pick your next level', yourTurn: 'Your turn!',
+    langLbl: 'Language', title1: '1, 2, 3…', decimal: '.',
+    chant: { pre: 'RED', sun: 'RED LIGHT!', moon: 'MOON!', hop: 'HOP!',
+      traps: ['RED HAT!', 'RED BUS!', 'RED FOX!', 'RED SOCKS!', 'RED BALL!', 'RED KITE!', 'RED NOSE!', 'RED NIGHT!', 'RED LINE!', 'RED BIKE!', 'RED BOOTS!', 'RED LEAF!'],
+      moonTraps: ['MOOSE!', 'MOOD!', 'MOO!', 'MONKEY!', 'MOP!'] },
+    say: { num: ['One…', 'Two…', 'Three…'], so: 'Red…', sun: 'Red light!', moon: 'Moon!', hop: 'Hop!',
+      heh: ['Heh heh!', 'Got you!', 'Hee hee!'], hmm: ['Hmmm…', 'Hmm hmm…'], grilled: ['Toasted!', 'Too slow!', 'I saw you!', 'Burnt toast!'],
+      bossSun: ['You’re gonna melt…', 'It’s getting hot…'], bossMoon: ['Shh… the night is mine…', 'The night is mine…'],
+      bossBeaten: ['Pfff… next time!', 'Pfff… lucky shot!'] }
   }
 };
-const L = TXT[LANG];
-const tr = o => o[LANG] || o.fr;
+// L : les textes de la langue choisie. Un seul objet, rempli par js/core/i18n-apply.js (après le chargement
+// de toutes les langues) et re-rempli si le joueur change de langue : les modules qui ont gardé « L » le voient.
+const L = {};
 
-Object.assign(S, { LANG, TXT, L, tr });
+// ---------- Typographie française : une espace INSÉCABLE avant « ! ? ; : », à l'intérieur des « », et entre
+// un nombre et son unité (« 0,08 s », « 12 m »). Sans elle, un « ! » peut se retrouver seul en début de ligne.
+// Appliquée à TOUS les textes français d'un coup (typoAll, à la fin de core/i18n-levels.js) et aux textes
+// des niveaux (tr). On écrit donc les textes normalement, avec des espaces ordinaires.
+const NB = '\u00A0';
+function typoFr(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[ \u202F]+([!?;:»])/g, NB + '$1')
+            .replace(/«[ \u202F]+/g, '«' + NB)
+            .replace(/(\d) (s|m|ms|px|%|⭐|★)(?=$|[\s.,!?;:)…·])/gu, '$1' + NB + '$2');
+}
+function typoAll(o, seen = new Set()) {           // chaque texte, liste et fonction (dont le résultat est un texte)
+  if (!o || typeof o !== 'object' || seen.has(o)) return o;
+  seen.add(o);
+  for (const k of Object.keys(o)) {
+    const v = o[k];
+    if (typeof v === 'string') o[k] = typoFr(v);
+    else if (typeof v === 'function' && !v.typo) { const f = (...a) => typoFr(v(...a)); f.typo = true; o[k] = f; }
+    else if (v && typeof v === 'object') typoAll(v, seen);
+  }
+  return o;
+}
+// Un texte écrit dans les données ({ fr, en }, niveaux, missions, tenues…) : français, anglais, sinon la traduction
+// de la phrase anglaise dans TXT.xx.phrases (js/core/lang/xx.js), sinon l'anglais.
+const tr = o => {
+  if (o == null) return '';
+  if (typeof o === 'string') return o;
+  const c = S.LANG;
+  if (c === 'fr') return typoFr(o.fr);
+  if (o[c] != null) return o[c];
+  const ph = TXT[c] && TXT[c].phrases, key = o.en != null ? String(o.en).replace(/\u00A0/g, ' ') : null;   // clés écrites avec des espaces simples
+  const t = ph && key != null && ph[key] != null ? ph[key] : o.en != null ? o.en : o.fr;
+  return String(t).replace(/(\d) (m|s)(?=$|[\s.,!?;:)…·])/g, '$1\u00A0$2');   // « 30 m » : jamais coupé en fin de ligne
+};
+
+Object.assign(S, { LANGS, TXT, L, tr, typoFr, typoAll });
 })(window.Soleil);

@@ -6,7 +6,7 @@ const { ACC, CAM_BACK, DEC, DUO_FINISH, DUO_INTRO, DUO_LANE, DUO_RESPAWN, DUO_WI
   SAY, Voice, Lt, over, safe, duoPtr, newRunner, newWatcher, randomSeed, setRunSeed, updateWatcher, confetti,
   popup, smokeAt, fit, otext, otextC, rrp, yAt, drawRunnerFig, drawBanner, toast, refreshUI } = S;   // déjà chargés
 
-$('rematch').addEventListener('click', e => { e.stopPropagation(); Sound.unlock(); $('rematch').blur(); startDuo(); });
+$('rematch').addEventListener('click', e => { e.stopPropagation(); Sound.unlock(); $('rematch').blur(); rematch(); });
 $('rematch').addEventListener('pointerdown', e => e.stopPropagation());
 
 /* ---------- 27. Mode 2 joueurs : même soleil, même chant, deux couloirs ---------- */
@@ -31,6 +31,7 @@ const duoScore = () => `${L.pName[0]} ${S.duo.wins[0]} – ${S.duo.wins[1]} ${L.
 const endLen = () => (S.duo.wins[S.duo.winner] >= DUO_WIN ? 1.6 : 2.6);   // durée de l'écran de fin de manche
 function startDuo() {                              // nouveau match (ou revanche)
   Sound.unlock();
+  S.trialEnd();                                    // une tenue d'essai ne dure qu'une partie (elle n'est pas pour le mode 2 joueurs)
   S.mode = 'duo'; S.state = 'duo';
   S.duo = { round: 0, wins: [0, 0], phase: 'intro', t: 0, racers: [newRacer(0), newRacer(1)], winner: -1, tips: [] };
   clearTimeout(S.armTimer); clearTimeout(S.deTimer);
@@ -41,6 +42,7 @@ function startDuo() {                              // nouveau match (ou revanche
   startDuoRound();
   refreshUI();
 }
+function rematch() { S.afterBreak(startDuo); }   // Revanche : pause pub (si Poki le décide), puis nouvelle partie
 function startDuoRound() {
   const d = S.duo;
   d.round++; d.phase = 'intro'; d.t = 0; d.winner = -1;
@@ -139,7 +141,7 @@ function showDuoEnd() {                            // « J2 GAGNE ! 🏆 », sco
   $('deTitle').textContent = L.matchWin(L.pName[i]);
   $('deTitle').style.color = DUO_TXT[i];
   $('deScore').innerHTML = `<span style="color:${DUO_TXT[0]}">${esc(L.pName[0])}</span> ${d.wins[0]} – ${d.wins[1]} <span style="color:${DUO_TXT[1]}">${esc(L.pName[1])}</span>`;
-  $('rematch').textContent = L.rematch; $('deHome').textContent = L.duoHomeBtn;
+  $('rematch').innerHTML = S.icon('restart') + S.esc(L.rematch); $('deHome').innerHTML = S.icon('home') + S.esc(L.duoHomeBtn);
   el.classList.remove('armed'); el.classList.add('show');
   confetti(110); Sound.mission(); vibrate([60, 40, 60, 40, 120]);
   clearTimeout(S.deTimer);
@@ -228,7 +230,7 @@ function drawDuoBeams() {                          // le regard qui grille, vers
   }
 }
 function drawDuoHUD() {                            // distances, barres jusqu'à l'arrivée, score
-  const fs = Math.min(Lt.U * 0.052, 26), left = 14 + safe.l, right = S.W - 122 - safe.r;
+  const fs = Math.min(Lt.U * 0.052, 26), left = 14 + safe.l + S.pillX, right = S.W - 122 * S.uiZoom - safe.r - S.pillR;   // pillX : la pilule Poki
   const bw = Math.max(70, Math.min(190, (right - left) / 2 - 14));
   const rowY = safe.t + 12 + (Lt.land ? 0 : fs * 1.35);
   for (const r of S.duo.racers) {
@@ -292,7 +294,7 @@ function drawDuoOverlay() {                        // zones « maintiens ici »,
   if (d.phase === 'roundEnd' && d.winner >= 0) drawBanner(L.roundWin(L.pName[d.winner]), duoScore(), '', d.t, endLen(), DUO_TXT[d.winner]);
 }
 
-Object.assign(S, { DUO_COL, DUO_TXT, DUO_KEY, newRacer, racerHeld, racerScreen, duoScore, endLen, startDuo,
+Object.assign(S, { DUO_COL, DUO_TXT, DUO_KEY, newRacer, racerHeld, racerScreen, duoScore, endLen, startDuo, rematch,
   startDuoRound, updateDuo, updateRacer, duoLookCheck, duoCaught, roundWon, showDuoEnd, calmWatcher, drawFinish,
   drawRacers, drawDuoBeams, drawDuoHUD, drawDuoOverlay });
 })(window.Soleil);

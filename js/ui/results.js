@@ -2,7 +2,7 @@
    et écran de résultats (classement, étoiles qui s'allument une par une, Suivant / Rejouer / Carte). */
 (function (S) {
 'use strict';
-const { L, tr, esc, fmt, Sound, PROFILES, lvCard, goalText, confetti, vibrate } = S;
+const { L, tr, esc, fmt, Sound, PROFILES, lvCard, goalText, confetti, vibrate, icon } = S;
 
 // ---------- Réglages ----------
 const STAR_DELAY = 0.45;       // une étoile s'allume toutes les 0,45 s
@@ -21,10 +21,13 @@ function showLevelFail(info) {
   closeLevelCards();
   const el = lvCard('lvFail');
   el.className = 'lvcard fail';
+  const revive = S.Reward.canRevive();            // 🎬 2e chance (pub récompensée) : avec son bouton normal « Réessayer »
   el.innerHTML = `<div class="why">${esc(info.why)}</div><div class="almost">${esc(info.almost)}</div>`
     + (info.tip ? `<div class="tipx">${esc(info.tip)}</div>` : '')
-    + `<div class="tap">👆 ${esc(L.failTap)}</div>`
-    + `<div class="btns"><button class="btn sm" type="button" data-act="map">${esc(L.mapBtn)}</button></div>`;
+    + (revive ? S.Reward.pairHTML({ act: 'retry', label: L.tryAgain, icon: 'restart' },
+                                  { kind: 'revive', token: S.Reward.reviveToken(), label: L.reviveBtn, cap: L.reviveCap })
+              : `<div class="tap">${S.touchUI ? '👆 ' : ''}${esc(S.forDevice(L.failTap, L.keyRetry))}</div>`)
+    + `<div class="btns"><button class="btn sm c-white" type="button" data-act="map">${icon('grid')}${esc(L.mapBtn)}</button></div>`;
   el.classList.add('show');
   later(() => el.classList.add('armed'), 0.25);
 }
@@ -33,7 +36,8 @@ function showLevelFail(info) {
 function showLevelResults(info) {
   closeLevelCards();
   const el = lvCard('lvEnd'), lv = info.def, res = info.res;
-  const lines = [[L.goalDone, info.stars[0]], [goalText(lv, lv.goal), info.stars[1]], [goalText(lv, lv.challenge), info.stars[2]]];
+  const lines = [[L.goalDone, info.stars[0]], [goalText(lv, lv.goal), info.stars[1]],
+                 [goalText(lv, lv.challenge) + (res.revived ? ` (${L.noChallengeRevive})` : ''), info.stars[2]]];   // après une 2e chance : pas de défi
   let rank = info.ranking.map((e, i) => ({ e, i }));
   const me = rank.find(x => x.e.you);
   if (rank.length > RANK_MAX) rank = rank.slice(0, RANK_MAX - 1).concat(me && me.i >= RANK_MAX - 1 ? [me] : [rank[RANK_MAX - 1]]);
@@ -53,9 +57,14 @@ function showLevelResults(info) {
     + (info.ranking.length > 1 ? `<div class="rank">${rows}</div>` : '')
     + (extra ? `<div class="extra">${esc(extra)}</div>` : '')
     + (lv.boss && info.firstWin ? `<div class="extra">${esc(lv.world === 2 ? L.worldDone2 : L.worldDone)}</div>` : '')
-    + `<div class="btns">${info.next ? `<button class="btn" type="button" data-act="next">${esc(L.nextBtn)}</button>` : ''}`
-    + `<button class="btn alt" type="button" data-act="retry">${esc(L.retryBtn)}</button>`
-    + `<button class="btn alt" type="button" data-act="map">${esc(L.mapBtn)}</button></div>`;
+    + (S.Reward.canDouble()                       // 🎬 ×2 ⭐ : à côté du bouton normal vert (Suivant, ou Carte au dernier niveau)
+        ? S.Reward.pairHTML(info.next ? { act: 'next', label: L.nextBtn, icon: 'play' } : { act: 'map', label: L.mapBtn, icon: 'grid' },
+                            { kind: 'double', token: S.Reward.doubleToken(), label: L.doubleBtn, cap: L.doubleCap(info.coins) })
+          + `<div class="btns"><button class="btn c-orange" type="button" data-act="retry">${icon('restart')}${esc(L.retryBtn)}</button>`
+          + (info.next ? `<button class="btn c-white" type="button" data-act="map">${icon('grid')}${esc(L.mapBtn)}</button>` : '') + `</div>`
+        : `<div class="btns">${info.next ? `<button class="btn c-green" type="button" data-act="next">${esc(L.nextBtn)}${icon('play')}</button>` : ''}`
+          + `<button class="btn c-orange" type="button" data-act="retry">${icon('restart')}${esc(L.retryBtn)}</button>`
+          + `<button class="btn c-white" type="button" data-act="map">${icon('grid')}${esc(L.mapBtn)}</button></div>`);
   el.classList.add('show');
   info.stars.forEach((ok, i) => later(() => {           // les étoiles s'allument une par une
     const st = el.querySelector(`.stars span[data-i="${i}"]`), g = el.querySelector(`.goals div[data-g="${i}"]`);

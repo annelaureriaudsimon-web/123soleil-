@@ -1,10 +1,10 @@
 # Notes pour les phases suivantes
 
-Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout relire. Il est à jour à la fin de la **phase 2** (monde 2 « Le parc » et les tentations).
+Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout relire. Il est à jour à la fin de l'**étape Poki 2** (v2.3 : corrections et pubs récompensées), après l'étape Poki 1 (v2.2 : SDK Poki, pause, premiers pas, build Poki), la phase 2 (monde 2 « Le parc ») et la v2.1 (nouveau look).
 
 ## L'architecture en 30 secondes
 
-- **Fichiers.** `index.html` charge des `<script>` classiques dans l'ordre (56 fichiers). Il n'y a ni module ni `fetch()`, donc tout marche en ouvrant le fichier par double-clic.
+- **Fichiers.** `index.html` charge des `<script>` classiques dans l'ordre (63 fichiers ; le build Poki en réunit 62 dans un seul `game.js`, sans le mode debug). Il n'y a ni module ni `fetch()`, donc tout marche en ouvrant le fichier par double-clic. Le seul fichier externe est le SDK Poki, en `async` dans la version dev : sans lui, le jeu passe en mode de secours.
 - **Objet global.** Il n'y en a qu'un : `window.Soleil`.
   - Chaque fichier est une fonction `(function (S) { … })(window.Soleil)`.
   - En haut, une ligne `const { … } = S;` liste ce qu'il utilise des fichiers chargés avant lui.
@@ -18,6 +18,42 @@ Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout reli
   - Pour une nouvelle mécanique, **ajoutez des dés à la fin** d'une suite (ou créez une 3e suite avec un autre décalage, par exemple `6000 + n`), sans décaler les autres : les niveaux existants gardent exactement le même comportement. C'est ce qui garantit que le monde 1 n'a pas bougé d'un chiffre en phase 2.
   - `Math.random()` est réservé aux effets visuels (particules, bulles des rivaux, ordre des moqueries).
 
+## Poki (v2.2) : à respecter pour tout ce qui suit
+
+Tout est décrit dans `docs/POKI_INTEGRATION.md` (le tableau de chaque moment du jeu et son événement SDK). L'essentiel :
+
+- **Ne jamais appeler `PokiSDK` directement.** Tout passe par `S.Poki` (`js/platform/poki.js`), qui protège chaque appel et marche sans SDK.
+- **Ne jamais envoyer `gameplayStart` / `gameplayStop` à la main.** `S.gameActive()` (`js/platform/flow.js`) dit si le joueur joue vraiment ; la boucle envoie l'événement quand la réponse change. Pour un **nouveau mode** : ajoutez une ligne dans `gameActive()` (quand il est « en jeu »), une dans `pausable()` (`js/ui/pause.js`, quand ⏸ est permis), et ses libellés dans `fillMenu()`. Une nouvelle cinématique ou carte d'intro = une phase qui n'est pas « en jeu ».
+- **Une pub avant de rejouer** : `S.afterBreak(() => …)` (Rejouer, Suivant, Recommencer, Reprendre, Revanche). Elle bloque le double tap, fige et coupe le son si Poki montre une pub, puis lance la suite. Pas de pub quand on va vers la carte, l'accueil ou un écran de sélection.
+- **Pubs récompensées (v2.3)** : tout passe par `js/ui/reward.js`. Pour une nouvelle récompense : ajoutez un `handlers.xxx = { can(token), give(token, bouton) }`, une taille dans `SIZE`, et affichez le duo avec `S.Reward.pairHTML({ act, label, icon }, { kind: 'xxx', token, label, cap })` (le bouton normal vert reste à gauche, plus large). Ne montrez jamais de bouton 🎬 si `S.Reward.available()` est faux (mode de secours). Une 2e chance dans un nouveau mode : une fonction de reprise (comme `Match.revive` ou `S.reviveRun`) et une ligne dans `canRevive()`.
+- **Tenue dessinée** : utilisez `S.wornOutfit()` (et plus `S.outfit`) pour dessiner le joueur : c'est la tenue d'essai s'il y en a une. `S.trialBegin()` au début d'une partie, `S.trialEnd()` quand on la quitte.
+- **Sons** : pour couper le son pour une raison du jeu, `Sound.silence('raison', true)` (jamais `Sound.muted`, qui est le choix du joueur). Testez `Sound.quiet` avant de jouer un son.
+- **Nouveaux boutons** : à droite (colonne des boutons ronds) ou au centre, jamais dans la zone de la pilule Poki. Elle est à gauche (`S.pillX` = 56 px) OU à droite (`S.pillR` = 56 px) selon `PILL.side` (`js/platform/flow.js`) : décalez les textes du haut à gauche de `S.pillX`, et ce que vous placez en haut à droite de `S.pillR` (les boutons ronds le font tout seuls avec `--pr`).
+- **Messages** (`S.toast`) : sur un écran de fin, ils se placent tout seuls au-dessus du panneau. Un nouvel écran de fin : ajoutez son sélecteur à `END_PANELS` (`js/ui/toast.js`).
+- **Textes français** : écrivez-les avec des espaces normales, `typoAll` met les espaces insécables (avant « ! ? : ; », dans les « », entre un nombre et son unité). Un texte construit ailleurs : passez-le dans `S.typoFr()`.
+- **Consignes** : `S.forDevice(texteTactile, texteClavier)` donne le bon texte (« Touche… » ou « Clic ou Espace… ») ; `S.drawTut('hold' | 'release')` dessine la main (tactile) ou la touche Espace (clavier), `S.drawTutWord(mot)` le mot au-dessus du coureur. Dans un niveau : `hints: [{ on: 'so', cycle: 1, text: T('LÂCHE !', 'LET GO!'), hand: 'release' }]`.
+- **Premiers pas** : `js/ui/onboard.js` (`soleil.onboard` : 0 → 3). Le niveau 1 est en douceur (`soft: { back: 6 }`, géré par `match.js`) : un niveau difficile ne doit jamais l'utiliser.
+- **Mode debug** : `index.html?debug=1` (journal à l'écran, enchaînements interdits en rouge), `&fakead=1` (fausse pub de 2 s). Le code de debug va dans `js/platform/debug.js`, ou sur une ligne marquée `// @debug` (ou entre `// @debug-start` et `// @debug-end`) : le build les retire.
+- **Avant d'envoyer à Poki** : `node tools/build-poki.js` doit afficher « TOUT EST OK » (aucune adresse externe sauf le SDK, aucun lien sortant, `localStorage` toujours dans un try/catch — passez par `S.store` —, pas de `console.log`, moins de 8 Mo). Puis la liste de tests du Poki Inspector (`docs/POKI_INTEGRATION.md`, section 10).
+
+## Les prochaines étapes Poki (pas faites à l'étape 1, exprès)
+
+- Fait en v2.4 : 6 langues (avec leur chant), miniatures (`tools/thumbnails/make.py`), qualité automatique, grands écrans.
+- Le partage a été **retiré** en v2.4 (décision : personne ne l'utilise). Ne pas le remettre sans en reparler.
+- Les mondes 3 à 5 et les nouvelles mécaniques.
+- **Pour tout nouveau texte** : l'écrire en français ET en anglais (`js/core/i18n.js` ou `T(fr, en)` dans un niveau), puis dans
+  `js/core/lang/es.js`, `pt.js`, `de.js`, `it.js` (clé, ou phrase anglaise dans `phrases`). Le test 29 de `test_poki.py`
+  liste ce qui manque. Ne jamais écrire « SO », « SOLEIL » ou un mot piège en dur : `S.chantW()` et `L.chant`.
+- **Pour toute nouvelle information de jeu** : jamais par la couleur seule (forme, icône, mouvement ou texte en plus).
+- **Pour tout nouvel effet coûteux** (particules, décor) : respecter `S.Q` (`js/render/quality.js`).
+
+## Le look (v2.1)
+
+- **Couleurs des boutons** : une classe par couleur dans `css/style.css` (`c-blue`, `c-green`, `c-orange`, `c-purple`, `c-pink`, `c-white`). Un nouveau bouton prend `class="btn c-green"` (ou `hbtn` pour l'accueil) et a tout de suite le relief et le contour.
+- **Icônes** : `js/ui/icons.js`. `S.icon('play')` donne le SVG à glisser dans un bouton ; `S.setIcon(id, 'home')` change l'icône d'un bouton fixe. Pour une nouvelle icône, ajoutez son dessin (carré de 24 × 24) dans `ICONS`.
+- **Logo** : `drawLogo(texte, taille, couleurHaut, couleurBas)` dans `js/render/hud.js`.
+- **Carte** : `drawTile`, `drawPadlock`, `drawStones`, `drawRoundBtn` dans `js/ui/worldmap.js` servent pour les mondes suivants.
+
 ## Le cycle de vie d'un niveau
 
 1. La carte (`ui/worldmap.js`) appelle `Levels.open(id)`.
@@ -26,7 +62,8 @@ Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout reli
 
    | Phase | Ce qui se passe |
    |---|---|
-   | `intro` | carte d'intro |
+   | `ready` | 1re visite : le niveau 1 sans carte d'intro, le soleil attend, la main montre le geste (v2.2) |
+   | `intro` | carte d'intro ; elle attend un appui (v2.2 : c'est l'appui qui envoie `gameplayStart`) |
    | `boss` | cinématique du boss (lunettes noires ou lunettes-nez-moustache, selon `bossKind`) |
    | `play` | `Match.step(m, dt, S.pressing)` à chaque image |
    | `caught` → `fail` | grillé, puis carte de défaite |
@@ -46,6 +83,7 @@ Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout reli
    | `soleil.temptSeen` (phase 2) | tentations déjà rencontrées (l'indication « 1re fois » ne revient pas) |
    | `soleil.worldsShown` (phase 2) | mondes dont l'animation de déblocage a déjà été jouée |
    | `soleil.lastLevel` (phase 2) | dernier niveau gagné (la carte s'ouvre sur son monde) |
+   | `soleil.onboard` (v2.2) | premiers pas : 0 jamais joué, 1 niveau 1 fini, 2 niveau 2 fini, 3 carte présentée (anciennes sauvegardes : 3) |
 
    Chaque nouvelle étoile rapporte des ⭐ pour le casier (`COINS`), plus 1 ⭐ par tentation résistée si on finit le niveau.
 
@@ -85,10 +123,9 @@ Règle commune :
 | **Verglas dans les niveaux** | même chemin que la boue | `ice: [[début, fin]]` dans le niveau, `kinStep(…, 'ice', …)` dans `move()`, dessin avec `drawPuddle({ type: 'ice' }, …)` (`render/ground.js`), comme `drawLevelMud`. |
 | **La Lune** | `game/chant.js` (`MOON_TRAPS`) | La Lune existe en course infinie (nuit). Pour un niveau, il faudrait un champ `moon` dans `sun` et la palette de nuit (`render/sky.js`). Le « ding » doit rester le même signal pour la Lune. |
 | **Soleil-projecteur** | `match.js`, `stepSun` (`case 'look'`) | Le regard grille aujourd'hui tout le monde. Un projecteur ne verrait qu'une zone : un test de couloir/position dans la boucle des rivaux et du joueur du `case 'look'`, et un cône dessiné dans `render/levelhud.js`. |
-| **Voix du soleil** | `audio/voice.js` | Elle existe pour la course infinie : `Voice`, `sayEvent`, avance mesurée `Voice.lead`. En niveau, quand `'voice'` est dans `mechanics`, appelez `S.sayEvent(e.ev)` dans `events()` (`modes/levels.js`) **avant** l'affichage, de `Voice.lead` secondes. Les moqueries et l'éternuement pourraient aussi être dits. Le bouton 🗣️ est caché en mode Niveaux (`refreshUI`, `ui/home.js`). |
+| **Voix du soleil** | `audio/voice.js` | Elle existe pour la course infinie : `Voice`, `sayEvent`, avance mesurée `Voice.lead`. En niveau, quand `'voice'` est dans `mechanics`, appelez `S.sayEvent(e.ev)` dans `events()` (`modes/levels.js`) **avant** l'affichage, de `Voice.lead` secondes. Les moqueries et l'éternuement pourraient aussi être dits. Le bouton 🗣️ est caché en mode Niveaux et pendant une partie, où ⏸ prend sa place (`syncButtons`, `ui/pause.js`). |
 | **Nuage** | `main.js` (`cloudOn`) + `render/sky.js` (`drawCloud`) | Le soleil d'un niveau a déjà le champ `cloud` (toujours `false`). Tirez-le avec un dé ajouté à la fin d'une suite si `'cloud'` est actif. Gardez la règle d'équité `audioOK()` : jamais de nuage si on n'entend pas le jeu. |
 | **Mode 2 joueurs** | `modes/duo.js` | Il existe et utilise le soleil de la course infinie. Pour un duo dans les niveaux, `Match` sait déjà gérer plusieurs coureurs : faites du 2e joueur un « rival » piloté au clavier (`press` imposé au lieu du cerveau, comme `r.forced`). |
-| **Nouveau partage** | `ui/share.js` (texte) et `ui/story.js` (image) | `Levels.info` (après une victoire) contient tout : temps, place, étoiles, classement, `bonus` (tentations résistées). |
 | **Mondes 3 à 5** | `levels/worlds.js` | Le monde 2 montre le chemin : passez `soon: false` et ajoutez `need: { world: 2, stars: N }` ; créez `levels/world3.js` ; ajoutez le `<script>` dans `index.html` **et** dans `FILES` de `tools/simulate.js` (avec ses objectifs dans `TARGETS`). Décor : un fichier `render/beach.js` (comme `park.js`), choisi dans `drawLevelDecor` et `tintLevel` (`render/tempt.js`). Carte : un fond comme `drawParkMap` (`ui/worldmap.js`). Le déblocage animé marche tout seul (`worldsShown`). |
 
 ## Pièges à éviter
@@ -96,5 +133,6 @@ Règle commune :
 - **Ne pas recopier de logique de jeu dans `modes/levels.js`.** Tout ce qui décide doit être dans `match.js`, sinon la simulation ment.
 - **Ne jamais imiter le « ding ».** Voir plus haut.
 - **Garder les textes en FR et EN.** Ceux du mode Niveaux sont dans `core/i18n-levels.js`. Le test « tous les nouveaux textes existent » vérifie les deux langues.
-- **Ne pas casser les anciennes sauvegardes.** Les clés `soleil.best`, `stars`, `owned`, `outfit`, `ghost`, `medals`, `streak`, `mstate`, `daily`, `mute`, `voice`, `cloudSeen`, `levels`, `temptSeen`, `worldsShown` et `lastLevel` sont lues telles quelles. N'ajoutez que de nouvelles clés.
-- **Tester les modes existants.** La course infinie, le défi du jour et le mode 2 joueurs ont leurs propres chemins dans `update()` et `render()`. Vérifiez-les après chaque phase (voir `docs/TESTS.md`). Pour prouver que rien n'a bougé, `python3 tools/tests/compare_frames.py <ancienne version>` compare le dessin image par image (en phase 2 : 94/94 images identiques).
+- **Ne pas casser les anciennes sauvegardes.** Les clés `soleil.best`, `stars`, `owned`, `outfit`, `ghost`, `medals`, `streak`, `mstate`, `daily`, `mute`, `voice`, `cloudSeen`, `levels`, `temptSeen`, `worldsShown`, `lastLevel` et `onboard` sont lues telles quelles. N'ajoutez que de nouvelles clés.
+- **Rien d'externe.** Aucune requête réseau, aucun lien qui sort du jeu (Poki le refuse) : le build le vérifie.
+- **Tester les modes existants.** La course infinie, le défi du jour et le mode 2 joueurs ont leurs propres chemins dans `update()` et `render()`. Vérifiez-les après chaque phase (voir `docs/TESTS.md`). Pour prouver que rien n'a bougé, `python3 tools/tests/compare_frames.py <ancienne version>` compare le dessin image par image (en phase 2, v2.1 et v2.2 : 94/94 images identiques). Les événements Poki se testent avec `python3 tools/tests/test_poki.py`.

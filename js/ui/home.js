@@ -2,24 +2,35 @@
 (function (S) {
 'use strict';
 const { L, $, esc, dailyState, DAY, missionsDone, streakAlive, todayNumber, untilMidnight, Sound, Lt, over,
-  newRunner, newWatcher, rankIndex, rankLabel, startRun, shareTextNow, canAfford, releaseAll } = S;   // déjà chargés
+  newRunner, newWatcher, rankIndex, rankLabel, startRun, canAfford, releaseAll, icon, setIcon } = S;   // déjà chargés
+
+// Le contenu d'un gros bouton de l'accueil : une pastille ronde avec l'icône, le titre, et une petite ligne dessous
+const hb = (ic, title, hint) => `<span class="bi">${icon(ic)}</span><span class="bt"><b>${esc(title)}</b><small>${esc(hint)}</small></span>`;
 
 function refreshUI() {
-  const showMeta = S.state === 'title';
+  const showMeta = S.state === 'title' && !S.booting;   // pendant le chargement : le titre seul
   const meta = $('meta');
   meta.classList.toggle('hide', !showMeta);
   if (showMeta) {
     const lines = [];
-    if (S.best > 0) lines.push(`<span class="g">${L.meta2(rankLabel(rankIndex(S.best)), Math.floor(S.best))}</span>`);
-    if (S.plays > 0) lines.push(L.meta3(missionsDone(), S.stars, streakAlive()));
-    meta.innerHTML = lines.join('<br>');
+    if (S.best > 0) lines.push(`<div class="mrow"><span class="pill g">${esc(rankLabel(rankIndex(S.best)))}</span></div>`);   // des pastilles : rang,
+    const row = [];                                // puis record, missions, étoiles et série du jour
+    if (S.best > 0) row.push(`<span class="pill" title="${esc(L.meta2('', Math.floor(S.best)).replace(/^ · /, ''))}">${icon('trophy')}${Math.floor(S.best)}\u00A0m</span>`);
+    if (S.plays > 0) {
+      const n = streakAlive();
+      row.push(`<span class="pill">${icon('target')}${missionsDone()}/3</span>`, `<span class="pill">${icon('star', 'gold')}${S.stars}</span>`);
+      if (n) row.push(`<span class="pill">🔥\u00A0${n}</span>`);
+    }
+    if (row.length) lines.push(`<div class="mrow">${row.join('')}</div>`);
+    meta.innerHTML = lines.join('');
   }
   $('home').classList.toggle('hide', !showMeta);
   if (showMeta) { renderHome(); layoutHome(); }
-  $('homeBtn').classList.toggle('hide', !(S.state === 'duo' || S.state === 'map' || S.state === 'level'));
-  $('locker').classList.toggle('hide', !(S.state === 'title' || S.state === 'over' || S.state === 'map'));
-  $('voice').classList.toggle('hide', S.state === 'map' || S.state === 'level');
-  document.body.classList.toggle('st-map', S.state === 'map');   // carte : le casier passe sous le bouton 🏠   // la voix est réservée à la course infinie (monde 1)
+  $('locker').classList.toggle('hide', !(S.state === 'title' || S.state === 'over' || S.state === 'map') || !!S.booting);
+  document.body.classList.toggle('st-map', S.state === 'map');   // carte : le casier passe sous le bouton 🏠
+  if (S.syncButtons) S.syncButtons(true);
+  if (S.syncLangBtn) S.syncLangBtn();              // bouton de langue « FR » (js/ui/lang.js), accueil seulement
+  if (S.syncTrialTag) S.syncTrialTag();            // le badge « Essai » (pub récompensée, js/ui/reward.js)          // ⏸, 🏠 et 🗣️ (ils changent aussi pendant la partie : js/ui/pause.js)
   const dot = canAfford();
   $('dot1').classList.toggle('hide', !dot); $('dot2').classList.toggle('hide', !dot);
 }
@@ -27,17 +38,16 @@ function renderHome() {
   const d = dailyState(), box = $('dailyBox');
   $('home').classList.toggle('done', !!d);
   if (!d) {                                        // pas encore joué : le gros bouton du défi
-    box.innerHTML = `<button id="dailyBtn" class="hbtn daily" type="button">${esc(L.dailyBtn(DAY))}<small>${esc(L.dailyHint)}</small></button>`;
-  } else {                                         // déjà joué : résultat, grille, compte à rebours, repartage
-    const grid = d.done && Array.isArray(d.lines) && d.lines.length ? `<div class="g">${esc(d.lines.join('\n'))}</div>` : '';
-    const again = d.done && d.share ? `<button id="reshare" type="button">${esc(L.reshare)}</button>` : '';
-    box.innerHTML = `<div class="dcard"><div class="t">${esc(d.done ? L.dailyDone(DAY, d.dist) : L.dailyLost(DAY))}</div>${grid}`
-                  + `<div class="r"><span class="c" id="countdown">${esc(L.nextIn(untilMidnight()))}</span>${again}</div></div>`;
+    box.innerHTML = `<button id="dailyBtn" class="hbtn daily c-orange" type="button">${hb('sun', L.dailyBtn(DAY), L.dailyHint)}</button>`;
+  } else {                                         // déjà joué : résultat et compte à rebours
+    box.innerHTML = `<div class="dcard"><div class="t">${esc(d.done ? L.dailyDone(DAY, d.dist) : L.dailyLost(DAY))}</div>`
+                  + `<div class="r"><span class="c" id="countdown">${esc(L.nextIn(untilMidnight()))}</span></div></div>`;
   }
-  const lastWorld = S.WORLDS.filter(w => w.levels.length && S.Levels.worldOpen(w)).pop() || S.WORLDS[0];   // le monde ouvert le plus loin
-  $('lvBtn').innerHTML = `${esc(L.levelsBtn)}<small>${esc(L.levelsHint(S.Levels.totalStars(), S.Levels.maxStars(), S.tr(lastWorld.name)))}</small>`;   // le mode principal
-  $('freeBtn').innerHTML = `${esc(L.endlessBtn)}<small>${esc(L.freeHint)}</small>`;
-  $('duoBtn').innerHTML = `${esc(L.duoBtn)}<small>${esc(L.duoHint)}</small>`;
+  const cont = S.Onboard.contLevel(), cw = S.WORLDS.find(w => w.id === cont.world) || S.WORLDS[0];   // un appui : on reprend là où on en était
+  $('contBtn').innerHTML = hb('play', S.Onboard.started() ? L.contBtn : L.playBtn, L.contHint(cont.num, S.tr(cw.name)));
+  $('lvBtn').innerHTML = hb('grid', L.levelsShort, `★ ${S.Levels.totalStars()}/${S.Levels.maxStars()}`);   // les autres modes, plus petits
+  $('freeBtn').innerHTML = hb('infinity', L.endlessShort, L.freeHint);
+  $('duoBtn').innerHTML = hb('duo', L.duoBtn, L.duoHint);
   $('rules').textContent = L.rules;
 }
 function layoutHome() {                            // boutons en bas (portrait) ou en bas à droite (paysage)
@@ -45,12 +55,34 @@ function layoutHome() {                            // boutons en bas (portrait) 
   if (el.classList.contains('hide')) return;
   const side = Lt.land && S.W > S.H * 1.2;
   el.classList.toggle('side', side);
+  fitRow();
   Lt.homeTop = side ? 0 : el.getBoundingClientRect().top;   // le titre se cale au-dessus
 }
+// Les 3 petits boutons (Niveaux, Infini, 2 joueurs) : le texte doit TOUJOURS tenir dans le bouton, à toutes les
+// tailles et dans toutes les langues. On réduit d'abord la taille du texte ; si ça ne suffit pas, l'icône s'efface.
+const FIT_MIN = 12;                                // px : taille de texte la plus petite acceptée
+function fitRow() {
+  const btns = [...document.querySelectorAll('#home .row .hbtn')];
+  const over = bt => { const t = bt.querySelector('.bt'); return t && (t.scrollWidth > t.clientWidth + 0.5 || bt.scrollWidth > bt.clientWidth + 0.5); };
+  btns.forEach(bt => { bt.classList.remove('noico'); const b = bt.querySelector('b'); if (b) b.style.fontSize = ''; });
+  if (!btns.some(over)) return;
+  const b0 = btns[0] && btns[0].querySelector('b');
+  if (!b0) return;
+  let fs = parseFloat(getComputedStyle(b0).fontSize);
+  const setFs = v => btns.forEach(bt => { const b = bt.querySelector('b'); if (b) b.style.fontSize = v + 'px'; });   // même taille pour les 3
+  while (fs > FIT_MIN && btns.some(over)) setFs(fs -= 0.5);
+  if (btns.some(over)) {                           // toujours trop serré : sans l'icône, à la taille d'origine
+    btns.forEach(bt => { bt.classList.add('noico'); const b = bt.querySelector('b'); if (b) b.style.fontSize = ''; });
+    fs = parseFloat(getComputedStyle(b0).fontSize);
+    while (fs > FIT_MIN && btns.some(over)) setFs(fs -= 0.5);
+  }
+}
+window.addEventListener('resize', () => { if (!$('home').classList.contains('hide')) fitRow(); });
 function goHome() {
   if (S.state === 'level' && S.Levels.m) { S.Levels.toMap(); return; }   // 🏠 pendant un niveau : retour à la carte
   if (todayNumber() !== DAY) { location.reload(); return; }   // minuit est passé : nouveau défi
   S.Levels.cleanup(); S.mapKeys = false;                       // on quitte proprement le mode Niveaux
+  S.trialEnd();                                                // une tenue d'essai ne dure qu'une partie
   S.state = 'title'; S.mode = 'free'; S.duo = null;
   clearTimeout(S.armTimer); clearTimeout(S.deTimer);
   over.classList.remove('show', 'armed'); $('duoEnd').classList.remove('show', 'armed');
@@ -66,12 +98,13 @@ $('home').addEventListener('click', e => {
   const b = e.target.closest ? e.target.closest('button') : null;
   if (!b) return;
   e.stopPropagation(); Sound.unlock(); b.blur();
-  if (b.id === 'lvBtn') S.WorldMap.open();
+  if (b.id === 'contBtn') S.Levels.open(S.Onboard.contLevel().id, false);   // la carte d'intro du niveau, tout de suite
+  else if (b.id === 'lvBtn') S.WorldMap.open();
   else if (b.id === 'dailyBtn') startRun('daily');
   else if (b.id === 'freeBtn') startRun('free');
   else if (b.id === 'duoBtn') S.startDuo();
-  else if (b.id === 'reshare') { const d = dailyState(); if (d && d.share) shareTextNow(d.share); }
 });
+setIcon('homeBtn', 'home'); setIcon('homeBtn2', 'home');
 ['homeBtn', 'homeBtn2', 'deHome'].forEach(id => {
   $(id).addEventListener('click', e => { e.stopPropagation(); Sound.unlock(); $(id).blur(); goHome(); });
   $(id).addEventListener('pointerdown', e => e.stopPropagation());

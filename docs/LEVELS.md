@@ -29,7 +29,7 @@ Ce qui grille un joueur : être encore en mouvement quand le soleil a fini de se
 ## Monde 1 : ce que j'ai ajusté (phase 1)
 
 1. **Durées.** Au premier réglage, les niveaux duraient 15 à 22 s : trop courts. Je les ai allongés à 135–150 m, et le boss à 180 m. Le joueur moyen met maintenant 27 à 31 s, et 38 s pour le boss. L'expert y met 44 s, parce qu'il s'arrête à chaque « SO ».
-2. **Débutant au niveau 1.** Il réussissait 97 %, puis 89 % avec les niveaux plus longs. J'ai raccourci le demi-tour de 0,68–0,74 s à 0,60–0,66 s, en gardant 1 s pour le tout premier regard. Il réussit maintenant environ 63 % : il peut rater.
+2. **Débutant au niveau 1.** Il réussissait 97 %, puis 89 % avec les niveaux plus longs. J'ai raccourci le demi-tour de 0,68–0,74 s à 0,60–0,66 s, en gardant 1 s pour le tout premier regard. Il réussit maintenant environ 63 % : il peut rater. **v2.2 (étape Poki 1)** : le niveau 1 devient un départ en douceur. Vu en train de bouger, le joueur n'est plus grillé : « OUPS ! », il recule de 6 m et doit lâcher pour repartir. Le débutant le finit 100 % du temps (27 s en moyenne, 0,4 « OUPS ! » par essai). Les 15 autres niveaux n'ont pas bougé d'un chiffre.
 3. **Boss.** Le moyen le réussissait à 81 %. J'ai durci les demi-tours (0,51–0,56 s), et le moyen est tombé à environ 30 %, dans l'objectif 15–35 %.
 4. **Progression.** Elle était plate de 1 à 5, puis chutait de 48 points du niveau 7 au boss. J'ai réglé le demi-tour niveau par niveau. Pour le moyen, il n'y a plus de saut de plus de 20 points entre deux niveaux (le plus gros est d'environ 17 points).
 
@@ -68,8 +68,8 @@ _Généré par `node tools/simulate.js --md docs/LEVELS.md` (300 essais par prof
 | Niveau | Profil | Réussite | Durée moyenne (réussites) | Position moyenne | Défaite la plus fréquente | ★★ | ★★★ |
 |---|---|---|---|---|---|---|---|
 | 1. Premiers pas | Expert | 100 % | 29,3 s | 1,00 / 3 | — | 100 % | 0 % |
-| 1. Premiers pas | Moyen | 100 % | 27,3 s | 1,00 / 3 | lâché trop tard (100 %) | 100 % | 33 % |
-| 1. Premiers pas | Débutant | 66 % | 26,8 s | 1,00 / 3 | lâché trop tard (100 %) | 66 % | 56 % |
+| 1. Premiers pas | Moyen | 100 % | 27,3 s | 1,00 / 3 | — | 100 % | 33 % |
+| 1. Premiers pas | Débutant | 100 % | 27,0 s | 1,00 / 3 | — | 100 % | 86 % |
 | 2. Les hésitations | Expert | 100 % | 35,1 s | 1,81 / 3 | — | 100 % | 0 % |
 | 2. Les hésitations | Moyen | 99 % | 28,5 s | 1,73 / 3 | lâché trop tard (100 %) | 99 % | 71 % |
 | 2. Les hésitations | Débutant | 59 % | 25,6 s | 1,68 / 3 | lâché trop tard (98 %) | 59 % | 59 % |
@@ -175,7 +175,8 @@ Objectifs vérifiés :
 - ✅ monde 1 : la difficulté monte régulièrement (moyen : jamais plus de 20 points d’écart, jamais plus facile) (plus gros saut 18 points)
 - ✅ monde 2 : le moyen réussit le boss 10 à 30 % (24 %)
 - ✅ monde 2 : la difficulté monte régulièrement (moyen : jamais plus de 20 points d’écart, jamais plus facile) (plus gros saut 18 points)
-- ✅ monde 1, niveau 1 : le débutant réussit 40 à 70 % (66 %)
-- ✅ monde 1 : mêmes résultats qu’à la fin de la phase 1 (à 3 points près) (plus gros écart 0 points)
+- ✅ monde 1, niveau 1 (en douceur) : le débutant le finit presque à chaque fois (≥ 90 %) (100 %)
+- ✅ monde 1, niveau 1 (en douceur) : le débutant le finit en moins de 45 s (27,0 s)
+- ✅ monde 1 : mêmes résultats que la référence REF_W1 (phase 1 ; niveau 1 en douceur depuis la v2.2), à 3 points près (plus gros écart 0 points)
 - ✅ monde 2, niveau 1 : un peu plus dur que le niveau 4 du monde 1 (moyen : 2 à 15 points de moins) (76 % contre 88 %)
 <!-- tableau:fin -->

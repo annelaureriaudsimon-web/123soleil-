@@ -13,7 +13,7 @@ function drawLevelHUD() {
   const LV = S.Levels, m = LV.m;
   if (!m) return;
   const g = S.ctx, def = m.level, boss = !!def.boss;
-  const x0 = 14 + safe.l, x1 = Lt.land ? Math.min(x0 + S.W * 0.3, Lt.cx - Lt.R * 1.6) : S.W - RIGHT_FREE - safe.r;   // paysage : le chant reste lisible
+  const x0 = 14 + safe.l + S.pillX, x1 = Lt.land ? Math.min(x0 + S.W * 0.3, Lt.cx - Lt.R * 1.6) : S.W - RIGHT_FREE * S.uiZoom - safe.r - S.pillR;   // paysage : le chant reste lisible ; pillX : la pilule Poki
   const y = safe.t + 16, w = Math.max(60, x1 - x0);
   const k = clamp(m.player.z / def.length, 0, 1);
   // la barre
@@ -28,7 +28,7 @@ function drawLevelHUD() {
     g.fillStyle = css(rv.state === 'grilled' ? '#2A2524' : rivalOutfit(rv).body); g.strokeStyle = INK; g.lineWidth = 2;
     g.beginPath(); g.arc(x0 + w * rk, y + BAR_H / 2, BAR_H * 0.42, 0, TAU); g.fill(); g.stroke();
   }
-  g.fillStyle = css(S.outfitById(S.outfit).body); g.strokeStyle = '#FFFFFF'; g.lineWidth = 3;
+  g.fillStyle = css(S.outfitById(S.wornOutfit()).body); g.strokeStyle = '#FFFFFF'; g.lineWidth = 3;
   g.beginPath(); g.arc(x0 + w * k, y + BAR_H / 2, BAR_H * 0.62, 0, TAU); g.fill(); g.stroke();
   // l'arrivée : un petit soleil
   g.font = `${BAR_H * 1.5}px ${S.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -48,6 +48,16 @@ function drawLevelHUD() {
   otext(lab, x0 + (total > 1 ? fs * 2.9 : 0), ty + fs * 0.05, fs * 0.62, boss ? '#FF8FA3' : '#FFFFFF');
   // rivaux derrière toi
   S.drawBehind();
+  // consigne dessinée (main qui appuie ou lève le doigt, ou touche Espace) et son mot : « MAINTIENS », « LÂCHE ! »…
+  const hd = LV.hand;
+  if (hd && (LV.phase === 'play' || LV.phase === 'ready')) {
+    const age = S.gtime - hd.t0, a = Math.min(1, age / 0.2) * (hd.done ? Math.max(0, 1 - (S.gtime - hd.done) / 0.5) : 1);
+    S.drawTut(hd.kind, a);
+    const wa = hd.wordAt ? Math.max(0, Math.min(1, (S.gtime - hd.wordAt) / 0.2)) : 1;   // après un « OUPS ! », le mot attend son tour
+    if (hd.text && wa > 0) S.drawTutWord(hd.text, hd.kind === 'release' ? '#FF8FA3' : '#FFD166', a * wa);
+  }
+  // niveau en douceur : des étoiles tournent autour de la tête après un « OUPS ! »
+  if (LV.oops) drawDizzy(LV.oops.t);
   // « MAINTIENS pour courir » : reste tant qu'on n'a pas maintenu
   if (LV.hold && LV.phase === 'play') {
     const t = LV.hold.text, s = fit(t, Math.min(Lt.U * 0.085, 44), S.W * 0.86) * (1 + Math.sin(S.gtime * 6) * 0.04);
@@ -70,6 +80,19 @@ function drawLevelHUD() {
   if (b) drawBanner(b.title, b.sub, '', b.t, b.life, b.col);
   // le boss met ses lunettes
   if (LV.glass >= 0) { if (def.bossKind === 'farceur') S.drawGrouchoDrop(LV.glass); else drawGlassesDrop(LV.glass); }
+}
+
+// « OUPS ! » : trois petites étoiles qui tournent au-dessus de la tête, puis s'en vont
+function drawDizzy(t) {
+  const g = S.ctx, a = Math.min(1, t / 0.15) * Math.max(0, Math.min(1, (1.4 - t) / 0.4));
+  if (a <= 0) return;
+  const cx = Lt.cx, cy = Lt.yFeet - Lt.s * 1.85 - S.Levels.jump, rx = Lt.s * 0.42, ry = Lt.s * 0.13;
+  g.save(); g.globalAlpha = a;
+  for (let i = 0; i < 3; i++) {
+    const ang = t * 7 + i * TAU / 3;
+    S.drawStarShape(cx + Math.cos(ang) * rx, cy + Math.sin(ang) * ry, Lt.s * (0.09 + 0.03 * Math.sin(ang)), '#FFD23A', ang);
+  }
+  g.restore();
 }
 
 // Les lunettes noires descendent du ciel jusque sur les yeux du soleil

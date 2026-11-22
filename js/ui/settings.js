@@ -1,11 +1,12 @@
 /* js/ui/settings.js — Boutons son 🔊 et voix 🗣️ */
 (function (S) {
 'use strict';
-const { L, $, store, Sound, Voice, toast } = S;   // déjà chargés
+const { L, $, store, Sound, Voice, toast, setIcon } = S;   // déjà chargés
 
 const muteBtn = $('mute');
+setIcon('voice', 'mic');
 function refreshMute() {
-  muteBtn.textContent = Sound.muted ? '🔇' : '🔊';
+  setIcon(muteBtn, Sound.muted ? 'soundOff' : 'soundOn');
   const label = Sound.muted ? L.unmute : L.mute;
   muteBtn.setAttribute('aria-label', label); muteBtn.title = label;
   $('locker').setAttribute('aria-label', L.locker); $('locker').title = L.locker;

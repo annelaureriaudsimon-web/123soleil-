@@ -9,10 +9,8 @@ const ordEn = n => `${n}${n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !=
 
 Object.assign(TXT.fr, {
   ord: ordFr,
-  levelsBtn: '▶ NIVEAUX', levelsHint: (n, t, w) => `★ ${n}/${t} · ${w}`,
-  endlessBtn: '♾️ Course infinie',
   worldN: n => `Monde ${n}`, soon: 'Bientôt', soonToast: 'Ce monde arrive bientôt ! 🔒', lockedToast: 'Finis le niveau d’avant pour le débloquer 🔒',
-  mapHint: 'Touche un niveau pour jouer', levelN: n => `Niveau ${n}`, bossTag: 'BOSS',
+  levelN: n => `Niveau ${n}`, bossTag: 'BOSS',
   goalDone: 'Finis le niveau',
   goal: (g, who) => g.type === 'top' ? `Arrive dans le top ${g.n}` : g.type === 'first' ? 'Arrive 1er'
     : g.type === 'oufs' ? `Fais ${g.n} OUF` : g.type === 'combo' ? `Fais un combo OUF ×${g.n}`
@@ -25,7 +23,7 @@ Object.assign(TXT.fr, {
   failAlmost: m => `À ${m} m de l’arrivée !`, failPlace: p => `Tu étais ${ordFr(p)} !`, failTap: 'Touche pour réessayer',
   failTipTrap: 'Il t’a eu juste après un mot piège 😏',
   winTitle: 'BRAVO !', bossWinTitle: 'SOLEIL COOL BATTU ! 😎', you: 'Toi', notIn: 'pas arrivé',
-  nextBtn: 'Suivant ▶', retryBtn: '↻ Rejouer', mapBtn: '🗺️ Carte', bestTime: s => `Meilleur temps : ${s} s`,
+  nextBtn: 'Suivant', retryBtn: 'Rejouer', mapBtn: 'Carte', bestTime: s => `Meilleur temps : ${s} s`,
   coins: n => `+${n} ⭐ pour le casier`, worldDone: 'Monde 1 terminé ! La suite arrive bientôt 🎉',
   rivalBurnt: p => `${p} GRILLÉ !`, rivalBack: p => `${p} repart du début`, rivalDone: (p, n) => `🏁 ${p} ${ordFr(n)}`,
   haha: 'HA HA !', passed: p => `▲ ${ordFr(p)}`, passedBy: p => `▼ ${ordFr(p)}`,
@@ -55,10 +53,8 @@ Object.assign(TXT.fr, {
 
 Object.assign(TXT.en, {
   ord: ordEn,
-  levelsBtn: '▶ LEVELS', levelsHint: (n, t, w) => `★ ${n}/${t} · ${w}`,
-  endlessBtn: '♾️ Endless run',
   worldN: n => `World ${n}`, soon: 'Soon', soonToast: 'This world is coming soon! 🔒', lockedToast: 'Finish the previous level to unlock it 🔒',
-  mapHint: 'Tap a level to play', levelN: n => `Level ${n}`, bossTag: 'BOSS',
+  levelN: n => `Level ${n}`, bossTag: 'BOSS',
   goalDone: 'Finish the level',
   goal: (g, who) => g.type === 'top' ? `Finish in the top ${g.n}` : g.type === 'first' ? 'Finish 1st'
     : g.type === 'oufs' ? `Get ${g.n} PHEWs` : g.type === 'combo' ? `Get a ×${g.n} PHEW combo`
@@ -67,11 +63,11 @@ Object.assign(TXT.en, {
     : g.type === 'quick' ? `Get ${g.n} lightning starts` : g.type === 'resist' ? `Resist ${g.n} temptations` : '',
   tapStart: 'Tap to start',
   posOf: (n, t) => `${ordEn(n)}/${t}`, toGo: m => `${m} m`,
-  failWhyRunning: 'You were still running! Let go on “SO”',
+  failWhyRunning: 'You were still running! Let go on “RED”',
   failAlmost: m => `${m} m from the finish!`, failPlace: p => `You were ${ordEn(p)}!`, failTap: 'Tap to try again',
   failTipTrap: 'He got you right after a trap word 😏',
   winTitle: 'WELL DONE!', bossWinTitle: 'COOL SUN BEATEN! 😎', you: 'You', notIn: 'not in',
-  nextBtn: 'Next ▶', retryBtn: '↻ Replay', mapBtn: '🗺️ Map', bestTime: s => `Best time: ${s} s`,
+  nextBtn: 'Next', retryBtn: 'Replay', mapBtn: 'Map', bestTime: s => `Best time: ${s} s`,
   coins: n => `+${n} ⭐ for the locker`, worldDone: 'World 1 complete! More coming soon 🎉',
   rivalBurnt: p => `${p} TOASTED!`, rivalBack: p => `${p} starts over`, rivalDone: (p, n) => `🏁 ${p} ${ordEn(n)}`,
   haha: 'HA HA!', passed: p => `▲ ${ordEn(p)}`, passedBy: p => `▼ ${ordEn(p)}`,
@@ -98,4 +94,29 @@ Object.assign(TXT.en, {
   bossTaunt2: 'You’ll laugh… or cry!', bossDown2: 'My nose!!', bossWin2: 'PRANKSTER SUN BEATEN! 🤡', bossBar2: 'Prankster Sun',
   worldDone2: 'World 2 complete! More coming soon 🎉',
 });
+// Pubs récompensées (v2.3, js/ui/reward.js)
+Object.assign(TXT.fr, {
+  tryAgain: 'Réessayer', reviveBtn: '2e chance', reviveCap: 'Regarde une courte vidéo pour continuer d’ici',
+  continueBtn: 'Continuer', continueCap: 'Regarde une courte vidéo pour continuer ta course d’ici',
+  doubleBtn: '×2 ⭐', doubleCap: n => `Regarde une courte vidéo pour gagner ${n} ⭐ de plus`, doubledPop: n => `+${n} ⭐ ×2 !`, doubledTag: ' ×2',
+  tryBtn: 'Essayer', tryCap: 'Regarde une courte vidéo pour la porter pendant ta prochaine partie',
+  buyBtn: p => `Acheter · ${p} ⭐`, close: 'Fermer',
+  trialOn: n => `${n} : tu la portes pour ta prochaine partie !`, trialEnd: (n, p) => `Tu l’as aimée ? ${n} coûte ${p} ⭐`,
+  trialTag: n => `Essai : ${n}`, trialBadge: 'Essai',
+  noVideo: 'Vidéo indisponible', rewardDone: 'Fait', revived: '2E CHANCE !', noChallengeRevive: 'impossible après une 2e chance'
+});
+Object.assign(TXT.en, {
+  tryAgain: 'Try again', reviveBtn: 'Second chance', reviveCap: 'Watch a short video to continue from here',
+  continueBtn: 'Continue', continueCap: 'Watch a short video to continue your run from here',
+  doubleBtn: '×2 ⭐', doubleCap: n => `Watch a short video to get ${n} more ⭐`, doubledPop: n => `+${n} ⭐ ×2!`, doubledTag: ' ×2',
+  tryBtn: 'Try it', tryCap: 'Watch a short video to wear it in your next game',
+  buyBtn: p => `Buy · ${p} ⭐`, close: 'Close',
+  trialOn: n => `${n}: you’ll wear it in your next game!`, trialEnd: (n, p) => `Liked it? ${n} costs ${p} ⭐`,
+  trialTag: n => `Trial: ${n}`, trialBadge: 'Trial',
+  noVideo: 'Video unavailable', rewardDone: 'Done', revived: 'SECOND CHANCE!', noChallengeRevive: 'not possible after a second chance'
+});
+// Qualité d'image (v2.4, js/render/quality.js)
+Object.assign(TXT.fr, { qualityLbl: m => `Qualité : ${{ auto: 'Auto', high: 'Haute', low: 'Basse' }[m] || m}` });
+Object.assign(TXT.en, { qualityLbl: m => `Quality: ${{ auto: 'Auto', high: 'High', low: 'Low' }[m] || m}` });
+S.typoAll(TXT.fr);                                 // typographie française : espaces insécables (core/i18n.js)
 })(window.Soleil);

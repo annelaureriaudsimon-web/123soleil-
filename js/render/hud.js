@@ -1,7 +1,7 @@
 /* js/render/hud.js — Chant à l’écran, bannières, HUD de la course infinie, titre */
 (function (S) {
 'use strict';
-const { FONT, INK, L, clamp, finePointer, Lt, safe, ghostZ, drawGhostIcon, drawStar, fit, otext, otextC, rrp } = S;   // déjà chargés
+const { FONT, INK, L, clamp, Lt, safe, ghostZ, drawGhostIcon, drawStar, fit, otext, otextC, rrp } = S;   // déjà chargés
 
 function drawChant() {                               // « 1… 2… 3… SO… SOLEIL ! »
   const w = S.watcher;
@@ -27,15 +27,46 @@ function drawChant() {                               // « 1… 2… 3… SO… 
   S.ctx.save(); S.ctx.translate(Lt.cx, Lt.chantY);
   if (trapShown) S.ctx.rotate(Math.sin(S.gtime * 22) * 0.06 * Math.max(0, 1 - (since - 0.2) * 1.5));
   S.ctx.scale(sc, sc);
+  // Daltoniens : la couleur n'est jamais le seul indice. Un mot « qui claque » (SOLEIL !, LUNE !, HOP ! et, au tout début,
+  // les mots pièges) a une étoile « POW » derrière lui ; un piège démasqué perd l'étoile et se fait rayer (et tremble).
+  const loud = w.textKind === 'trigger' || (w.textKind === 'trap' && !trapShown);
+  if (loud || trapShown) { S.ctx.font = `900 ${size}px ${FONT}`; }
+  const tw = loud || trapShown ? S.ctx.measureText(w.text).width : 0;
+  if (loud) drawBurst(Math.min(tw * 0.56 + size * 0.22, S.W * 0.47), size * 0.82, a, S.gtime);
   otextC(w.text, size, col, a);
+  if (trapShown) drawStrike(tw, size, clamp((since - 0.2) / 0.12, 0, 1), a);
   if ((w.textKind === 'num' || w.textKind === 'so') && w.state === 'chant' && since > 0.42 && S.cloudK < 0.05) {   // il fait durer le suspense…
     const n = 1 + (Math.floor((since - 0.42) / 0.22) % 3);
     S.ctx.font = `900 ${size}px ${FONT}`;
-    const tw = S.ctx.measureText(w.text).width;
+    const dw = S.ctx.measureText(w.text).width;
     S.ctx.textAlign = 'left';
-    otext('.'.repeat(n), tw / 2 + size * 0.05, 0, size, col);
+    otext('.'.repeat(n), dw / 2 + size * 0.05, 0, size, col);
   }
   S.ctx.restore();
+}
+
+function drawBurst(rx, ry, a, t) {                   // étoile « POW » de bande dessinée derrière le vrai signal
+  const c = S.ctx, n = 16, wob = 1 + 0.04 * Math.sin(t * 18);
+  c.save(); c.globalAlpha *= a * 0.95; c.rotate(Math.sin(t * 6) * 0.03);
+  c.beginPath();
+  for (let i = 0; i < n * 2; i++) {
+    const ang = (i / (n * 2)) * Math.PI * 2, k = i % 2 ? 0.72 : 1.08 * wob;
+    const x = Math.cos(ang) * rx * k, y = Math.sin(ang) * ry * k;
+    if (i) c.lineTo(x, y); else c.moveTo(x, y);
+  }
+  c.closePath(); c.fillStyle = '#FFF4C2'; c.fill();
+  c.lineJoin = 'round'; c.lineWidth = Math.max(2.5, ry * 0.07); c.strokeStyle = INK; c.stroke();
+  c.restore();
+}
+
+function drawStrike(tw, size, k, a) {               // piège démasqué : le mot est rayé d'un gros trait
+  if (k <= 0) return;
+  const c = S.ctx, x0 = -tw * 0.56, x1 = x0 + (tw * 1.12) * k;
+  c.save(); c.globalAlpha *= a; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(x0, size * 0.12); c.lineTo(x1, size * 0.12 - (x1 - x0) * 0.12);
+  c.strokeStyle = INK; c.lineWidth = size * 0.2; c.stroke();
+  c.strokeStyle = '#FFFFFF'; c.lineWidth = size * 0.1; c.stroke();
+  c.restore();
 }
 
 function drawGrille() {                              // gros « GRILLÉ ! »
@@ -64,7 +95,7 @@ function drawBanner(title, sub, sub2, t, life, col) {
 }
 
 function drawHUD() {
-  const x = 14 + safe.l, y = 12 + safe.t, fs = Math.min(Lt.U * 0.09, 52);
+  const x = 14 + safe.l + S.pillX, y = 12 + safe.t, fs = Math.min(Lt.U * 0.09, 52);   // pillX : la pilule Poki
   const shown = S.state === 'play' || !S.lastRun ? Math.floor(S.runner.z) : S.lastRun.dist;   // la glissade après « GRILLÉ » ne compte pas
   S.ctx.textAlign = 'left'; S.ctx.textBaseline = 'top';
   otext(`${shown} m`, x, y, fs, '#FFFFFF');
@@ -82,7 +113,7 @@ function drawHUD() {
     }
   }
   if (S.state === 'play' || S.state === 'caught') {     // étoiles gagnées et combo, sous le bouton son
-    const rx = S.W - 16 - safe.r, ry = safe.t + 66, ss = s2 * 1.25;
+    const rx = S.W - 16 * S.uiZoom - safe.r - S.pillR, ry = safe.t + 66 * S.uiZoom, ss = s2 * 1.25;
     S.ctx.textAlign = 'right'; S.ctx.textBaseline = 'top';
     otext(String(S.runStars), rx, ry, ss, '#FFD166');
     S.ctx.font = `900 ${ss}px ${FONT}`;
@@ -99,11 +130,46 @@ function drawHUD() {
       otext(`✨${S.RS.catches}`, rx, cy2, ss * 0.9, '#FFF3B0');
     }
   }
-  if (S.tutorial && S.state === 'play' && S.cycleN <= 1) {
-    S.ctx.textAlign = 'center'; S.ctx.textBaseline = 'middle';
-    const hs = fit(L.playHint, Math.min(Lt.U * 0.045, 20), S.W * 0.9);
-    otext(L.playHint, Lt.cx, Math.min(S.H - 20 - safe.b, Lt.yFeet + Lt.s * 0.45), hs, '#FFFFFF');
+  if (S.tutorial && S.state === 'play' && S.cycleN <= 1) {   // 1re course : le geste dessiné (main ou touche Espace) et un mot
+    const w = S.watcher;
+    const stop = (w.state === 'chant' && (w.textKind === 'so' || w.textKind === 'trigger')) || w.state === 'turn' || w.state === 'look';   // « SO… » : on lâche
+    S.drawTut(stop ? 'release' : 'hold');
+    S.drawTutWord(stop ? L.letGo : L.holdWord, stop ? '#FF8FA3' : '#FFD166');
   }
+}
+
+// ---------- Le logo « 1, 2, 3… SOLEIL ! » : lettres bombées, gros contour bleu, relief bleu nuit ----------
+const LOGO_BLUE = '#3B49F0', LOGO_NAVY = '#141A6E';
+const logoCache = new Map();
+function logoSprite(t, size, top, bot) {           // dessiné une seule fois par taille, puis recopié à chaque image
+  const key = `${t}|${Math.round(size * 2)}|${top}|${S.DPR}`;
+  let c = logoCache.get(key);
+  if (c) return c;
+  if (logoCache.size > 12) logoCache.clear();
+  c = document.createElement('canvas');
+  const g = c.getContext('2d'), font = `900 ${size}px ${FONT}`;
+  g.font = font;
+  const tw = g.measureText(t).width, rim = size * 0.17, depth = size * 0.13, pad = rim + 4;
+  c.w = tw + pad * 2; c.h = size * 1.25 + depth + pad * 2;
+  c.width = Math.ceil(c.w * S.DPR); c.height = Math.ceil(c.h * S.DPR);
+  g.scale(S.DPR, S.DPR);
+  g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.miterLimit = 2;
+  const x = c.w / 2, y = pad + size * 0.62;
+  g.strokeStyle = LOGO_NAVY; g.lineWidth = rim * 2;              // le relief : le bord bleu nuit, recopié vers le bas
+  for (let d = depth; d >= 0; d -= Math.max(1, depth / 7)) g.strokeText(t, x, y + d);
+  g.strokeText(t, x, y);
+  g.strokeStyle = LOGO_BLUE; g.lineWidth = size * 0.2;            // le contour bleu vif
+  g.strokeText(t, x, y);
+  const grd = g.createLinearGradient(0, y - size * 0.45, 0, y + size * 0.45);   // les lettres : plus claires en haut
+  grd.addColorStop(0, top); grd.addColorStop(1, bot);
+  g.fillStyle = grd; g.fillText(t, x, y);
+  c.cx = x; c.cy = y;
+  logoCache.set(key, c);
+  return c;
+}
+function drawLogo(t, size, top, bot) {             // centré sur (0, 0)
+  const c = logoSprite(t, size, top, bot);
+  S.ctx.drawImage(c, -c.cx, -c.cy, c.w, c.h);
 }
 
 function drawTitle() {                     // le titre se cale au-dessus des boutons de l'accueil
@@ -118,21 +184,24 @@ function drawTitle() {                     // le titre se cale au-dessus des bou
     s2 = Math.min(fit(L.title2, Math.min(Lt.U * 0.18, 110), S.W * 0.86), Math.max(20, (bottom - top) / 1.75));
   }
   const s1 = s2 * 0.6, wob = Math.sin(S.gtime * 2.4);
-  S.ctx.textAlign = 'center'; S.ctx.textBaseline = 'middle';
-  S.ctx.save(); S.ctx.translate(cx, midY - s2 * 0.62); S.ctx.rotate(-0.05 + wob * 0.012); otext('1, 2, 3…', 0, 0, s1, '#FFFFFF'); S.ctx.restore();
+  S.ctx.save(); S.ctx.translate(cx, midY - s2 * 0.62); S.ctx.rotate(-0.05 + wob * 0.012); drawLogo(L.title1, s1, '#FFFFFF', '#D6DDFF'); S.ctx.restore();
   S.ctx.save(); S.ctx.translate(cx, midY + s2 * 0.18); S.ctx.rotate(-0.035); const k = 1 + wob * 0.025; S.ctx.scale(k, k);
-  otext(L.title2, 0, 0, s2, '#FFD166'); S.ctx.restore();
+  drawLogo(L.title2, s2, '#FFF27A', '#FFAE1A'); S.ctx.restore();
 }
 
 function drawReplayHint() {
   if (S.state !== 'over' || S.gtime - S.overT < 0.3 || S.panelOpen) return;
-  const txt = S.mode === 'daily' ? L.replayHome : finePointer() ? L.replayKey : L.replayTouch;   // après le défi : retour à l'accueil
-  const size = fit(txt, Math.min(Lt.U * 0.05, 22), S.W * 0.9), k = 1 + 0.05 * Math.sin(S.gtime * 6);
-  S.ctx.save(); S.ctx.translate(Lt.cx, S.H - safe.b - size * 1.4); S.ctx.scale(k, k);
+  const txt = S.mode === 'daily' ? S.forDevice(L.replayHome, L.keyHome) : S.forDevice(L.replayTouch, L.replayKey);   // après le défi : retour à l'accueil
+  // Panneau de fin à droite (paysage) qui descend jusqu'en bas (petit écran) : la consigne se centre dans la place libre à gauche
+  const ov = S.over && S.over.classList.contains('show') ? S.over.getBoundingClientRect() : null;
+  const side = ov && ov.left > S.W * 0.3 && ov.bottom > S.H - safe.b - 44;
+  const cx = side ? (safe.l + ov.left) / 2 : Lt.cx, room = side ? ov.left - safe.l - 16 : S.W * 0.9;
+  const size = fit(txt, Math.min(Lt.U * 0.05, 22), room), k = 1 + 0.05 * Math.sin(S.gtime * 6);
+  S.ctx.save(); S.ctx.translate(cx, S.H - safe.b - size * 1.4); S.ctx.scale(k, k);
   S.ctx.textAlign = 'center'; S.ctx.textBaseline = 'middle';
   otext(txt, 0, 0, size, '#FFFFFF');
   S.ctx.restore();
 }
 
-Object.assign(S, { drawChant, drawGrille, drawBanner, drawHUD, drawTitle, drawReplayHint });
+Object.assign(S, { drawChant, drawGrille, drawBanner, drawHUD, drawTitle, drawLogo, drawReplayHint });
 })(window.Soleil);

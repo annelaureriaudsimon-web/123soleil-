@@ -13,20 +13,26 @@
 <meta property="og:description" content="Cours vers le soleil. Fige-toi quand il se retourne. S’il te voit bouger : GRILLÉ !">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 3v9M32 52v9M3 32h9M52 32h9M11 11l6 6M47 47l6 6M11 53l6-6M47 17l6-6' stroke='%232B2D42' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='32' r='16' fill='%23FFD23A' stroke='%232B2D42' stroke-width='4'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/style.css">
+<!-- SDK Poki : le seul fichier externe. Ici en « async » (un double-clic hors ligne ne bloque rien : mode de secours) ;
+     le build Poki (tools/build-poki.js) met la balise normale. -->
+<script async src="https://game-cdn.poki.com/scripts/v2/poki-sdk.js" onerror="window.PokiSDKfailed = true"></script>
 </head>
 <body>
 <canvas id="c" role="img" aria-label="1, 2, 3… SOLEIL ! Maintiens pour courir, lâche quand le soleil se retourne."></canvas>
 <div id="meta"></div>
-<button id="mute" class="round" type="button" aria-label="Son">🔊</button>
-<button id="voice" class="round" type="button" aria-label="Voix">🗣️</button>
-<button id="locker" class="round" type="button" aria-label="Casier">🎒<span class="dot hide" id="dot1"></span></button>
-<button id="homeBtn" class="round hide" type="button" aria-label="Accueil">🏠</button>
+<button id="mute" class="round" type="button" aria-label="Son"></button>
+<button id="voice" class="round" type="button" aria-label="Voix"></button>
+<button id="locker" class="round" type="button" aria-label="Casier"><span class="dot hide" id="dot1"></span></button>
+<button id="langBtn" class="round hide" type="button" aria-label="Langue"></button>
+<button id="homeBtn" class="round hide" type="button" aria-label="Accueil"></button>
+<button id="pauseBtn" class="round hide" type="button" aria-label="Pause"></button>
 <div id="home" class="hide">
-  <button id="lvBtn" class="hbtn main lv" type="button"></button>
+  <button id="contBtn" class="hbtn main c-green" type="button"></button>
   <div id="dailyBox"></div>
   <div class="row">
-    <button id="freeBtn" class="hbtn" type="button"></button>
-    <button id="duoBtn" class="hbtn" type="button"></button>
+    <button id="lvBtn" class="hbtn c-blue" type="button"></button>
+    <button id="freeBtn" class="hbtn c-purple" type="button"></button>
+    <button id="duoBtn" class="hbtn c-pink" type="button"></button>
   </div>
   <div id="rules" class="rules"></div>
 </div>
@@ -35,30 +41,46 @@
   <div id="ovDist"></div>
   <div id="ovMsg"></div>
   <div id="ovSub"></div>
-  <div id="ovGrid"></div>
   <div id="ovRew"></div>
+  <div id="ovPair"></div>
   <div class="btns">
-    <button id="share" class="btn" type="button">📋 Partager</button>
-    <button id="imgBtn" class="btn" type="button">📸 Image</button>
-    <button id="lock2" class="btn" type="button" aria-label="Casier">🎒<span class="dot hide" id="dot2"></span></button>
-    <button id="homeBtn2" class="btn" type="button" aria-label="Accueil">🏠</button>
+    <button id="lock2" class="btn icon c-white" type="button" aria-label="Casier"><span class="dot hide" id="dot2"></span></button>
+    <button id="homeBtn2" class="btn icon c-white" type="button" aria-label="Accueil"></button>
   </div>
 </div>
 <div id="duoEnd" role="dialog" aria-live="polite">
   <div id="deTitle"></div>
   <div id="deScore"></div>
   <div class="btns">
-    <button id="rematch" class="btn" type="button"></button>
-    <button id="deHome" class="btn" type="button"></button>
+    <button id="rematch" class="btn c-green" type="button"></button>
+    <button id="deHome" class="btn c-white" type="button"></button>
   </div>
 </div>
 <div id="panel" class="hide" role="dialog" aria-modal="true">
   <div class="sheet">
-    <button id="pClose" class="x" type="button" aria-label="Fermer">✕</button>
+    <button id="pClose" class="x" type="button" aria-label="Fermer"></button>
     <div id="pHead"></div>
     <h3 id="hMis"></h3><div id="pMis"></div><div id="pMisFoot" class="foot"></div>
     <h3 id="hMed"></h3><div id="pMed" class="medals"></div>
     <h3 id="hOut"></h3><div id="pOut" class="outfits"></div>
+  </div>
+</div>
+<div id="pause" class="hide" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+  <div class="pcard">
+    <div id="pTitle" class="ttl"></div>
+    <div class="pbtns">
+      <button id="pResume" class="btn c-green" type="button"></button>
+      <button id="pRestart" class="btn c-orange" type="button"></button>
+      <button id="pExit" class="btn c-white" type="button"></button>
+      <button id="pSound" class="btn c-blue" type="button"></button>
+      <button id="pQual" class="btn c-white sm" type="button"></button>
+    </div>
+  </div>
+</div>
+<div id="langCard" class="hide" role="dialog" aria-modal="true" aria-labelledby="lTitle">
+  <div class="lcard">
+    <div id="lTitle" class="ttl"></div>
+    <div id="lList" class="lbtns"></div>
   </div>
 </div>
 <div id="toast"></div>
@@ -67,15 +89,24 @@
 <script src="js/core/config.js"></script>
 <script src="js/core/i18n.js"></script>
 <script src="js/core/i18n-levels.js"></script>
+<script src="js/core/lang/es.js"></script>
+<script src="js/core/lang/pt.js"></script>
+<script src="js/core/lang/de.js"></script>
+<script src="js/core/lang/it.js"></script>
 <script src="js/game/content.js"></script>
+<script src="js/core/i18n-apply.js"></script>
 <script src="js/core/utils.js"></script>
 <script src="js/core/rng.js"></script>
 <script src="js/core/storage.js"></script>
+<script src="js/platform/poki.js"></script>
+<script src="js/platform/debug.js"></script>
+<script src="js/platform/showcase.js"></script>
 <script src="js/modes/daily.js"></script>
 <script src="js/render/palette.js"></script>
 <script src="js/audio/sounds.js"></script>
 <script src="js/audio/voice.js"></script>
 <script src="js/audio/music.js"></script>
+<script src="js/render/quality.js"></script>
 <script src="js/render/canvas.js"></script>
 <script src="js/game/state.js"></script>
 <script src="js/game/progress.js"></script>
@@ -104,21 +135,26 @@
 <script src="js/render/rivals.js"></script>
 <script src="js/render/tempt.js"></script>
 <script src="js/render/hud.js"></script>
+<script src="js/render/tuto.js"></script>
 <script src="js/render/levelhud.js"></script>
 <script src="js/render/scene.js"></script>
+<script src="js/ui/icons.js"></script>
 <script src="js/ui/over.js"></script>
-<script src="js/ui/share.js"></script>
 <script src="js/ui/toast.js"></script>
+<script src="js/ui/reward.js"></script>
 <script src="js/ui/locker.js"></script>
 <script src="js/ui/settings.js"></script>
 <script src="js/core/input.js"></script>
 <script src="js/ui/home.js"></script>
-<script src="js/ui/story.js"></script>
+<script src="js/ui/lang.js"></script>
 <script src="js/modes/duo.js"></script>
 <script src="js/ui/levelintro.js"></script>
 <script src="js/ui/results.js"></script>
 <script src="js/ui/worldmap.js"></script>
 <script src="js/modes/levels.js"></script>
+<script src="js/ui/onboard.js"></script>
+<script src="js/platform/flow.js"></script>
+<script src="js/ui/pause.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

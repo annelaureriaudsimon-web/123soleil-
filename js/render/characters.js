@@ -137,7 +137,7 @@ function drawRunner() {
   drawRunnerFig(S.ctx, Lt.cx + r.jx * Lt.s, Lt.yFeet, Lt.s,
     { sp: clamp(r.v / VMAX0, 0, 1), ph: r.phase, st: r.statue, tz: r.toast, t: S.gtime, slide: r.slide,
       breathe: S.state === 'title' ? Math.sin(S.gtime * 3) * 0.015 : 0 },
-    outfitById(S.outfit), false, S.state === 'title' || S.mode === 'daily' ? String(DAY) : '');
+    outfitById(S.wornOutfit()), false, S.state === 'title' || S.mode === 'daily' ? String(DAY) : '');
 }
 
 function ghostPos(camZ) {                            // où dessiner le fantôme (à droite du chemin)

@@ -11,7 +11,7 @@ S.pressing = false, S.keyDown = false, S.panelOpen = false;
 const pointers = new Set();
 S.rng = mulberry32(SEED);
 S.runner = newRunner(), S.watcher = newWatcher();
-S.events = [], S.lastRun = null;            // journal de la partie (regards, pièges, boss…) pour le partage
+S.lastRun = null;                          // la dernière partie de la course infinie (écran de fin)
 S.recordAtStart = S.best, S.passedRecord = false;
 S.phaseIdx = 0, S.phaseTitle = null, S.bossBanner = null, S.bossQueue = [];
 S.particles = [];
@@ -24,7 +24,6 @@ S.runSeed = SEED, S.seedF = 0;               // graine de la partie : utilisée 
 S.duo = null, S.duoCam = 0;                  // mode 2 joueurs
 const duoPtr = new Map();                    // doigt (pointerId) → joueur 0 ou 1
 S.duoKeys = [false, false];                // touches A et L
-S.storyFile = null, S.storyPromise = null;   // image à partager (préparée en avance)
 S.star = null;                             // étoile flottante à attraper (une à la fois)
 S.cloudK = 0, S.tilt = 0, S.tiltPx = 0;        // nuage devant le soleil (0 → 1) ; horizon qui descend dans la descente
 S.trapBanner = null, S.cloudBanner = null, S.trapTuto = false;
@@ -44,7 +43,6 @@ function newWatcher() {
 }
 window.addEventListener('resize', resize);
 const anyMoving = () => (S.mode === 'duo' && S.duo ? S.duo.racers.some(r => r.resp <= 0 && r.v > V_EPS) : S.runner.v > V_EPS);
-function logEvent(sym) { S.events.push({ ph: Math.floor(S.runner.z / PHASE_LEN), s: sym }); }
 
-Object.assign(S, { pointers, duoPtr, newRunner, newRunStats, newWatcher, anyMoving, logEvent });
+Object.assign(S, { pointers, duoPtr, newRunner, newRunStats, newWatcher, anyMoving });
 })(window.Soleil);

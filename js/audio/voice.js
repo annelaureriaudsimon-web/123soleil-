@@ -6,16 +6,10 @@ const { VOICE_MAX_LAG, L, clamp, store, Sound } = S;   // déjà chargés
 
 /* ---------- 8 bis. La voix du soleil et de la Lune (Web Speech, aucun fichier audio) ---------- */
 // La voix ne pilote JAMAIS le jeu : elle suit la chronologie de makeChant(), lancée un peu en avance
-// de son délai mesuré pour tomber pile avec le texte. Elle reste en français : « SOLEIL » fait partie du jeu.
-const SAY = {
-  num: ['Un…', 'Deux…', 'Trois…'], so: 'So…', sun: 'Soleil !', moon: 'Lune !', hop: 'Hop !',
-  heh: ['Hé hé !', 'Je t’ai eu !', 'Hi hi !'],
-  hmm: ['Hmmm…', 'Hmm hmm…'],
-  grilled: ['Grillé !', 'Trop lent !', 'Je t’ai vu !', 'Bien cuit !'],
-  bossSun: ['Tu vas fondre…', 'Ça va chauffer…'],
-  bossMoon: ['Chut… la nuit est à moi…', 'La nuit est à moi…'],
-  bossBeaten: ['Pfff… la prochaine fois !', 'Pfff… coup de chance !']
-};
+// de son délai mesuré pour tomber pile avec le texte. Elle parle la langue du jeu (L.say, js/core/i18n.js et lang/*.js),
+// avec une voix de cette langue (sinon : pas de voix, les sons 8-bit restent).
+const SAY = new Proxy({}, { get: (o, k) => (S.L.say || {})[k] });   // SAY.sun… lit toujours la langue actuelle
+const VOICE_LANG = { fr: /^fr[-_]fr/i, en: /^en[-_](us|gb)/i, es: /^es[-_](es|mx|us)/i, pt: /^pt[-_]br/i, de: /^de[-_]de/i, it: /^it[-_]it/i };
 const Voice = {
   ok: typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined',
   pref: store.get('voice', true) !== false,      // bouton 🗣️ (mémorisé)
@@ -26,17 +20,19 @@ const Voice = {
     const pick = () => {                         // les voix arrivent en différé : on choisit dès qu'elles sont là
       let vs = [];
       try { vs = speechSynthesis.getVoices() || []; } catch (e) { vs = []; }
-      const fr = vs.filter(v => /^fr([-_]|$)/i.test(v.lang || ''));
-      if (!fr.length) { S.refreshVoice(); return; }
-      const score = v => (/^fr[-_]fr/i.test(v.lang) ? 4 : 0) + (v.localService ? 2 : 0) + (v.default ? 1 : 0);
-      this.voice = fr.sort((a, b) => score(b) - score(a))[0];
+      const lg = S.LANG, mine = vs.filter(v => new RegExp('^' + lg + '([-_]|$)', 'i').test(v.lang || ''));
+      this.voice = null;
+      if (!mine.length) { S.refreshVoice(); return; }
+      const score = v => (VOICE_LANG[lg] && VOICE_LANG[lg].test(v.lang) ? 4 : 0) + (v.localService ? 2 : 0) + (v.default ? 1 : 0);
+      this.voice = mine.sort((a, b) => score(b) - score(a))[0];
       S.refreshVoice();
     };
+    this.repick = () => { this.stop(); this.lags = []; this.skip = 1; pick(); };   // le joueur a changé de langue
     pick();
     try { speechSynthesis.addEventListener('voiceschanged', pick); } catch (e) { speechSynthesis.onvoiceschanged = pick; }
   },
   ready() { return this.ok && !!this.voice && !this.broken; },
-  active() { return this.pref && this.unlocked && this.ready() && !Sound.muted; },
+  active() { return this.pref && this.unlocked && this.ready() && !Sound.quiet; },
   unlock() {                                     // au premier appui du joueur
     if (this.unlocked || !this.ready()) return;
     this.unlocked = true;
@@ -55,7 +51,7 @@ const Voice = {
     if (this.cur) this.cur.dead = true;
     try { if (sp.speaking || sp.pending || (this.cur && !this.cur.ended)) sp.cancel(); } catch (e) { /* rien */ }   // jamais deux phrases empilées
     const u = new SpeechSynthesisUtterance(text);
-    u.voice = this.voice; u.lang = this.voice.lang || 'fr-FR'; u.pitch = pitch; u.rate = rate; u.volume = vol;
+    u.voice = this.voice; u.lang = this.voice.lang || S.LANG; u.pitch = pitch; u.rate = rate; u.volume = vol;
     const t0 = performance.now();
     u.onstart = () => { u.started = true; if (!u.dead && !warmup) this.measure((performance.now() - t0) / 1000); };
     u.onend = u.onerror = () => { u.ended = true; };
@@ -77,12 +73,13 @@ const Voice = {
     S.toast(L.voiceLag);
   }
 };
+const sayable = t => { const x = t.toLowerCase(), i = x.search(/\p{L}/u); return i < 0 ? x : x.slice(0, i) + x.charAt(i).toUpperCase() + x.slice(i + 1); };
 function sayEvent(ev) {                            // ce que dit la voix pour un mot du chant
   const w = S.watcher;
   if (!Voice.active() || ev.t < w.t - 0.15) return;   // trop tard : on saute ce mot (le jeu ne l'attend jamais)
   const moon = w.type === 'moon';
   Voice.say(ev.kind === 'num' ? SAY.num[ev.n] : ev.kind === 'so' ? SAY.so : ev.kind === 'trigger' ? (moon ? SAY.moon : SAY.sun)
-            : ev.text.charAt(0) + ev.text.slice(1).toLowerCase(), moon);   // « SOLDES ! » → « Soldes ! »
+            : sayable(ev.text), moon);   // « SOLDES ! » → « Soldes ! », « ¡POLLO! » → « ¡Pollo! »
 }
 
 Object.assign(S, { SAY, Voice, sayEvent });

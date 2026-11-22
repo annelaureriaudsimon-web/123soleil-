@@ -143,7 +143,7 @@ function drawKite() {
 // Remplace le décor de la course infinie quand on joue un niveau du monde 2
 function drawPark(camZ) {
   drawKite();
-  const k0 = Math.ceil((camZ + 1.5) / SEG), k1 = Math.floor((camZ + 115) / SEG);
+  const k0 = Math.ceil((camZ + 1.5) / SEG), k1 = Math.floor((camZ + 115 * S.Q.decor) / SEG);   // qualité basse : décor moins loin
   const pk0 = Math.ceil((camZ + 1.5) / PIGEON_EVERY), pk1 = Math.floor((camZ + 70) / PIGEON_EVERY);
   for (let k = k1; k >= k0; k--) {
     for (let side = -1; side <= 1; side += 2) {

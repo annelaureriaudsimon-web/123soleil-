@@ -6,13 +6,15 @@ const { store } = S;   // déjà chargés
 /* ---------- 8. Sons 8-bit générés dans le navigateur (aucun fichier) ---------- */
 const Sound = {
   ctx: null, out: null, noiseBuf: null, muted: !!store.get('mute', false),
+  hush: new Set(),                               // silences du jeu (pub, pause, onglet caché) : le choix 🔊 du joueur n'y est pour rien
+  get quiet() { return this.muted || this.hush.size > 0; },
   unlock() {
     if (!this.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) { S.Voice.unlock(); return; }                    // pas de sons 8-bit : la voix peut quand même marcher
       try { this.ctx = new AC(); } catch (e) { S.Voice.unlock(); return; }
       this.out = this.ctx.createGain();
-      this.out.gain.value = this.muted ? 0 : 0.55;
+      this.out.gain.value = this.quiet ? 0 : 0.55;
       this.out.connect(this.ctx.destination);
       const n = this.ctx.sampleRate;
       this.noiseBuf = this.ctx.createBuffer(1, n, n);
@@ -29,10 +31,15 @@ const Sound = {
     S.refreshVoice();
   },
   level() {                                      // sons 8-bit un peu moins forts quand la voix est active
-    if (this.out) this.out.gain.setTargetAtTime(this.muted ? 0 : S.Voice.active() ? 0.4 : 0.55, this.ctx.currentTime, 0.03);
+    if (this.out) this.out.gain.setTargetAtTime(this.quiet ? 0 : S.Voice.active() ? 0.4 : 0.55, this.ctx.currentTime, this.hush.size ? 0.01 : 0.03);
+  },
+  silence(why, on) {                             // coupe (ou rend) TOUT le son pour une raison du jeu ; la voix s'arrête net
+    if (on === this.hush.has(why)) return;
+    if (on) { this.hush.add(why); S.Voice.stop(); } else this.hush.delete(why);
+    this.level();
   },
   tone(f, d, type = 'triangle', v = 0.2, f2 = 0, delay = 0) {
-    const c = this.ctx; if (!c || this.muted) return;
+    const c = this.ctx; if (!c || this.quiet) return;
     const t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
     o.type = type; o.frequency.setValueAtTime(f, t);
     if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
@@ -42,7 +49,7 @@ const Sound = {
     o.connect(g); g.connect(this.out); o.start(t); o.stop(t + d + 0.05);
   },
   noise(d, v = 0.2, type = 'bandpass', f = 1000, f2 = 0, q = 1, delay = 0) {
-    const c = this.ctx; if (!c || this.muted) return;
+    const c = this.ctx; if (!c || this.quiet) return;
     const t = c.currentTime + delay, s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
     s.buffer = this.noiseBuf;
     fl.type = type; fl.frequency.setValueAtTime(f, t); fl.Q.value = q;

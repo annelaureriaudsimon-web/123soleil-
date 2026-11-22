@@ -60,9 +60,12 @@ const DUO_LANE = 0.45;       // écart de chaque couloir par rapport au centre d
 const DUO_INTRO = 2.4;       // durée de l'écran « J1 / J2 : maintiens ici » (s)
 const CAM_H = 3, CAM_BACK = 5, PATH_W = 0.95, FAR = 150;                                     // caméra et chemin
 const INK = '#2B2D42', SKIN = '#F2B48C', TAU = Math.PI * 2;
+// Le titre international du jeu (fiche Poki) : à changer ICI seulement. Propositions : docs/POKI_SUBMISSION.md.
+// Dans le jeu, le logo suit la langue (L.title1 + L.title2 : « 1, 2, 3… SOLEIL ! », « 1, 2, 3… RED LIGHT! »…).
+const GAME_TITLE = 'Red Light Sun';
 const FONT = 'ui-rounded,"SF Pro Rounded","Nunito","Varela Round","Arial Rounded MT Bold",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
 
-Object.assign(S, { VMAX0, VMAX_STEP, VMAX_CAP, ACC, DEC, ICE_DEC, MUD_ACC, MUD_SPEED, V_EPS, CLOSE, PHASE_LEN,
+Object.assign(S, { GAME_TITLE, VMAX0, VMAX_STEP, VMAX_CAP, ACC, DEC, ICE_DEC, MUD_ACC, MUD_SPEED, V_EPS, CLOSE, PHASE_LEN,
   TURN0, TURN_MIN, RET_DUR, HOP_DUR, PEEK_P, DIFF_SCALE, PRESSURE, OVER_START, OVER_LEN, UNLOCK,
   FIRST_TRAP_CYCLE, STAR_EVERY, STAR_P, BIG_P, STAR_PTS, BIG_PTS, STAR_MARGIN, BIG_MARGIN, STAR_R, CLOUD_P,
   SLOPE_SPEED, SLOPE_DEC, SLOPE_TILT, VOICE_MAX_LAG, BOSS_LEAD, BOSS_REST, DUO_FINISH, DUO_WIN, DUO_D, DUO_TURN,

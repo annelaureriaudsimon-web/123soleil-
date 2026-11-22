@@ -2,7 +2,7 @@
 (function (S) {
 'use strict';
 const { BIG_MARGIN, BIG_P, BIG_PTS, CAM_BACK, CLOSE, FIRST_TRAP_CYCLE, STAR_MARGIN, STAR_P, STAR_PTS, STAR_R,
-  V_EPS, lerp, vibrate, Sound, Lt, logEvent, addStars, checkMissions, difficulty, runnerKin } = S;   // déjà chargés
+  V_EPS, lerp, vibrate, Sound, Lt, addStars, checkMissions, difficulty, runnerKin } = S;   // déjà chargés
 
 // Course à fond jusqu'à « tr », puis on lâche : où et quand s'arrête-t-on, et bouge-t-on encore au bout de T secondes ?
 // Même physique que le coureur (runnerKin) : boue, verglas, descente, changement de vitesse de phase.
@@ -51,7 +51,7 @@ function catchStar() {                             // attrapée en passant dessu
   const s = S.star;
   s.taken = true; s.gone = 0.001;
   S.RS.catches++; if (s.big) S.RS.big++;
-  addStars(s.pts); logEvent('⭐');
+  addStars(s.pts);
   Sound.catchStar(s.big); vibrate(s.big ? [20, 30, 20] : 15);
   S.sparks(s.big ? 26 : 16, Lt.cx, Lt.yFeet - Lt.s * 1.1, s.big ? '#FFD166' : '#FFF6C2');
   S.popup(`+${s.pts} ⭐`, Lt.cx, Lt.yFeet - Lt.s * 2.35, '#FFD166', Math.min(Lt.U * (s.big ? 0.075 : 0.06), 40), 1.0);

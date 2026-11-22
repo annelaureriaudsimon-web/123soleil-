@@ -123,7 +123,7 @@ function drawRecord(camZ) {                          // ligne dorée + drapeau R
 function drawDecor(camZ) {                           // arbres, fleurs, touffes, cailloux sur les côtés
   if (S.state === 'level') { S.drawLevelDecor(camZ); return; }   // décor du monde du niveau (render/playground.js, render/park.js)
   const SEG = 3;
-  const k0 = Math.ceil((camZ + 1.5) / SEG), k1 = Math.floor((camZ + 115) / SEG);
+  const k0 = Math.ceil((camZ + 1.5) / SEG), k1 = Math.floor((camZ + 115 * S.Q.decor) / SEG);   // qualité basse : décor moins loin
   for (let k = k1; k >= k0; k--) {
     for (let side = -1; side <= 1; side += 2) {
       if (hash(k * 1.731 + side * 91.7) < 0.3) continue;
