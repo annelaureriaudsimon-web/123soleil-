@@ -183,8 +183,8 @@ function drawLevelMud(camZ) {
 
 // Décor et couleurs selon le monde du niveau
 const worldOf = () => (S.Levels.def && S.Levels.def.world) || 1;
-function drawLevelDecor(camZ) { if (worldOf() === 2) S.drawPark(camZ); else S.drawPlayground(camZ); }
-function tintLevel() { if (worldOf() === 2) S.tintPark(); else S.tintPlayground(); }
+function drawLevelDecor(camZ) { const w = worldOf(); if (w === 3) S.drawBeach(camZ); else if (w === 2) S.drawPark(camZ); else S.drawPlayground(camZ); }
+function tintLevel() { const w = worldOf(); if (w === 3) S.tintBeach(); else if (w === 2) S.tintPark(); else S.tintPlayground(); }
 
 Object.assign(S, { drawTemptStar, drawFly, drawTaunt, drawPeekEye, drawTrueEnd, drawSneezeEyes, drawGroucho, drawFarceurFace, drawGrouchoDrop,
   drawSunMarks, drawLevelMud, drawLevelDecor, tintLevel, flyPos });

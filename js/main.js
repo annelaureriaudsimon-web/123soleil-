@@ -37,6 +37,7 @@ function update(dt) {
   if (S.bossBanner && (S.bossBanner.t += dt) > 1.8) S.bossBanner = null;
   if (S.trapBanner && (S.trapBanner.t += dt) > 2.4) S.trapBanner = null;
   if (S.cloudBanner && (S.cloudBanner.t += dt) > 2.4) S.cloudBanner = null;
+  if (S.lieBanner && (S.lieBanner.t += dt) > 2.4) S.lieBanner = null;   // v2.5 : 1re fois qu'on voit un faux signal (game/watcher.js)
   if (S.star && S.star.gone && (S.star.gone += dt) > 0.35) S.star = null;
   // Nuage : seulement si le joueur entend le jeu (sinon il ne vient pas, ou s'efface et laisse voir le texte)
   const runCloud = w.cloud && audioOK() && (S.state === 'play') && (w.state === 'chant' || w.state === 'turn' || (w.state === 'look' && !w.second));
@@ -48,6 +49,10 @@ function update(dt) {
   S.cloudK += ((cloudOn ? 1 : 0) - S.cloudK) * Math.min(1, dt * (cloudOn ? 3.2 : 5));
   if (runCloud && !w.cloudSnd) { w.cloudSnd = true; Sound.cloud(); }
   if (runCloud && !S.cloudSeen && S.cloudK > 0.3) { S.cloudSeen = true; store.set('cloudSeen', true); S.cloudBanner = { t: 0 }; }
+  else if (runCloud && S.cloudK > 0.3 && S.reflectOn() && !S.cloudBanner) {   // v2.5 : dès 150 m, le reflet dans une flaque (1re fois)
+    const seen = store.get('lieSeen', []);
+    if (!seen.includes('reflet')) { store.set('lieSeen', seen.concat('reflet')); S.lieBanner = { kind: 'reflet', t: 0 }; }
+  }
   S.updatePlane(dt);                                           // v2.5 : l'avion menteur traverse le ciel
   // Descente : l'horizon descend un peu
   const onSlope = S.mode !== 'duo' && S.mode !== 'level' && (patchAt(S.runner.z) === 'slope' || patchAt(S.runner.z + 4) === 'slope');

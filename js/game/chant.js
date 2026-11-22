@@ -3,8 +3,11 @@
 (function (S) {
 'use strict';
 const { BOSS_LEAD, CLOUD_P, DIFF_SCALE, DUO_D, DUO_FAUX, DUO_TRAPS, DUO_TURN, FIRST_TRAP_CYCLE, OVER_LEN,
-  OVER_START, PHASE_LEN, PRESSURE, TURN_MIN, TURN0, UNLOCK, VMAX_CAP, VMAX_STEP, VMAX0, L, MOON_TRAPS, SUN_TRAPS,
-  lerp, smooth, vibrate, Sound, SAY, Voice, Lt } = S;   // déjà chargés
+  OVER_START, PHASE_LEN, PRESSURE, TURN_MIN, TURN0, UNLOCK, LIE_P, VMAX_CAP, VMAX_STEP, VMAX0, L, MOON_TRAPS, SUN_TRAPS,
+  lerp, smooth, vibrate, mulberry32, mixSeed, Sound, SAY, Voice, Lt } = S;   // déjà chargés
+// v2.5 — les faux signaux de la course infinie (même réglage que les niveaux : game/match.js)
+const LIE_NEED = { recount: 2.0, planeGo: 1.7 };   // après le début du mensonge, il regarde encore au moins ce temps (s)
+const PLANE_STOP = [0.2, 0.45];                    // l'avion « SOLEIL ! » : entre 0,2 s après « 1 » et 0,45 s avant le vrai mot
 
 /* ---------- 13. Le chant du soleil : mots pièges, hésitations, boss ---------- */
 const effort = () => S.runner.z + PRESSURE * S.runT;
@@ -78,6 +81,21 @@ function startChant() {
   w.faux = w.R[17] < pFaux || (w.boss && (w.boss - 1) % 4 % 2 === 1);   // boss du Soir et de l'Aube : faux dos garanti
   w.peekDur = 0.55 + w.R[18] * 0.6; w.peekPlan = w.peekDur; w.spotAt = 0;
   if (S.tutorial && S.cycleN === 1) w.turnDur = 1.0;              // toute première partie : on laisse le temps de comprendre
+  // v2.5 — le recomptage et l'avion menteur, avec leur PROPRE flux de dés (les 24 dés d'avant ne changent pas :
+  // le même défi du jour pour tout le monde). Jamais à deux, pendant un boss ou derrière un nuage.
+  const N = mulberry32(mixSeed(S.runSeed || 1, 7000 + S.cycleN)), nd = [N(), N(), N(), N(), N()];
+  w.lie = null; w.planeAt = -1;
+  if (!isDuo && !w.boss && !w.cloud) {
+    const pR = z >= UNLOCK.recount ? lerp(LIE_P.recount[0], LIE_P.recount[1], smooth(0.1, 0.7, D)) : 0;
+    const pP = z >= UNLOCK.plane ? lerp(LIE_P.plane[0], LIE_P.plane[1], smooth(0.2, 0.8, D)) : 0;
+    if (nd[0] < pR) w.lie = { type: 'recount', at: 0.3 + 0.4 * nd[1], n: -1, fired: false };
+    else if (nd[2] < pP && nd[3] < 0.5) w.lie = { type: 'planeGo', at: 0.25 + 0.45 * nd[4], fired: false };
+    else if (nd[2] < pP) {                                         // « SOLEIL ! » sur la banderole, pendant le chant
+      const e0 = w.chant.events[0].t + PLANE_STOP[0];
+      w.planeAt = e0 + Math.max(0, w.chant.trig - PLANE_STOP[1] - e0) * nd[4];
+    }
+    if (w.lie) w.lookDur = Math.max(w.lookDur, w.lie.at + LIE_NEED[w.lie.type]);
+  }
   if (w.boss) {
     S.bossBanner = { t: 0, moon }; S.phaseTitle = null;
     Sound.boss(); vibrate(30);

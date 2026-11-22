@@ -43,6 +43,7 @@ function drawWatcher() {
   S.ctx.restore();
   S.ctx.strokeStyle = INK; S.ctx.lineWidth = Math.max(2, R * 0.06);
   S.ctx.beginPath(); S.ctx.arc(cx, cy, R, 0, TAU); S.ctx.stroke();
+  if (w.bossFace === 'vacancier') S.drawVacancierFace(cx, cy, R);   // v2.5 : chapeau et lunettes en cœur (render/beach.js)
 }
 
 // Le visage est dessiné sur une « sphère » : quand il se retourne, les yeux glissent depuis le bord.

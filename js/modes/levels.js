@@ -27,6 +27,14 @@ const SIGNAL_WORLD = 1;          // le « ding » du vrai retour et les « DÉPA
 const HAND_LIFE = 2.4;           // une consigne dessinée (main / touche Espace) reste au plus 2,4 s
 const OOPS_SPIN = 0.6;           // niveau en douceur : la toupie du « OUPS ! » (s)
 const OOPS_WORD = 0.7;           // « OUPS ! » reste 0,7 s, puis le mot « LÂCHE ! » prend sa place
+// Les boss (champ « bossKind » d'un niveau) : ce qu'ils mettent (face), le son, la couleur, l'emoji qui s'envole, leurs textes.
+// cool = Soleil Cool (monde 1), farceur = Soleil Farceur (monde 2), vacancier = Soleil Vacancier (monde 3, v2.5).
+const BOSS = {
+  cool:      { face: null, snd: 'glasses', col: '#FF4D6D', fly: '😎', icon: '😎', taunt: 'bossTaunt', down: 'bossDown', win: 'bossWinTitle', bar: 'bossBar' },
+  farceur:   { face: 'farceur', snd: 'boing', col: '#9B5DE5', fly: '🥸', icon: '🤡', taunt: 'bossTaunt2', down: 'bossDown2', win: 'bossWin2', bar: 'bossBar2' },
+  vacancier: { face: 'vacancier', snd: 'hat', col: '#00A6C8', fly: '👒', icon: '🏖️', taunt: 'bossTaunt3', down: 'bossDown3', win: 'bossWin3', bar: 'bossBar3' }
+};
+const bossOf = def => BOSS[def && def.bossKind] || BOSS.cool;
 
 // ---------- Sauvegarde : soleil.levels = { 'w1-3': { s: [true, true, false], best: 27.4, tries: 6, done: true } } ----------
 let save = (() => { const v = store.get('levels', {}); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; })();
@@ -111,7 +119,7 @@ function beginPlay() {                            // fin de la carte d'intro (ou
   S.hideLevelIntro(); LV.hand = null;
   if (LV.def.boss && LV.glass >= 0) {
     setPhase('boss'); LV.m.sun.state = 'look'; LV.m.sun.turnP = 1;   // il se tourne vers toi pour mettre ses lunettes
-    const taunt = LV.def.bossKind === 'farceur' ? L.bossTaunt2 : L.bossTaunt;
+    const taunt = L[bossOf(LV.def).taunt];
     popup(taunt, Lt.cx, Lt.sunY - Lt.R * 1.5, '#FFFFFF', S.fit(taunt, Math.min(Lt.U * 0.06, 30), S.W * 0.9), 1.6); Sound.hmm();
   }
   else { setPhase('play'); Sound.start(); vibrate(20); }
@@ -120,17 +128,18 @@ function endBossIntro() {                         // il se remet de dos : le cha
   const w = LV.m.sun; w.state = 'pause'; w.t = 0; w.turnP = 0;
   setPhase('play'); Sound.unwhoosh();
 }
-function dressBoss() {                             // ses lunettes : noires (Soleil Cool) ou lunettes-nez-moustache (Farceur)
-  if (LV.def.bossKind === 'farceur') LV.m.sun.bossFace = 'farceur'; else LV.m.sun.boss = 1;
+function dressBoss() {                             // ses lunettes : noires (Cool), lunettes-nez-moustache (Farceur), chapeau et cœurs (Vacancier)
+  const B = bossOf(LV.def);
+  if (B.face) LV.m.sun.bossFace = B.face; else LV.m.sun.boss = 1;
 }
 function putGlasses() {                           // le boss met ses lunettes : flash, musique, bannière
-  const farceur = LV.def.bossKind === 'farceur';
+  const B = bossOf(LV.def);
   LV.glass = -1; dressBoss();
   S.shake = Lt.U * 0.03; S.flash = 0.8;
-  if (farceur) Sound.boing(); else Sound.glasses();
+  Sound[B.snd]();
   Sound.boss(); vibrate(40);
   Music.start(LV.def.bossKind || 'cool');
-  LV.banner = { title: L.bossTitle, sub: tr(LV.def.name), t: 0, life: 2.0, col: farceur ? '#9B5DE5' : '#FF4D6D' };
+  LV.banner = { title: L.bossTitle, sub: tr(LV.def.name), t: 0, life: 2.0, col: B.col };
 }
 
 // Un tap (ou Espace) pendant le mode Niveaux
@@ -595,15 +604,15 @@ function onWin() {
   if (coins) S.addStars(coins);
   Sound.levelWin(); vibrate([30, 40, 60]); confetti(def.boss ? 120 : 70);
   if (def.scoops && scoops) LV.mountain = { n: scoops, t0: S.gtime, popped: [] };   // la montagne de glace
-  const farceur = def.bossKind === 'farceur';
-  if (def.boss) {                                 // les lunettes (ou le nez !) s'envolent !
+  const B = bossOf(def);
+  if (def.boss) {                                 // les lunettes (le nez, le chapeau !) s'envolent !
     m.sun.boss = 0; m.sun.bossFace = null; Music.stop(0.6); setTimeout(() => Sound.fanfare(), 250);
-    if (farceur) Sound.boing();
-    popup(farceur ? '🥸' : '😎', Lt.cx, Lt.sunY, '#FFFFFF', Lt.R * 0.9, 1.8);
-    const down = farceur ? L.bossDown2 : L.bossDown;
+    if (B.snd !== 'glasses') Sound[B.snd]();
+    popup(B.fly, Lt.cx, Lt.sunY, '#FFFFFF', Lt.R * 0.9, 1.8);
+    const down = L[B.down];
     popup(down, Lt.cx, Lt.sunY + Lt.R * 1.3, '#FFFFFF', S.fit(down, Math.min(Lt.U * 0.06, 30), S.W * 0.8), 1.6);
   }
-  const t = def.boss ? (farceur ? L.bossWin2 : L.bossWinTitle) : L.winTitle;
+  const t = def.boss ? L[B.win] : L.winTitle;
   popup(t, Lt.cx, Lt.hy + (Lt.yFeet - Lt.hy) * 0.3, '#FFD166', S.fit(t, Math.min(Lt.U * 0.11, 58), S.W * 0.9), 1.4);
   if (S.Onboard.chain(def)) {                     // premiers pas : pas d'écran de résultats, les étoiles gagnées ici
     const st = stars.map(x => (x ? '★' : '☆')).join(' ');
@@ -655,12 +664,14 @@ function revive() {
 function restart() { if (LV.def) open(LV.def.id, true); }   // le niveau repart tout de suite (sans pub : déjà demandée)
 function retry() { if (LV.def) S.afterBreak(restart); }      // Rejouer : pause pub (si Poki le décide), puis on relance
 
+S.bossOf = bossOf;
 S.Levels = {
   open, press, update, toMap, next, retry, restart, revive, cleanup, totalStars, maxStars, worldStars, starsOf, unlocked, lastUnlocked, rec, peek, worldOpen,
   get fx() { return LV.fx; },
   get m() { return LV.m; }, get phase() { return LV.phase; }, get def() { return LV.def; },
   get hold() { return LV.hold; }, get banner() { return LV.banner; }, get tip() { return LV.tip; }, get glass() { return LV.glass; }, get jump() { return LV.jump; },
   get hand() { return LV.hand; }, get oops() { return LV.oops; }, get spin() { return spin(); }, get info() { return LV.info; }, get attempt() { return LV.attempt; },
+  get plocs() { return LV.plocs; }, get cone() { return LV.cone; }, get mountain() { return LV.mountain; },   // v2.5 : la glace (render/pressure.js)
   isBossLevel: () => !!(LV.def && LV.def.boss)
 };
 })(window.Soleil);

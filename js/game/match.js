@@ -407,23 +407,28 @@ function startChant(m) {
 function chantWord(m, ev) {
   const w = m.sun;
   w.text = ev.text; w.textKind = ev.kind; w.textAt = m.t;
-  if (ev.kind === 'num' && ev.n === 2) { m.soSeen = true; m.trapTrack = { moving: m.player.v > 2, stopped: false, trapT: -1 }; }   // le « 3 » : le mot arrive
+  if (ev.kind === 'num' && ev.n === 2) {          // le « 3 » : le mot arrive
+    if (m.trapTrack && m.trapTrack.trapT >= 0) judgeTrap(m);   // v2.5 : il reprend à « 3 » juste après un piège (rire court) : on juge d'abord
+    m.soSeen = true; m.trapTrack = { moving: m.player.v > 2, stopped: false, trapT: -1 };
+  }
   if (ev.kind === 'trap') { w.trapsThisChant++; w.revealed = false; if (m.trapTrack) m.trapTrack.trapT = m.t; }
   if (ev.kind === 'trigger') m.trapTrack = null;
   emit(m, 'word', { ev });
   feed(m, ev.kind, ev);
 }
 
-// As-tu freiné pour un mot piège ? (depuis le « 3 » jusqu'à TRAP_WIN s après le mot)
+// As-tu freiné pour un mot piège ? (depuis le « 3 » jusqu'à TRAP_WIN s après le mot, ou jusqu'au « 3 » suivant s'il arrive avant)
 function trackTrap(m) {
   const k = m.trapTrack;
   if (!k) return;
   if (m.player.v < 0.5) k.stopped = true;
-  if (k.trapT >= 0 && m.t - k.trapT >= TRAP_WIN) {
-    if (k.moving && k.stopped) { m.stats.trapsFell++; emit(m, 'trapFell'); }
-    else if (k.moving) { m.stats.trapsAvoided++; emit(m, 'trapAvoided'); }
-    m.trapTrack = null;
-  }
+  if (k.trapT >= 0 && m.t - k.trapT >= TRAP_WIN) judgeTrap(m);
+}
+function judgeTrap(m) {
+  const k = m.trapTrack;
+  if (k.moving && k.stopped) { m.stats.trapsFell++; emit(m, 'trapFell'); }
+  else if (k.moving) { m.stats.trapsAvoided++; emit(m, 'trapAvoided'); }
+  m.trapTrack = null;
 }
 
 // Les rivaux en course entre range[0] et range[1] mètres de toi, du plus proche au plus loin

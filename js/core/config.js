@@ -29,7 +29,11 @@ const PRESSURE = 3;          // anti-camping : le soleil s'impatiente avec le te
 const OVER_START = 8 * PHASE_LEN, OVER_LEN = 3 * PHASE_LEN;   // au-delà, il s'emballe : aucune partie ne dure des heures
 // Apparition des pièges (m), en fractions de phase : avec PHASE_LEN = 60 → 30, 45, 60, 80, 100, 120, 120, 180
 const UNLOCK = { traps: PHASE_LEN / 2, stutter: PHASE_LEN * 3 / 4, mud: PHASE_LEN, cloud: PHASE_LEN * 4 / 3,
-                 fauxDos: PHASE_LEN * 5 / 3, rush: 2 * PHASE_LEN, slope: 2 * PHASE_LEN, ice: 3 * PHASE_LEN };
+                 fauxDos: PHASE_LEN * 5 / 3, rush: 2 * PHASE_LEN, slope: 2 * PHASE_LEN, ice: 3 * PHASE_LEN,
+                 // v2.5 — les faux signaux : le recomptage (50 m), l'avion menteur (90 m), le reflet du soleil dans une flaque (150 m)
+                 recount: PHASE_LEN * 5 / 6, plane: PHASE_LEN * 3 / 2, reflet: PHASE_LEN * 5 / 2 };
+// v2.5 — probabilité, par chant, du recomptage et de l'avion menteur dans la course infinie (de la phase 1 à la phase difficile)
+const LIE_P = { recount: [0.2, 0.3], plane: [0.22, 0.32] };   // (jamais pendant un boss : à grande vitesse, un cycle sur deux en est un)
 const FIRST_TRAP_CYCLE = 3;  // un mot piège forcé au 3e cycle de chaque partie (vers 12-15 s)
 const STAR_EVERY = PHASE_LEN / 4;   // une étoile de distance tous les 15 m
 // Étoiles à attraper (risque / récompense)
@@ -70,5 +74,5 @@ Object.assign(S, { GAME_TITLE, VMAX0, VMAX_STEP, VMAX_CAP, ACC, DEC, ICE_DEC, MU
   TURN0, TURN_MIN, RET_DUR, HOP_DUR, PEEK_P, DIFF_SCALE, PRESSURE, OVER_START, OVER_LEN, UNLOCK,
   FIRST_TRAP_CYCLE, STAR_EVERY, STAR_P, BIG_P, STAR_PTS, BIG_PTS, STAR_MARGIN, BIG_MARGIN, STAR_R, CLOUD_P,
   SLOPE_SPEED, SLOPE_DEC, SLOPE_TILT, VOICE_MAX_LAG, BOSS_LEAD, BOSS_REST, DUO_FINISH, DUO_WIN, DUO_D, DUO_TURN,
-  DUO_TRAPS, DUO_FAUX, DUO_RESPAWN, DUO_LANE, DUO_INTRO, CAM_H, CAM_BACK, PATH_W, FAR, INK, SKIN, TAU, FONT });
+  DUO_TRAPS, DUO_FAUX, DUO_RESPAWN, DUO_LANE, DUO_INTRO, CAM_H, CAM_BACK, PATH_W, FAR, INK, SKIN, TAU, FONT, LIE_P });
 })(window.Soleil);

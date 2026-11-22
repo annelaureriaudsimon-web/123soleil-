@@ -58,6 +58,7 @@ function render() {
     if (S.bossBanner) drawBanner(L.bossTitle, L.bossSub(S.bossBanner.moon), '', S.bossBanner.t, 1.8, '#FF4D6D');
     else if (S.trapBanner) drawBanner(L.trapTitle, L.trapSub(S.trapBanner.moon), '', S.trapBanner.t, 2.4, '#06D6A0');
     else if (S.cloudBanner) drawBanner(L.cloudTitle, L.cloudSub, '', S.cloudBanner.t, 2.4, '#FFFFFF');
+    else if (S.lieBanner) drawBanner(L.lieTitle[S.lieBanner.kind] || L.refletTitle, L.lieSub[S.lieBanner.kind] || L.refletSub, '', S.lieBanner.t, 2.4, '#4CC9F0');   // v2.5
     else if (S.phaseTitle) drawBanner(S.phaseTitle.title, S.phaseTitle.sub, S.phaseTitle.sub2, S.phaseTitle.t, 2.6, '#FFD166');
     drawHUD(); drawReplayHint();
   }

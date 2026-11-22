@@ -17,7 +17,7 @@ function subMsg(R) {                                 // la phrase « presque » 
   if (R.reason === 'late' && R.ice) return L.tipIce;
   if (R.reason === 'late' && R.slope) return L.tipSlope;
   if (R.reason === 'running') return R.afterTrap ? L.realOne : R.moon ? L.tipMoon : L.tipSo;
-  if (R.reason === 'early') return L.tipLook;
+  if (R.reason === 'early') return R.lie ? L.temptFail[R.lie] : L.tipLook;   // v2.5 : « Il comptait en te regardant… »
   return '';
 }
 function placeOver() {

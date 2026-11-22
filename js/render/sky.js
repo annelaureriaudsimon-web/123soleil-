@@ -31,6 +31,7 @@ function drawSky() {
 }
 
 function drawHills() {
+  if (S.state === 'level' && S.Levels.def && S.Levels.def.world === 3) return;   // v2.5 : à la plage, l'horizon est la mer (render/beach.js)
   for (let layer = 0; layer < 2; layer++) {
     S.ctx.fillStyle = css(layer ? pal.hillNear : pal.hillFar);
     const amp = Lt.U * (layer ? 0.035 : 0.06);

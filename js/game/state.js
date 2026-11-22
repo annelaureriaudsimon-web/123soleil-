@@ -26,7 +26,7 @@ const duoPtr = new Map();                    // doigt (pointerId) → joueur 0 o
 S.duoKeys = [false, false];                // touches A et L
 S.star = null;                             // étoile flottante à attraper (une à la fois)
 S.cloudK = 0, S.tilt = 0, S.tiltPx = 0;        // nuage devant le soleil (0 → 1) ; horizon qui descend dans la descente
-S.trapBanner = null, S.cloudBanner = null, S.trapTuto = false, S.plane = null;   // v2.5 : S.plane = l'avion menteur (render/lies.js)
+S.trapBanner = null, S.cloudBanner = null, S.trapTuto = false, S.plane = null, S.lieBanner = null;   // v2.5 : S.plane = l'avion menteur (render/lies.js)
 S.cloudSeen = !!store.get('cloudSeen', false);
 
 function newRunner() {

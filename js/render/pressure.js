@@ -10,6 +10,7 @@ const { FAR, FONT, INK, PATH_W, L, Lt, clamp, css, mix, pal, safe, otext, otextC
 
 S.sunSink = 0;                                     // de combien de pixels le soleil est descendu (coucher du soleil)
 const TAU = Math.PI * 2;
+const CONE_MAX = 6;           // au plus 6 boules dessinées sur le cornet (au-delà : « ×n » à côté) — la pile ne monte jamais jusqu'au soleil
 // Les parfums : une couleur ET un motif (daltoniens : on les reconnaît sans la couleur)
 const FLAVORS = [
   { c: '#FFF3D6', ink: '#E8C98A', pat: 'dots' },     // vanille, grains
@@ -75,13 +76,19 @@ function drawCone() {
   const bx = Lt.cx + s * 0.62, by = Lt.yFeet - s * 1.12 - (LV.jump || 0);
   const sway = LV.cone ? LV.cone.a : 0;
   drawConeBase(g, bx, by, r);
-  const n = m.scoops, melt = m.level.melt, k = melt ? (m.t % melt) / melt : 0;   // la boule du haut fond peu à peu
+  const n = Math.min(m.scoops, CONE_MAX), melt = m.level.melt, k = melt ? (m.t % melt) / melt : 0;   // la boule du haut fond peu à peu
   let x = bx, y = by - r * 0.3;
   for (let i = 0; i < n; i++) {
     const h = (i + 1) / Math.max(4, n), ang = sway * Math.pow(h, 1.25);
     x += Math.sin(ang) * r * 1.3; y -= Math.cos(ang) * r * 1.25;
     const top = i === n - 1, drip = top ? Math.max(0, (k - 0.55) / 0.45) : 0;
     drawScoop(g, x, y, r * (top ? 1 - drip * 0.15 : 1), i, 1, drip);
+  }
+  if (m.scoops > CONE_MAX) {                       // encore plus de boules : le compte, à côté du haut de la pile
+    const fs = Math.max(13, r * 1.1);
+    g.save(); g.textAlign = 'left'; g.textBaseline = 'middle';
+    otext(`×${m.scoops}`, x + r * 1.2, y, fs, '#FFFFFF');
+    g.restore();
   }
   // les boules qui tombent (« PLOC ! »)
   for (const p of LV.plocs) {

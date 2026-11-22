@@ -194,5 +194,13 @@ Object.assign(TXT.en.temptHint, { alarm: 'A rival is pranking you: only the sun 
 Object.assign(TXT.en.temptFail, { alarm: 'The rival lied: the sun was still watching you! 😜',
   herd: 'You followed the herd 🐑: only the sun counts!' });
 Object.assign(TXT.en, { alarmShout: 'HE’S NOT LOOKING! RUN!', herdBurnt: 'ALL TOASTED!' });
+// v2.5 — le monde 3 « La plage » : son boss, le Soleil Vacancier (chapeau de paille et lunettes en cœur)
+Object.assign(TXT.fr, { bossTaunt3: 'Cette plage est à moi !', bossDown3: 'Mon chapeau !!', bossWin3: 'SOLEIL VACANCIER BATTU ! 🏖️', bossBar3: 'Soleil Vacancier', worldDone2: 'Monde 2 terminé ! La plage t’attend 🏖️', worldDone3: 'Monde 3 terminé ! La suite arrive bientôt 🎉', worldUnlockedSub3: 'La plage t’attend 🏖️' });
+Object.assign(TXT.en, { bossTaunt3: 'This beach is mine!', bossDown3: 'My hat!!', bossWin3: 'HOLIDAY SUN BEATEN! 🏖️', bossBar3: 'Holiday Sun', worldDone2: 'World 2 complete! The beach awaits 🏖️', worldDone3: 'World 3 complete! More coming soon 🎉', worldUnlockedSub3: 'The beach awaits 🏖️' });
+// v2.5 — course infinie : la bannière de la 1re fois qu'on voit un faux signal (game/watcher.js)
+Object.assign(TXT.fr, { lieTitle: { recount: 'IL RECOMPTE !', planeGo: 'L’AVION MENT !' },
+  lieSub: { recount: 'Il compte en te regardant : il ment !', planeGo: 'Ce n’est pas le soleil qui parle ☀️' } });
+Object.assign(TXT.en, { lieTitle: { recount: 'HE’S RECOUNTING!', planeGo: 'THE PLANE IS LYING!' },
+  lieSub: { recount: 'He counts while looking at you: he’s lying!', planeGo: 'The sun isn’t the one talking ☀️' } });
 S.typoAll(TXT.fr);                                 // typographie française : espaces insécables (core/i18n.js)
 })(window.Soleil);

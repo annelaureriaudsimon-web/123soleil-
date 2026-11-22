@@ -1,7 +1,8 @@
 /* levels/world1.js — Monde 1 « La cour de récré » : 8 niveaux courts, dont un boss.
    Le format d'un niveau est expliqué dans levels/README.md. Les réglages ont été ajustés avec tools/simulate.js
    (résultats dans docs/LEVELS.md). Mécaniques de ce monde : maintenir/lâcher, mots pièges, hésitations,
-   bégaiement, chant express et rivaux. Rien d'autre (la suite arrive dans les mondes 2 à 5). */
+   bégaiement, chant express et rivaux ; v2.5 : le coucher du soleil (niveau 3), le recomptage (niveau 4)
+   et la fausse alerte d'un rival (niveau 7). Rien d'autre (la suite arrive dans les mondes 2 à 5). */
 (function (S) {
 'use strict';
 
@@ -65,15 +66,16 @@ S.addWorld(1, [
     mechanics: ['hold', 'traps', 'rivals', 'night'] },
 
   // 4 ---------------------------------------------------------------------------------------------
-  { id: 'w1-4', emoji: '⚡', name: T('Le Fonceur', 'The Speedster'),
-    tip: T('Max court très vite… mais il se fait griller !', 'Max runs really fast… but he gets toasted!'),
-    length: 145, night: 34, seed: 1404, sky: 1.3,
+  // v2.5 : le recomptage (il recompte « 1… 2… » en te regardant : il ment). Max le Fonceur, lui, tombe dans le panneau.
+  { id: 'w1-4', emoji: '🔁', name: T('Le recomptage', 'The recount'),
+    tip: T('Il recompte en te regardant ? Il ment ! Attends le « ding » 🔔', 'Counting while looking at you? He’s lying! Wait for the “ding” 🔔'),
+    length: 145, night: 38, seed: 1404, sky: 1.3,
     rivals: [kid('max', { brain: { speed: 1.18, greed: [0.12, 0.1] } }), kid('leo')],
-    sun: { word: [0.54, 0.64], turn: [0.605, 0.655], traps: 0.3, hesitate: 0.2 },
-    script: {},
+    sun: { word: [0.54, 0.64], turn: [0.605, 0.655], traps: 0.3, hesitate: 0.2, tempt: { recount: 0.2, max: 1 } },
+    script: { 2: { tempt: ['recount'] } },
     hints: [{ on: 'start', text: T('Bats Max ! ⚡', 'Beat Max! ⚡'), pop: true }],
-    goal: { type: 'beat', who: 'max' }, challenge: { type: 'time', s: 32 },
-    mechanics: ['hold', 'traps', 'hesitate', 'rivals'] },
+    goal: { type: 'beat', who: 'max' }, challenge: { type: 'time', s: 34 },
+    mechanics: ['hold', 'traps', 'hesitate', 'rivals', 'tempt:recount'] },
 
   // 5 ---------------------------------------------------------------------------------------------
   { id: 'w1-5', emoji: '🥴', name: T('Le bégaiement', 'The stutter'),
@@ -89,7 +91,7 @@ S.addWorld(1, [
   // 6 ---------------------------------------------------------------------------------------------
   { id: 'w1-6', emoji: '🚀', name: T('Le chant express', 'Express chant'),
     tip: T('Tout va deux fois plus vite. Sois prêt !', 'Everything goes twice as fast. Be ready!'),
-    length: 130, night: 34.5, seed: 1606, sky: 1.6,
+    length: 130, night: 34, seed: 1606, sky: 1.6,
     rivals: [kid('sam'), kid('hugo'), kid('lila')],
     sun: { word: [0.52, 0.62], turn: [0.59, 0.64], express: 0.65, traps: 0.25 },
     script: { 1: { express: true } },
@@ -98,34 +100,36 @@ S.addWorld(1, [
     mechanics: ['hold', 'express', 'traps', 'rivals'] },
 
   // 7 ---------------------------------------------------------------------------------------------
+  // v2.5 : la fausse alerte (un rival crie « IL REGARDE PAS ! VAS-Y ! » : c'est faux)
   { id: 'w1-7', emoji: '🏃', name: T('La grande course', 'The big race'),
-    tip: T('5 rivaux, et le soleil mélange tout !', '5 rivals, and the sun mixes everything!'),
-    length: 145, night: 33.2, seed: 1707, sky: 2.15,
+    tip: T('5 rivaux… et l’un d’eux crie « VAS-Y ! » pour te piéger !', '5 rivals… and one of them shouts “RUN!” to trick you!'),
+    length: 145, night: 35.8, seed: 1707, sky: 2.15,
     rivals: [kid('ines'), kid('max'), kid('jade'), kid('leo'), kid('zoe')],
-    sun: { word: [0.5, 0.6], turn: [0.55, 0.6], traps: 0.4, double: 0.2, hesitate: 0.3, stutter: 0.3, express: 0.3 },
-    script: {},
+    sun: { word: [0.5, 0.6], turn: [0.55, 0.6], traps: 0.4, double: 0.2, hesitate: 0.3, stutter: 0.3, express: 0.3, tempt: { alarm: 0.25, max: 1 } },
+    script: { 2: { tempt: ['alarm'] } },
     hints: [],
     goal: { type: 'top', n: 3 }, challenge: { type: 'first' },
-    mechanics: ['hold', 'traps', 'hesitate', 'stutter', 'express', 'rivals'] },
+    mechanics: ['hold', 'traps', 'hesitate', 'stutter', 'express', 'rivals', 'tempt:alarm'] },
 
   // 8 : BOSS --------------------------------------------------------------------------------------
   { id: 'w1-8', emoji: '😎', boss: true, name: T('Le Soleil Cool', 'The Cool Sun'),
     tip: T('Il met ses lunettes et sort tous ses coups spéciaux !', 'He puts on his shades and pulls every trick!'),
-    length: 180, night: 38.2, seed: 1808, sky: 2.35,
+    length: 180, night: 39.6, seed: 1808, sky: 2.35,
     rivals: [kid('ines'), kid('max'), kid('leo')],
     sun: { word: [0.48, 0.56], turn: [0.56, 0.61], look: [1.1, 1.8], pause: [0.45, 0.85],
-           traps: 0.5, double: 0.35, hesitate: 0.4, hesLen: [1.0, 2.0], stutter: 0.35, express: 0.45 },
+           traps: 0.5, double: 0.35, hesitate: 0.4, hesLen: [1.0, 2.0], stutter: 0.35, express: 0.45, tempt: { recount: 0.15, alarm: 0.15, max: 1 } },
     script: {                                                       // ses coups spéciaux, dans l'ordre
       1: { hes: 2.0, traps: 0, move: T('LA GRANDE HÉSITATION', 'THE BIG HESITATION') },
       2: { traps: 2, hes: false, express: false, move: T('DOUBLE PIÈGE', 'DOUBLE TRAP') },
       3: { express: true, traps: 0, stutter: false, move: T('SUPER EXPRESS', 'SUPER EXPRESS') },
       4: { stutter: true, traps: 1, express: false, move: T('BÉGAIEMENT PIÉGÉ', 'TRAPPED STUTTER') },
       5: { express: true, hes: 1.4, traps: 1, hesAt: 1, move: T('EXPRESS HÉSITANT', 'HESITANT EXPRESS') },
-      6: { express: true, traps: 2, move: T('TOUT EN MÊME TEMPS', 'EVERYTHING AT ONCE') }
+      6: { express: true, traps: 2, move: T('TOUT EN MÊME TEMPS', 'EVERYTHING AT ONCE') },
+      7: { tempt: ['recount'], traps: 1, move: T('LE RECOMPTAGE', 'THE RECOUNT') }    // v2.5
     },
     hints: [],
     goal: { type: 'oufs', n: 3 }, challenge: { type: 'first' },
-    mechanics: ['hold', 'traps', 'hesitate', 'stutter', 'express', 'rivals', 'boss'] }
+    mechanics: ['hold', 'traps', 'hesitate', 'stutter', 'express', 'rivals', 'tempt:recount', 'tempt:alarm', 'boss'] }
 ]);
 
 S.KIDS = KIDS;

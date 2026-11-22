@@ -90,6 +90,7 @@ const Sound = {
   doubled() { [1047, 1319, 1568, 2093].forEach((f, i) => this.tone(f, 0.16, 'square', 0.07, 0, i * 0.06)); },
   poof() { this.noise(0.25, 0.08, 'bandpass', 1300, 300, 0.9); },
   cloud() { this.noise(1.0, 0.05, 'lowpass', 520, 180, 0.6); },
+  hat() { this.tone(500, 0.22, 'sine', 0.16, 1300); this.tone(1300, 0.25, 'sine', 0.12, 700, 0.2); },   // v2.5 : le chapeau du Soleil Vacancier (sifflet)
   shout() { this.tone(620, 0.1, 'square', 0.1, 820); this.tone(840, 0.16, 'square', 0.1, 1050, 0.11); this.noise(0.12, 0.05, 'bandpass', 1500, 2200, 2, 0.02); },   // v2.5 : « VAS-Y ! »
   stampede() { for (let i = 0; i < 9; i++) this.noise(0.06, 0.18, 'lowpass', 260, 0, 1.2, i * 0.045); },   // v2.5 : le troupeau qui démarre
   plane() {                                      // v2.5 : l'avion menteur, « brrr » d'hélice qui arrive puis s'en va

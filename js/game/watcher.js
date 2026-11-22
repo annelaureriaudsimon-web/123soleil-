@@ -38,6 +38,7 @@ function updateWatcher(dt) {
         Voice.quip(SAY.heh, w.type === 'moon');                // « Hé hé ! » (coupé par le mot suivant du chant)
         if (S.tutorial && !S.trapTuto && S.mode !== 'duo') { S.trapTuto = true; S.trapBanner = { t: 0, moon: w.type === 'moon' }; }
       }
+      if (w.planeAt >= 0 && w.t >= w.planeAt) { w.planeAt = -1; lieFirst('planeStop'); S.startPlane('stop', S.chantW().sun); }   // v2.5
       if (w.t >= w.chant.trig) { w.state = 'turn'; w.t = 0; w.turnP = 0; Sound.whoosh(w.turnDur); }
       break;
     }
@@ -49,6 +50,7 @@ function updateWatcher(dt) {
       if (S.mode === 'duo') S.duoLookCheck(false);                     // 2 joueurs : chacun est vérifié séparément
       else if (S.runner.v > V_EPS) { S.caught(w.second ? 'hop' : 'early', w.lookDur - w.t); return; }
       if (w.t >= w.beat) { Sound.heart(); w.beat += 0.75; }
+      if (w.lie && !w.second) lieStep(w);                              // v2.5 : il recompte en te regardant, ou l'avion « ALLEZ-Y ! »
       if (w.t >= w.lookDur) {
         const fake = w.faux && !w.second;
         w.state = 'return'; w.t = 0; w.retTo = fake ? PEEK_P : 0; Sound.unwhoosh();
@@ -86,6 +88,37 @@ function updateWatcher(dt) {
       }
       break;
   }
+}
+
+// v2.5 — les faux signaux pendant son regard (course infinie) : le recomptage « 1… 2… » (en te regardant : il ment),
+// puis il se marre ; ou l'avion avec sa banderole « ALLEZ-Y ! ». Seul le soleil compte : attends le vrai retour.
+const RECOUNT = { gap: 0.55, laugh: 1.15 };
+function lieStep(w) {
+  const lie = w.lie, moon = w.type === 'moon';
+  if (!lie.fired) {
+    if (w.t < lie.at) return;
+    lie.fired = true; lieFirst(lie.type);
+    if (lie.type === 'planeGo') { S.startPlane('go', L.planeGo); return; }
+  }
+  if (lie.type !== 'recount') return;
+  const k = w.t - lie.at, n = k < RECOUNT.gap ? 0 : k < RECOUNT.laugh ? 1 : 2;
+  if (n === lie.n) return;
+  lie.n = n;
+  if (n < 2) {
+    w.text = String(n + 1); w.textKind = 'recount'; w.textT = S.gtime; w.bump = 1;
+    Sound.chant({ kind: 'num', n }, moon); if (Voice.active()) Voice.say(SAY.num[n], moon);
+  } else {
+    w.text = ''; w.textKind = ''; w.laugh = 1; Sound.laugh();
+    S.popup(L.heh, Lt.cx + Lt.R * 1.15, Lt.sunY - Lt.R * 0.2, '#06D6A0', Math.min(Lt.U * 0.05, 24), 0.9);
+    Voice.quip(SAY.heh, moon);
+  }
+}
+// La toute première fois qu'on voit un faux signal : une bannière qui l'explique (une seule fois, mémorisée)
+function lieFirst(kind) {
+  const k = kind === 'planeStop' ? 'planeGo' : kind;     // les deux avions : une seule bannière
+  const seen = store.get('lieSeen', []);
+  if (seen.includes(k) || S.mode === 'duo') return;
+  store.set('lieSeen', seen.concat(k)); S.lieBanner = { kind: k, t: 0 };
 }
 
 // Le soleil vient de finir de se retourner : est-ce que tu bouges encore ?

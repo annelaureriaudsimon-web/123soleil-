@@ -2,7 +2,8 @@
    ✈️ L'avion menteur : il traverse le ciel juste au-dessus des yeux du soleil, avec une banderole
       (« SOLEIL ! » pendant le chant, « ALLEZ-Y ! » pendant son regard). Ce n'est jamais le soleil qui parle.
    💧 Le reflet dans l'eau : quand un nuage cache le soleil, son reflet (à l'envers, comme dans l'eau) montre tout :
-      son visage ou son dos, le demi-tour, l'œil du faux dos et l'anneau vert du « ding ».
+      son visage ou son dos, le demi-tour, l'œil du faux dos et l'anneau vert du « ding » (une flaque ; à la plage,
+      le sable mouillé au bord de la mer, où il brille tout le temps).
    📣 La fausse alerte : un rival crie « IL REGARDE PAS ! VAS-Y ! » (bulle de cri, jamais sur le soleil).
    Rien ne décide ici : le moteur (game/match.js) dit quand ; modes/levels.js lance l'avion (S.startPlane). */
 (function (S) {
@@ -78,15 +79,21 @@ function drawAirplane(nose, y, pl, d, fs) {     // un petit avion à hélice, de
 // ---------- 💧 Le reflet dans l'eau ----------
 // Niveaux : à chaque nuage. Course infinie : à partir de UNLOCK.reflet (avant, le nuage ne laisse que la voix).
 const reflectOn = () => S.state === 'level' || (UNLOCK.reflet != null && S.mode !== 'duo' && S.runner.z >= UNLOCK.reflet);
-// S.waterAt : un décor qui a sa propre eau à l'horizon (la mer, monde 3) n'a pas besoin de la flaque.
+// À la plage (monde 3), le sable mouillé au bord de la mer reflète le soleil tout le temps (un peu) : on apprend
+// où regarder avant que le nuage n'arrive (pas en qualité basse : on ne le dessine qu'avec le nuage).
+const beach = () => S.state === 'level' && S.Levels.def && S.Levels.def.world === 3;
 function drawReflection() {
-  const a = clamp(S.cloudK * 1.4, 0, 1);
+  const sea = beach(), a = Math.max(clamp(S.cloudK * 1.4, 0, 1), sea && S.Q.level < 2 ? 0.32 : 0);
   if (a <= 0.01 || !reflectOn()) return;
   const g = S.ctx, R = Lt.R, cx = Lt.cx, cy = Lt.hy + R * REF.dy, rx = R * REF.rx, ry = R * REF.ry;
   const w = S.watcher, sx = Lt.cx, sy = Lt.sunY + w.offY + S.sunSink;
   g.save(); g.globalAlpha *= a;
   g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, TAU);
-  if (!S.waterAt) {                               // la flaque (la mer du monde 3 est déjà là)
+  if (sea) {                                      // le sable mouillé qui brille (sans contour : c'est la plage)
+    const wg = g.createRadialGradient(cx, cy, ry * 0.3, cx, cy, rx);
+    wg.addColorStop(0, 'rgba(120,185,230,0.85)'); wg.addColorStop(1, 'rgba(120,185,230,0.15)');
+    g.fillStyle = wg; g.fill();
+  } else {                                        // ailleurs : une flaque
     const wg = g.createLinearGradient(0, cy - ry, 0, cy + ry);
     wg.addColorStop(0, '#5BA8E0'); wg.addColorStop(1, '#2E6CB0');
     g.fillStyle = wg; g.fill();

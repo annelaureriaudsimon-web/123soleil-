@@ -21,19 +21,22 @@ const PROFILES = ['expert', 'moyen', 'debutant', 'patient'];
 const NAMES = { expert: 'Expert', moyen: 'Moyen', debutant: 'Débutant', patient: 'Prudent' };
 const WHY = { running: 'courait encore', late: 'lâché trop tard', early: 'reparti trop tôt', hop: 'faux dos (HOP !)', timeout: 'trop long',
   night: 'la nuit est tombée', chairs: 'plus de transat' };
-const TEMPT_NAMES = { star: 'étoile', fakeRet: 'faux retour', sneeze: 'éternuement', taunt: 'moquerie', fly: 'mouche', crack: 'rival qui craque' };
+const TEMPT_NAMES = { star: 'étoile', fakeRet: 'faux retour', sneeze: 'éternuement', taunt: 'moquerie', fly: 'mouche', crack: 'rival qui craque',
+  recount: 'recomptage', planeGo: 'avion « ALLEZ-Y ! »', alarm: 'fausse alerte', herd: 'troupeau' };   // v2.5
 // Objectifs de chaque monde : durée du joueur moyen (s), boss, et taux du moyen au boss
 const TARGETS = {
   1: { dur: [25, 35], bossDur: 45, boss: [0.15, 0.35] },
-  2: { dur: [30, 42], bossDur: 50, boss: [0.10, 0.30] }   // v2.5 : sans « SO », on attend un peu plus (lire, puis repartir)
+  2: { dur: [30, 42], bossDur: 50, boss: [0.10, 0.30] },  // v2.5 : sans « SO », on attend un peu plus (lire, puis repartir)
+  3: { dur: [30, 42], bossDur: 50, boss: [0.10, 0.20] }    // v2.5 : la plage, le dernier boss (10 à 20 % pour le moyen)
 };
 // Résultats du monde 1 (300 essais) : ils ne doivent pas bouger (à 3 points près) tant qu'on ne règle pas le monde 1.
-// v2.5 (parties A et B) : plus de « SO » (demi-tours rallongés) et le coucher du soleil ; le robot « patient » échoue dès la nuit.
-const REF_W1 = { expert: [100, 100, 100, 100, 100, 100, 100, 100], moyen: [100, 100, 86, 82, 81, 67, 51, 33],
-                 debutant: [100, 91, 75, 41, 17, 7, 10, 4], patient: [100, 100, 0, 0, 1, 0, 0, 0] };
+// v2.5 : plus de « SO » (demi-tours rallongés), le coucher du soleil (niveau 3), le recomptage (niveau 4), la fausse alerte
+// (niveau 7) et le recomptage du boss ; le robot « patient » échoue dès la nuit.
+const REF_W1 = { expert: [100, 100, 100, 98, 100, 100, 99, 100], moyen: [100, 100, 86, 77, 81, 63, 50, 31],
+                 debutant: [100, 91, 75, 19, 17, 6, 6, 3], patient: [100, 100, 0, 0, 1, 0, 0, 0] };
 // Fichiers du jeu chargés, dans l'ordre de index.html (seulement ceux qui ne touchent pas à l'écran)
 const FILES = ['js/core/config.js', 'js/core/rng.js', 'js/game/content.js', 'js/game/physics.js', 'js/game/chant.js',
-  'js/game/rivals.js', 'js/game/match.js', 'levels/worlds.js', 'levels/world1.js', 'levels/world2.js'];
+  'js/game/rivals.js', 'js/game/match.js', 'levels/worlds.js', 'levels/world1.js', 'levels/world2.js', 'levels/world3.js'];
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
@@ -53,10 +56,10 @@ const { Match } = S;
 
 // ---------- Un essai ----------
 // Les tentations que le joueur a déjà rencontrées dans les niveaux précédents du même monde (champ « mechanics »)
-const ALL_TEMPT = ['star', 'fakeRet', 'sneeze', 'taunt', 'fly', 'crack', 'fakeBack'];
-function familiar(def) {
-  const w = S.WORLDS.find(x => x.id === def.world), known = new Set();
-  for (const lv of w.levels) {
+const ALL_TEMPT = ['star', 'fakeRet', 'sneeze', 'taunt', 'fly', 'crack', 'fakeBack', 'recount', 'planeGo', 'alarm', 'herd'];
+function familiar(def) {                          // v2.5 : les mondes d'avant comptent aussi (le recomptage vient du monde 1)
+  const known = new Set();
+  for (const lv of S.WORLDS.filter(x => x.id <= def.world).flatMap(x => x.levels)) {
     if (lv === def) break;
     for (const mk of lv.mechanics || []) {
       if (mk === 'tempt:*') ALL_TEMPT.forEach(k => known.add(k));
@@ -147,6 +150,16 @@ for (const w of worlds) {
     checks.push([`monde ${w.id} : la difficulté monte régulièrement (moyen : jamais plus de 20 points d’écart, jamais plus facile)`, ok, `plus gros saut ${Math.round(worst * 100)} points`]);
   }
 }
+// v2.5 — la prudence ne suffit plus : le robot « patient » (il s'arrête à chaque « 3 », ne repart qu'au « ding ») échoue
+// au moins une fois sur deux à la fin du monde 1, 4 fois sur 5 dans le monde 2 et après, et n'a jamais ★★★ ;
+// le joueur moyen réussit le début du monde 1 (niveau 3, le premier avec la nuit) environ 85 % du temps.
+rows.forEach(r => checks.push([`niveau ${tag(r)} : le robot prudent n'a jamais ★★★`, r.p.patient.s3 === 0, pct(r.p.patient.s3)]));
+for (const [w, n, max] of [[1, 7, 0.5], [1, 8, 0.5]]) {
+  const r = find(w, n); if (r) checks.push([`niveau ${w}-${n} : le robot prudent échoue au moins une fois sur deux`, r.p.patient.win <= max, pct(r.p.patient.win)]);
+}
+rows.filter(r => r.w.id >= 2).forEach(r => checks.push([`niveau ${tag(r)} : le robot prudent échoue au moins 4 fois sur 5`, r.p.patient.win <= 0.2, pct(r.p.patient.win)]));
+const r13 = find(1, 3);
+if (r13) checks.push(['monde 1, niveau 3 : le moyen réussit environ 85 % (entre 78 et 92 %)', r13.p.moyen.win >= 0.78 && r13.p.moyen.win <= 0.92, pct(r13.p.moyen.win)]);
 const r11 = find(1, 1), w1 = rows.filter(r => r.w.id === 1);
 if (r11) {                                         // v2.2 : le niveau 1 est un départ en douceur
   checks.push(['monde 1, niveau 1 (en douceur) : le débutant le finit presque à chaque fois (≥ 90 %)', r11.p.debutant.win >= 0.9, pct(r11.p.debutant.win)]);
@@ -155,7 +168,7 @@ if (r11) {                                         // v2.2 : le niveau 1 est un 
 if (w1.length === 8 && N >= 300) {
   let worst = 0;
   w1.forEach((r, i) => PROFILES.forEach(p => { worst = Math.max(worst, Math.abs(r.p[p].win * 100 - REF_W1[p][i])); }));
-  checks.push(['monde 1 : mêmes résultats que la référence REF_W1 (phase 1 ; niveau 1 en douceur depuis la v2.2), à 3 points près', worst <= 3, `plus gros écart ${Math.round(worst)} points`]);
+  checks.push(['monde 1 : mêmes résultats que la référence REF_W1 (réglée en v2.5), à 3 points près', worst <= 3, `plus gros écart ${Math.round(worst)} points`]);
 }
 // Pas de mur entre deux mondes : le niveau 1 d'un monde est plus dur que le niveau 2 du monde d'avant, mais plus facile que son boss
 for (const w of worlds) {

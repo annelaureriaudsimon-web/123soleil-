@@ -26,8 +26,8 @@ const { gauss } = S;   // core/rng.js
 // Une tentation déjà rencontrée (dans l'essai, ou dans un niveau précédent pour le joueur) fait moins craquer : × learn.
 // v2.5 : le recomptage imite le VRAI début d'un chant (c'est le plus dangereux) ; l'avion « ALLEZ-Y ! » dit de partir ;
 // la fausse alerte (un rival crie « VAS-Y ! ») ; le troupeau (trois rivaux partent d'un coup : on a envie de suivre).
-const TEMPT_K = { fakeRet: 1.2, fakeBack: 1.2, sneeze: 1, crack: 0.9, star: 0.8, fly: 0.3, taunt: 0.25, recount: 1.3, planeGo: 1.0,
-                  alarm: 1.1, herd: 1.3 };
+const TEMPT_K = { fakeRet: 1.2, fakeBack: 1.2, sneeze: 1, crack: 0.9, star: 0.8, fly: 0.3, taunt: 0.25, recount: 1.0, planeGo: 1.0,
+                  alarm: 1.0, herd: 1.2 };
 // Quand il craque, il appuie (« il bouge ») ce temps après le début de la tentation, plus son temps de réaction (s)
 const CRACK_AT = { star: 0, fakeRet: 0, fakeBack: 0.05, sneeze: 0.9, crack: 0, fly: 0.8, taunt: 0.1, recount: 0.05, planeGo: 0.2,
                    alarm: 0.15, herd: 0.05 };

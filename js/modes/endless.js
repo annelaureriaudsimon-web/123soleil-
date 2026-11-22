@@ -77,6 +77,7 @@ function caught(reason, val) {
   S.lastRun = { dist, mode: S.mode, reason, val, isRec: dist > prev && prev > 0, prevBest: prev,
               phase: Math.floor(r.z / PHASE_LEN) % 4, day: Math.floor(r.z / (PHASE_LEN * 4)) + 1, moon: w.type === 'moon',
               ice: r.ground === 'ice', slope: r.ground === 'slope', afterTrap: w.trapsThisChant > 0 && reason !== 'hop' && reason !== 'early',
+              lie: reason === 'early' && w.lie && w.lie.fired ? w.lie.type : '',   // v2.5 : grillé par un faux signal (recomptage, avion)
               rankBefore, rankAfter, stars: 0, bosses: S.RS.bosses, combo: S.RS.combo, catches: S.RS.catches };
   checkMissions();
   saveMissions();
@@ -115,7 +116,7 @@ function startRun(m = 'free') {
   S.watcher = newWatcher();
   S.watcher.rayA = rayA; S.watcher.state = 'pause'; S.watcher.pauseDur = 0.75;
   S.runT = 0; S.cycleN = 0;
-  S.star = null; S.cloudK = 0; S.trapBanner = null; S.cloudBanner = null; S.trapTuto = false; S.plane = null;
+  S.star = null; S.cloudK = 0; S.trapBanner = null; S.cloudBanner = null; S.trapTuto = false; S.plane = null; S.lieBanner = null;
   S.recordAtStart = S.best; S.passedRecord = false;
   S.phaseIdx = 0; S.phaseTitle = null; S.bossBanner = null; S.bossQueue = [];
   S.particles = []; S.shake = 0; S.flash = 0; S.timeScale = 1;

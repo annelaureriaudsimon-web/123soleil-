@@ -122,7 +122,8 @@ async def t_fair(b):
           while (!m.result && m.t < 150) S.Match.step(m, 1/60); if (m.result && m.result.win) w++; }
         res[lv.num] = w; }
       return res; })()""")
-    check('expert (lâche dès « SO ») : 120/120 sur chacun des 8 niveaux', all(v == 120 for v in r.values()), json.dumps(r))
+    # v2.5 : le recomptage (niveau 4) et la fausse alerte (niveau 7) peuvent, rarement, piéger même l'expert
+    check('expert : au moins 117/120 sur chacun des 8 niveaux', all(v >= 117 for v in r.values()), json.dumps(r))
     ERRS.extend(page.errs); await ctx.close()
 
 async def t_rivals(b):
@@ -145,7 +146,7 @@ async def t_rivals(b):
     ERRS.extend(page.errs); await ctx.close()
 
 async def t_map(b):
-    print('\n6) Carte : cadenas, mondes 3 à 5 « Bientôt », clavier, étoiles')
+    print('\n6) Carte : cadenas, monde 3 verrouillé (étoiles du monde 2), mondes 4 et 5 « Bientôt », clavier, étoiles')
     ctx, page = await new_page(b)
     await page.click('#lvBtn'); await page.wait_for_timeout(150)
     n = await page.evaluate("Soleil.WorldMap.nodes.map(n => [n.x, n.y])")
@@ -155,7 +156,11 @@ async def t_map(b):
     tab = await page.evaluate("(() => { Soleil.WorldMap.layout(); const S = Soleil; return 0; })()")
     await page.wait_for_timeout(1800)
     await page.mouse.click(14 + 62 * 2.5, 48 + 18); await page.wait_for_timeout(250)
-    check('monde 3 : « Bientôt »', 'bientôt' in (await page.evaluate("document.getElementById('toast').innerText")).lower())
+    t3 = await page.evaluate("document.getElementById('toast').innerText")
+    check('monde 3 (la plage) : verrouillé, il faut des étoiles du monde 2', 'monde 2' in t3 and 'débloquer' in t3, t3)
+    await page.wait_for_timeout(800)                # un message à la fois : le suivant attend que le 1er ait été lu (0,9 s)
+    await page.mouse.click(14 + 62 * 3.5, 48 + 18); await page.wait_for_timeout(250)
+    check('monde 4 : « Bientôt »', 'bientôt' in (await page.evaluate("document.getElementById('toast').innerText")).lower())
     for k in ['ArrowRight', 'ArrowLeft', 'ArrowLeft', 'Enter']: await page.keyboard.press(k)
     await page.wait_for_timeout(150)
     check('clavier : flèches + Entrée lancent le niveau débloqué', await page.evaluate("Soleil.state + ':' + (Soleil.Levels.def && Soleil.Levels.def.id)") == 'level:w1-1')
@@ -263,7 +268,9 @@ async def t_w2_signal(b):
       return { bad, clears, fakes, peeks, types: [...types].sort().join(' ') }; })()""")
     check('le « ding » vient seulement quand il se remet vraiment de dos', r['bad'] == 0 and r['clears'] > 100, f"{r['clears']} vrais retours, {r['fakes']} faux dos")
     check('faux dos : il passe toujours par l’œil (HMM…) avant le HOP', r['peeks'] == r['fakes'] and r['fakes'] > 10, f"{r['peeks']}/{r['fakes']}")
-    check('les 6 tentations apparaissent dans le monde 2', r['types'] == 'crack fakeRet fly sneeze star taunt', r['types'])
+    # v2.5 : le recomptage et la fausse alerte (monde 1) reviennent dans le parc, et le troupeau arrive au niveau 7
+    check('les 6 tentations du parc apparaissent dans le monde 2 (et le recomptage, la fausse alerte, le troupeau)',
+          r['types'] == 'alarm crack fakeRet fly herd recount sneeze star taunt', r['types'])
     ERRS.extend(page.errs); await ctx.close()
 
 async def t_w2_fair(b):
@@ -478,7 +485,7 @@ async def t_v25_lies_screen(b):
         for (const k of ['recount', 'planeGo']) if (!T.temptFail[k]) bad.push(lang + '.temptFail.' + k);
         for (const k of ['planeGo', 'refletTitle', 'refletSub', 'refletTip']) if (!T[k]) bad.push(lang + '.' + k);
         for (const k of ['recount', 'plane', 'reflet']) if (!T.obst[k]) bad.push(lang + '.obst.' + k);
-        const norm = x => (x || '').replace(/[^\p{L}]/gu, '').toUpperCase();
+        const norm = x => (x || '').replace(/[^\\p{L}]/gu, '').toUpperCase();
         if (norm(T.planeGo) === norm(T.go) || norm(T.planeGo).includes(norm(T.go)) || norm(T.planeGo) === norm(T.chant.sun)) bad.push(lang + '.planeGo = mot de départ');
       }
       return bad; })()""")
@@ -549,9 +556,136 @@ async def t_v25_rivals_screen(b):
     check('6 langues : tous les textes de la fausse alerte et du troupeau existent', not keys, ', '.join(keys))
     ERRS.extend(page.errs); await ctx.close()
 
+# ---------- v2.5 : le monde 3 « La plage » ----------
+SEEN_ALL = "['star', 'fakeRet', 'sneeze', 'taunt', 'fly', 'crack', 'fakeBack', 'recount', 'planeGo', 'alarm', 'herd']"
+
+async def t_w3_fair(b):
+    print('\n23) Monde 3 juste : l’expert réussit chaque niveau de la plage ; le robot prudent n’y arrive jamais')
+    ctx, page = await new_page(b)
+    r = await page.evaluate(f"""(() => {{
+      const S = Soleil, res = {{}}, pat = {{}};
+      for (const lv of S.WORLDS[2].levels) {{ let w = 0, p = 0;
+        for (let a = 1; a <= 100; a++) {{ const m = S.Match.create(lv, a, {{ playerBrain: 'expert', brainSeen: {SEEN_ALL} }}); m.out = null;
+          while (!m.result && m.t < 150) S.Match.step(m, 1/60); if (m.result && m.result.win) w++; }}
+        for (let a = 1; a <= 30; a++) {{ const m = S.Match.create(lv, a, {{ playerBrain: 'patient', brainSeen: {SEEN_ALL} }}); m.out = null;
+          while (!m.result && m.t < 150) S.Match.step(m, 1/60); if (m.result && m.result.win) p++; }}
+        res[lv.num] = w; pat[lv.num] = p; }}
+      return {{ res, pat }}; }})()""")
+    check('expert : au moins 95/100 sur chacun des 8 niveaux de la plage', all(v >= 95 for v in r['res'].values()), json.dumps(r['res']))
+    check('robot prudent (il s’arrête à chaque « 3 », attend le « ding ») : au plus 3/30 par niveau', all(v <= 3 for v in r['pat'].values()), json.dumps(r['pat']))
+    ERRS.extend(page.errs); await ctx.close()
+
+async def t_w3_map(b):
+    print('\n24) Carte : la plage se débloque avec 12 étoiles du monde 2 ; son décor')
+    ctx, page = await new_page(b)
+    await page.click('#lvBtn'); await page.wait_for_timeout(200)
+    await page.evaluate("Soleil.WorldMap.tap(14 + 62 * 2.5, 48 + 18)"); await page.wait_for_timeout(200)
+    t = await page.evaluate("document.getElementById('toast').innerText")
+    check('monde 3 verrouillé : « Gagne 12 ★ dans le monde 2… »', '12' in t and 'monde 2' in t, t)
+    await ctx.add_init_script("""if (location.search.includes('w2stars')) { const s = {};
+      for (let i = 1; i <= 8; i++) s['w1-' + i] = { s: [true, true, true], best: 30, tries: 1, done: true };
+      for (let i = 1; i <= 6; i++) s['w2-' + i] = { s: [true, true, false], best: 30, tries: 1, done: true };
+      localStorage.setItem('soleil.levels', JSON.stringify(s)); localStorage.setItem('soleil.worldsShown', JSON.stringify([2])); }""")
+    await page.goto(URL + '?w2stars'); await page.wait_for_function("Soleil.Poki && Soleil.Poki.loaded"); await page.wait_for_timeout(300); await page.evaluate(FAST)
+    await page.click('#lvBtn'); await page.wait_for_timeout(1600)
+    r = await page.evaluate("[Soleil.WorldMap.nodes[0].lv.id, Soleil.Levels.unlocked(Soleil.levelById('w3-1')), Soleil.Levels.unlocked(Soleil.levelById('w3-2')), JSON.stringify(Soleil.store.get('worldsShown', []))]")
+    check('12 étoiles : animation, la carte passe sur la plage, niveau 1 ouvert, niveau 2 fermé', r[0] == 'w3-1' and r[1] and not r[2] and '3' in r[3], str(r))
+    px = await page.evaluate("""(() => { const S = Soleil; S.WorldMap.draw(); const d = S.ctx.getImageData(Math.round(S.W * 0.5 * S.DPR), Math.round(S.H * 0.85 * S.DPR), 1, 1).data; return [d[0], d[1], d[2]]; })()""")
+    check('la page de la plage : du sable (jaune clair) en bas de la carte', px[0] > 200 and px[1] > 180 and px[2] < 200, str(px))
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w3-1', false)")
+    lv = await page.evaluate("(() => { const S = Soleil; S.render(); return [S.Levels.def.world, S.Levels.m.level.chairs, S.Levels.m.rivals.length]; })()")
+    check('niveau 1 de la plage : 3 transats pour 4 enfants', lv == [3, 3, 3], str(lv))
+    ERRS.extend(page.errs); await ctx.close()
+
+async def t_w3_pressure(b):
+    print('\n25) La plage : les transats et la glace qui fond')
+    ctx, page = await new_page(b)
+    r = await page.evaluate(f"""(() => {{
+      const S = Soleil, def = S.levelById('w3-1'), out = {{ chairs: 0, other: 0, revive: 0 }};
+      for (let a = 1; a <= 60; a++) {{ const m = S.Match.create(def, a, {{ playerBrain: 'patient', brainSeen: {SEEN_ALL} }});
+        while (!m.result && m.t < 150) {{ S.Match.step(m, 1/60); m.out.length = 0; }}
+        if (m.result.why === 'chairs') {{ out.chairs++; if (m.finishers.length >= m.level.chairs && S.Match.revive(m)) out.revive++; }}
+        else if (!m.result.win) out.other++; }}
+      return out; }})()""")
+    check('transats : le trop prudent n’a jamais de transat (perdu, sans 2e chance) ; sinon c’est la nuit', r['chairs'] >= 30 and r['revive'] == 0 and r['chairs'] + r['other'] == 60, json.dumps(r))
+    g = await page.evaluate("""(() => {
+      const S = Soleil, def = S.levelById('w3-2'), m = S.Match.create(def, 3, { playerBrain: 'expert' }), drops = [];
+      while (!m.result && m.t < 150) { S.Match.step(m, 1/60); for (const e of m.out) if (e.type === 'melt') drops.push([+m.t.toFixed(2), e.left]); m.out.length = 0; }
+      const st = S.Match.starsOf(S.Match.normalize(def), m.result);
+      return { drops, win: m.result.win, scoops: m.result.scoops, time: m.result.time, st, melt: def.melt, n0: def.scoops }; })()""")
+    regular = all(abs(t - (i + 1) * g['melt']) < 0.05 and left == g['n0'] - i - 1 for i, (t, left) in enumerate(g['drops']))
+    check('glace : une boule fond toutes les ' + str(g['melt']) + ' s ; à l’arrivée, il en reste ce que dit le temps', g['win'] and regular and g['scoops'] == g['n0'] - len(g['drops']), json.dumps(g)[:160])
+    check('glace : les étoiles viennent des boules qui restent', g['st'][1] == (g['scoops'] >= 4) and g['st'][2] == (g['scoops'] >= 5), str(g['st']))
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w3-2', false)")
+    await page.evaluate("Soleil.Levels.m.player.z = Soleil.Levels.m.level.length - 0.01; Soleil.Levels.m.player.v = 8")
+    m = await page.evaluate("(() => { LVBOT('greedy', 60 * 2, () => !!Soleil.Levels.mountain); const L = Soleil.Levels; return [L.phase, L.mountain && L.mountain.n, L.m.result && L.m.result.scoops]; })()")
+    check('arrivée : la montagne de boules (autant de boules que dans la glace)', m[1] and m[1] == m[2], str(m))
+    ERRS.extend(page.errs); await ctx.close()
+
+async def t_w3_boss(b):
+    print('\n26) Boss de la plage : le Soleil Vacancier (chapeau de paille, lunettes en cœur, calypso, coups spéciaux, victoire)')
+    ctx, page = await new_page(b)
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w3-8', false)")
+    await page.evaluate("Soleil.Sound.unlock()")
+    r = await page.evaluate("""(() => { const S = Soleil, L = S.Levels; LVBOT('none', 15); L.press(); LVBOT('none', 2); const a = { ph: L.phase, face: L.m.sun.turnP };
+      LVBOT('none', 60 * 2); a.face2 = L.m.sun.bossFace; a.music = S.Music.on; a.bpm = S.Music.T && S.Music.T.bpm; LVBOT('none', 90); a.ph2 = L.phase; return a; })()""")
+    check('intro : il se tourne vers toi', r['ph'] == 'boss' and r['face'] == 1)
+    check('chapeau de paille et lunettes en cœur + calypso (144 bpm)', r['face2'] == 'vacancier' and r['music'] and r['bpm'] == 144, json.dumps(r))
+    check('puis le niveau commence', r['ph2'] == 'play')
+    mv = await page.evaluate("""(() => { const L = Soleil.Levels, t = new Set(); for (let i = 0; i < 60 * 25; i++) { LVBOT('good', 1); if (L.banner) t.add(L.banner.title); if (L.phase !== 'play') break; } return [...t].join(' / '); })()""")
+    check('coups spéciaux annoncés (bannières)', 'L’AVION PUBLICITAIRE' in mv and 'LA SIESTE AU SOLEIL' in mv, mv)
+    await page.evaluate("Soleil.Levels.m.player.z = Soleil.Levels.m.level.length - 0.01; Soleil.Levels.m.player.v = 8")
+    await page.evaluate("LVBOT('greedy', 60 * 12, () => Soleil.Levels.phase === 'results')")   # la montagne de glace passe d'abord
+    w = await page.evaluate("[Soleil.Levels.phase, Soleil.Music.on, (document.getElementById('lvEnd') || {}).innerText || '']")
+    check('victoire : musique coupée, « SOLEIL VACANCIER BATTU ! », monde 3 terminé', w[0] == 'results' and not w[1] and 'VACANCIER BATTU' in w[2] and 'Monde 3' in w[2], w[2].split('\n')[0])
+    ERRS.extend(page.errs); await ctx.close()
+
+async def t_endless_lies(b):
+    print('\n27) Course infinie : le recomptage (dès 50 m) et l’avion menteur (dès 90 m), même défi du jour pour tous')
+    ctx, page = await new_page(b)
+    r = await page.evaluate("""(() => { const S = Soleil, out = { before: 0, recount: [], plane: [], cycles: 0 };
+      for (let run = 0; run < 8; run++) {
+        S.startRun('free'); if (run % 2) S.runner.z = 92;   // une partie sur deux commence à 92 m (les avions)
+        let last = null, lastP = null;
+        for (let i = 0; i < 60 * 300 && S.state === 'play'; i++) {
+          const w = S.watcher;
+          S.pressing = (w.state === 'pause' || (w.state === 'chant' && w.textKind !== 'trigger') || (w.state === 'return' && !w.retTo));
+          S.bossQueue.length = 0; S.update(1 / 60);   // pas de boss ici : les faux signaux ne viennent jamais pendant un boss
+          if (w.lie && w.lie.fired && w.lie !== last) { last = w.lie; (w.lie.type === 'recount' ? out.recount : out.plane).push(Math.round(S.runner.z)); }
+          if (S.plane && S.plane !== lastP) { lastP = S.plane; if (S.plane.kind === 'stop') out.plane.push(Math.round(S.runner.z)); }
+          if (w.lie && w.lie.fired && S.runner.z < 50) out.before++;
+        }
+        out.cycles += S.cycleN;
+      }
+      return out; })()""")
+    check('le recomptage arrive, jamais avant 50 m', len(r['recount']) >= 2 and min(r['recount']) >= 50 and r['before'] == 0, json.dumps(r)[:160])
+    check('l’avion menteur arrive, jamais avant 90 m', len(r['plane']) >= 2 and min(r['plane']) >= 90, json.dumps(r['plane']))
+    DAILY = """(() => { const S = Soleil; S.startRun('daily'); S.runner.z = 92; const lies = new Set();
+        for (let i = 0; i < 60 * 200 && S.state === 'play'; i++) { const w = S.watcher;
+          S.pressing = (w.state === 'pause' || (w.state === 'chant' && w.textKind !== 'trigger') || (w.state === 'return' && !w.retTo));
+          S.bossQueue.length = 0; S.update(1 / 60); if (w.lie) lies.add(S.cycleN + ':' + w.lie.type); if (w.planeAt >= 0) lies.add(S.cycleN + ':stop'); }
+        return [...lies].sort().join(); })()"""
+    ctx2, page2 = await new_page(b)                 # un 2e joueur, sur un autre appareil : le même défi du jour
+    d = [await page.evaluate(DAILY), await page2.evaluate(DAILY)]
+    check('défi du jour : les mêmes faux signaux, au même cycle, pour tout le monde (2 joueurs)', d[0] == d[1] and d[0] != '', d[0][:120])
+    ERRS.extend(page2.errs); await ctx2.close()
+    await page.evaluate("""(() => { const S = Soleil;           // un joueur qui repart dès qu'un faux signal lui dit « c'est reparti »
+      for (let k = 0; k < 8 && !(S.lastRun && S.lastRun.lie); k++) { S.startRun('free'); S.runner.z = 92;
+        for (let i = 0; i < 60 * 120 && S.state === 'play'; i++) { const w = S.watcher;
+          S.pressing = w.state === 'pause' || (w.state === 'chant' && w.textKind !== 'trigger') || (w.state === 'return' && !w.retTo)
+            || (w.state === 'look' && !w.second && !!w.lie && w.lie.fired);
+          S.bossQueue.length = 0; S.update(1 / 60); }
+        for (let i = 0; i < 200; i++) S.update(1 / 60); } })()""")
+    t = await page.evaluate("((Soleil.lastRun && Soleil.lastRun.lie) || '') + '|' + document.getElementById('over').innerText")
+    lie, txt = t.split('|', 1)
+    check('grillé par un faux signal : le conseil de fin le dit (« Il comptait en te regardant… » / « L’avion mentait… »)',
+          lie in ('recount', 'planeGo') and ('comptait en te regardant' in txt or 'avion mentait' in txt), (lie + ' / ' + txt.replace(chr(10), ' '))[:140])
+    ERRS.extend(page.errs); await ctx.close()
+
 TESTS = [t_flow, t_fail, t_determinism, t_fair, t_rivals, t_map, t_save, t_boss, t_english, t_perf,
          t_w2_rule, t_w2_signal, t_w2_fair, t_w2_mud, t_w2_map, t_w2_reward, t_w2_boss, t_w2_english,
-         t_v25_lies, t_v25_lies_screen, t_v25_rivals, t_v25_rivals_screen]
+         t_v25_lies, t_v25_lies_screen, t_v25_rivals, t_v25_rivals_screen,
+         t_w3_fair, t_w3_map, t_w3_pressure, t_w3_boss, t_endless_lies]
 async def main():
     only = sys.argv[1:]
     async with async_playwright() as p:
