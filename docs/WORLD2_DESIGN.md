@@ -6,7 +6,9 @@ Mécaniques de ce monde, et rien d'autre :
 - tout le monde 1 (maintenir / lâcher, mots pièges, hésitations, bégaiement, chant express, rivaux) ;
 - les tentations ;
 - le faux dos ;
-- la boue.
+- la boue ;
+- v2.5 : le coucher du soleil (tous les niveaux), le recomptage et la fausse alerte du monde 1 (ici et là), et
+  **le troupeau** (niveau 7). Ils sont décrits dans `docs/TRAPS_DESIGN.md`. Le chant n'a plus de « SO ».
 
 ## La règle (toujours vraie)
 
@@ -31,7 +33,7 @@ Les fausses fins n'imitent jamais ce signal en entier :
 
 Phrase apprise au joueur : **« Attends le ding ! »**. Elle s'affiche au départ du niveau 1 du parc.
 
-Le monde 1 reste exactement comme avant : le « ding », l'anneau vert et les « DÉPART ÉCLAIR ! » commencent au parc. Le réglage `SIGNAL_WORLD` (`js/modes/levels.js`) permet de les avoir aussi dans la cour (mettre 1).
+v2.5 : le « ding », l'anneau vert et les « DÉPART ÉCLAIR ! » commencent **dès la cour** (`SIGNAL_WORLD = 1`, `js/modes/levels.js`), parce que le recomptage et la fausse alerte y arrivent. Avant, ils commençaient au parc.
 
 ## Les tentations : règles exactes
 
@@ -46,6 +48,8 @@ Les temps sont comptés depuis le début du regard (t = 0 quand le soleil a fini
 | 🪰 **Mouche** | Elle bourdonne autour du coureur, se pose sur sa tête vers 0,9 s. Il tremble de plus en plus, l'écran vibre un peu. Elle s'envole au vrai retour. | 2,0 s | « Une mouche ne t'excuse pas ! » |
 | 💥 **Rival qui craque** | t ≈ 0,5 à 0,8 s : le rival en course le plus proche bouge et se fait griller bruyamment (flash, « BOUM », grosse fumée). S'il n'y a aucun rival assez proche, elle n'a pas lieu. | 1,5 s | « Ne sursaute pas ! » |
 | 👀 **Faux dos** | À la fin du regard, il tourne presque de dos (sans « ding ») et un gros œil dépasse : « HMM… ». 0,5 à 1,1 s plus tard : « HOP ! », il se retourne en 0,16 s et regarde encore 0,6 à 1,0 s. Si quelqu'un bouge pendant l'œil, il le voit et fait « HOP ! » tout de suite. | — | « Il faisait semblant ! Attends le ding » |
+
+**v2.5 : quatre tentations de plus**, avec les mêmes règles : le recomptage 🔁 (il recompte « 1… 2… » en te regardant), l'avion « ALLEZ-Y ! » ✈️ (plage), la fausse alerte 📣 (un rival crie « VAS-Y ! ») et le troupeau 🐑 (trois rivaux repartent ensemble et sont grillés). Leurs moments, leurs indices et leurs réglages sont dans `docs/TRAPS_DESIGN.md`.
 
 **Résister.** À chaque vrai retour, chaque tentation du regard compte comme résistée :
 - popup « SANG-FROID ! » ;
@@ -104,7 +108,7 @@ Le freinage ne change pas : la boue fait perdre du temps, mais elle ne grille pe
 
 ## Les 8 niveaux
 
-Les durées visées sont de 30 à 40 s, et jusqu'à 50 s pour le boss. Les taux visés sont pour le joueur « moyen ». Le niveau 1 doit être un peu plus dur que le niveau 4 du monde 1 (88 %).
+Les durées visées sont de 30 à 42 s (v2.5 ; avant : 30 à 40 s), et jusqu'à 50 s pour le boss. Les taux sont ceux du joueur « moyen » en v2.5 (300 essais). Le niveau 1 doit être plus dur que le début de la cour et plus facile que le Soleil Cool (v2.5 ; avant : un peu plus dur que le niveau 4 de la cour). Chaque niveau a maintenant sa nuit (de 37 s au niveau 1 à 51 s au boss).
 
 ### 1. L'étoile tentatrice ⭐
 - **Idée :** une étoile dorée apparaît devant toi pendant le regard.
@@ -113,7 +117,7 @@ Les durées visées sont de 30 à 40 s, et jusqu'à 50 s pour le boss. Les taux 
 - **★★ :** Fais 2 départs éclair.
 - **★★★ :** Arrive 1er.
 - **Rivaux :** Hugo ⚡ (il craque sur l'étoile) et Zoé 🐢.
-- **Simulation :** moyen 76 %, expert 98 % (niveau 4 du monde 1 : 88 %).
+- **Simulation :** moyen 66 %, expert 99 %, robot prudent 0 % (cour : 100 % au niveau 2, Soleil Cool : 31 %).
 
 ### 2. Le faux retour 🙃
 - **Idée :** il fait semblant de se retourner… « HA ! ».
@@ -122,16 +126,16 @@ Les durées visées sont de 30 à 40 s, et jusqu'à 50 s pour le boss. Les taux 
 - **★★ :** Fais 3 départs éclair.
 - **★★★ :** Finis en moins de 36 s.
 - **Rivaux :** Max ⚡ et Jade 🎯.
-- **Simulation :** moyen 73 %, expert 97 %.
+- **Simulation :** moyen 62 %, expert 98 %.
 
 ### 3. La mouche et les moqueries 🪰
 - **Idée :** pure pression : la mouche se pose sur toi, il te nargue.
 - **Apprend :** que rien de tout ça ne compte. Garde ton calme.
-- **Menace :** mouche au 1er regard, moquerie au 2e.
+- **Menace :** mouche au 1er regard, moquerie au 2e. v2.5 : parfois une fausse alerte.
 - **★★ :** Arrive dans le top 2.
 - **★★★ :** Fais 3 OUF.
 - **Rivaux :** Nino ⚡, Lila 🐢 et Sam 🎯.
-- **Simulation :** moyen 71 %, expert 98 %.
+- **Simulation :** moyen 55 %, expert 99 %.
 
 ### 4. Les flaques de boue 🟤
 - **Idée :** cinq flaques posées sur le chemin, et des étoiles tentatrices.
@@ -140,34 +144,34 @@ Les durées visées sont de 30 à 40 s, et jusqu'à 50 s pour le boss. Les taux 
 - **★★ :** Arrive dans le top 2.
 - **★★★ :** Arrive 1er malgré la boue.
 - **Rivaux :** Max ⚡, Inès 🎯 et Tom 🐢.
-- **Simulation :** moyen 69 %, expert 100 %.
+- **Simulation :** moyen 51 %, expert 99 %.
 
 ### 5. Le faux dos 👀
 - **Idée :** il se met de dos… mais un œil dépasse. « HOP ! ».
 - **Apprend :** l'œil n'est pas le « ding ».
-- **Menace :** faux dos forcé à la fin du 1er regard.
+- **Menace :** faux dos forcé à la fin du 1er regard. v2.5 : parfois un recomptage.
 - **★★ :** Fais 3 départs éclair.
 - **★★★ :** Finis en moins de 38 s.
 - **Rivaux :** Hugo ⚡ (il se fait avoir), Léo 🐢 et Jade 🎯.
-- **Simulation :** moyen 58 %, expert 97 %.
+- **Simulation :** moyen 46 %, expert 98 %.
 
 ### 6. Le grand jeu du Farceur 🎭
-- **Idée :** faux dos et tentations ensemble (étoile + faux retour, éternuement, rival qui craque).
+- **Idée :** faux dos et tentations ensemble (étoile + faux retour, éternuement, rival qui craque ; v2.5 : recomptage, fausse alerte).
 - **Apprend :** à combiner tout ce qu'on a appris.
 - **Menace :** éternuement au 1er regard.
 - **★★ :** Fais 2 OUF.
 - **★★★ :** Arrive 1er.
 - **Rivaux :** Sam 🎯, Nino ⚡ et Zoé 🐢.
-- **Simulation :** moyen 50 %, expert 96 %.
+- **Simulation :** moyen 50 %, expert 97 %.
 
 ### 7. La grande course du parc 🏃
-- **Idée :** tout mélangé, avec 5 rivaux.
-- **Apprend :** garder la tête froide dans la foule.
-- **Menace :** mot piège et moquerie au 1er cycle, de la boue dès 30 m.
+- **Idée :** tout mélangé, avec 5 rivaux. v2.5 : **le troupeau** : trois rivaux repartent ensemble pendant le regard… et sont grillés d'un coup.
+- **Apprend :** garder la tête froide dans la foule ; ne pas suivre les autres.
+- **Menace :** mot piège et moquerie au 1er cycle, le troupeau forcé au 2e regard (Inès, Max et Jade partent devant, à 10, 16 et 22 m, pour qu'il ait lieu), de la boue dès 30 m.
 - **★★ :** Arrive dans le top 3.
 - **★★★ :** Arrive 1er.
 - **Rivaux :** Inès 🎯, Max ⚡, Jade 🎯, Léo 🐢 et Lila 🐢.
-- **Simulation :** moyen 41 %, expert 99 %.
+- **Simulation :** moyen 38 %, expert 97 %.
 
 ### 8. BOSS — Le Soleil Farceur 🤡
 - **Idée :** de longs regards remplis de tentations enchaînées, des faux dos et des faux retours.
@@ -182,10 +186,11 @@ Les durées visées sont de 30 à 40 s, et jusqu'à 50 s pour le boss. Les taux 
 - **★★★ :** Arrive 1er.
 - **Rivaux :** Inès 🎯, Hugo ⚡ et Tom 🐢.
 - **Durée :** jusqu'à 50 s.
-- **Simulation :** moyen 24 % (visé : 10 à 30 %), expert 97 %, durée moyenne 46 s.
+- **Simulation :** moyen 27 % (visé : 10 à 30 %), expert 97 %, durée moyenne 47 s. v2.5 : recomptages et fausses alertes s'ajoutent à ses farces.
 
 ## La carte
 
 - Le monde 2 se débloque avec **12 étoiles du monde 1** (sur 24).
 - À la première ouverture de la carte après les avoir gagnées : le cadenas du badge « 2 » saute, avec des confettis, la bannière « MONDE 2 DÉBLOQUÉ ! » et un son. La carte bascule sur le parc.
 - La carte du parc : pelouses, étang, fontaine, kiosque, arbres variés, et le chemin des 8 niveaux jusqu'au boss.
+- v2.5 : la suite, c'est la plage (12 étoiles du monde 2), voir `docs/WORLD3_DESIGN.md`.

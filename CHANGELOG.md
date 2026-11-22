@@ -1,5 +1,79 @@
 # Journal des versions
 
+## v2.5 — les nouveaux pièges, le monde 3 « La plage » et la courbe de difficulté
+
+Le retour du joueur : « Le faux dos, c'est le seul bon piège. Les autres ne sont pas dangereux : on a juste à
+s'arrêter. » La v2.5 rend la prudence coûteuse et ajoute de faux signaux pour partir. Seuls les pièges choisis par le
+joueur ont été faits. Le détail de chaque piège est dans `docs/TRAPS_DESIGN.md`, la courbe dans `docs/DIFFICULTY.md`,
+la plage dans `docs/WORLD3_DESIGN.md`.
+
+### Changé
+- **Plus de « SO »**, partout (niveaux, course infinie, défi du jour, 2 joueurs, tutoriel, 6 langues) : le chant est
+  « 1… 2… 3… » puis le mot. C'est le mot qui prévient ; l'hésitation devient le « 3… » qui dure. Les demi-tours sont un
+  peu plus longs pour lire, réagir et freiner (niveaux +0,05 à +0,10 s, course infinie 0,50 s, 2 joueurs 0,65 s). Le
+  dé de l'ancien « SO » est encore tiré : la suite des dés ne bouge pas.
+- **Le « ding » du vrai retour dès le monde 1** (`SIGNAL_WORLD = 1`), avec les « DÉPART ÉCLAIR ! ».
+- **Le niveau 1-4 s'appelle « Le recomptage »** (Max le Fonceur est toujours à battre) ; le 1-3 « Avant la nuit ».
+- Tous les niveaux ont été réglés à nouveau (demi-tours, nuits, longueurs) : voir le tableau de `docs/DIFFICULTY.md`.
+
+### Nouveau : la prudence coûte cher
+- 🌅 **Le coucher du soleil** (du 1-3 au boss de la plage) : le soleil descend, le ciel passe au soir, une barre
+  « jusqu'à la nuit » ; « LA NUIT TOMBE ! » = perdu. 🎬 2e chance : +10 s de jour.
+- 🏖️ **Les transats** (plage 1, 4, 7) : un transat de moins que d'enfants ; le dernier arrivé a perdu, sans 2e chance.
+- 🍦 **La glace qui fond** (plage 2, 6, boss) : une boule fond toutes les 4 s, les boules qui restent donnent les
+  étoiles ; à l'arrivée, **la montagne de boules**. Le cornet ne cache jamais le soleil (6 boules dessinées, « ×n »).
+
+### Nouveau : les faux signaux
+- 🔁 **Le recomptage** (dès le 1-4 ; course infinie dès 50 m) : il recompte « 1… 2… » **en te regardant** : il ment.
+- ✈️ **L'avion menteur** (plage dès le 3-3 ; course infinie dès 90 m) : une banderole « SOLEIL ! » pendant le chant
+  (faux arrêt, on perd du temps) ou « ALLEZ-Y ! » pendant le regard (faux départ, grillé). Ce n'est jamais le soleil
+  qui parle, et le mot de la banderole n'est jamais le mot de départ.
+- 💧 **Le reflet dans l'eau** (plage dès le 3-5 ; course infinie dès 150 m) : le nuage cache le soleil, son reflet dans
+  l'eau (le sable mouillé à la plage) montre son visage, l'œil du faux dos et l'anneau vert du « ding ».
+
+### Nouveau : les rivaux
+- 📣 **La fausse alerte** (dès le 1-7) : un rival qu'on voit crie « IL REGARDE PAS ! VAS-Y ! ». C'est une blague.
+- 🐑 **Le troupeau** (2-7 et 3-7, niveaux seulement) : trois rivaux repartent ensemble… « TOUS GRILLÉS ! ». Un obstacle,
+  jamais un objectif d'étoile. Un rival peut maintenant partir devant (`z0`).
+
+### Nouveau : le monde 3 « La plage » (12 ★ du monde 2 pour l'ouvrir)
+- 8 niveaux : Les transats, La glace qui fond, L'avion menteur, Le volley de plage, Le reflet dans l'eau, Le château
+  de sable, La grande course de la plage, et le boss **le Soleil Vacancier 🏖️** (chapeau de paille, lunettes en cœur,
+  musique calypso, 6 coups spéciaux, « Mon chapeau !! »).
+- Décor dessiné en code (`js/render/beach.js`) : la mer, le sable mouillé, parasols, palmiers, châteaux de sable,
+  ballons, seaux, coquillages, tour de maître-nageur, marchand de glaces, mouettes ; la page de la plage sur la carte.
+- Les mondes 4 et 5 restent « Bientôt ».
+
+### Règles respectées
+- Chaque piège a un indice **qu'on voit** (jamais la couleur seule, jamais le son seul) ; aucun n'imite le « ding ».
+- Les nouveautés tirent dans une 3e suite de dés (`mixSeed(graine, 7000 + cycle)`) : les niveaux et le défi du jour
+  restent les mêmes pour tout le monde ; jamais `Math.random()` dans la logique.
+- Tous les textes en 6 langues, sans jeu de mots français ; les mots du chant viennent de `L.chant`.
+- Rien de téléchargé, les effets coûteux suivent la qualité automatique, rien dans la zone de la pilule Poki.
+
+### Corrigé en route
+- Un « 3 » juste après un mot piège effaçait le jugement de ce piège (le robot prudent avait ★★★ au 1-1).
+- `S.Levels` n'exposait pas les boules qui tombent ni la montagne de glace (getters `plocs`, `cone`, `mountain`).
+- Un 2e message sur la carte attendait la fin du 1er (0,9 s) : le test de la carte en tient compte.
+
+### Tests
+- `tools/simulate.js` : le monde 3, le robot prudent (profil `patient`), la référence `REF_W1` réglée en v2.5 ;
+  **126 vérifications**, toutes vertes.
+- `test_levels.py` : tests 19 à 27 (faux signaux, rivaux, la plage, son boss, la course infinie, le défi du jour
+  identique pour deux joueurs) ; **112 vérifications**.
+- `test_poki.py` : test 30 (plus de « SO », ni écrit ni dit, dans les 6 langues et tous les modes ; vérifié en
+  remettant exprès un « SO… » : le test le voit) ; **168 vérifications**.
+- Le test du conseil de fin (course infinie) tombait parfois : un encouragement « presque » (record, rang, moment de
+  la journée à quelques mètres) passe avant le conseil du faux signal, c'est voulu. Il refait maintenant une partie
+  jusqu'à voir le conseil, et vérifie qu'on n'a jamais le conseil générique à la place.
+- `compare_frames.py` : contre la v2.4, les 14 images de la course infinie (sans chant à l'écran, de 0 à 900 m) sont
+  identiques ; 76 des 80 images des niveaux changent, et c'est voulu (plus de « SO », coucher du soleil). Pour la suite,
+  comparer avec la v2.5.
+
+### Pas encore vérifié
+- Le ressenti sur un vrai téléphone (lisibilité du reflet et des banderoles, sons, musique du boss), et la fréquence des
+  faux signaux en course infinie sur de vraies parties. La liste des vérifications à faire est dans `docs/TESTS.md`.
+
 ## v2.4 — étape Poki 3 : sans partage, grands écrans, qualité automatique, daltoniens, 6 langues, dossier Poki
 
 ### Retiré

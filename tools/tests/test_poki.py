@@ -14,7 +14,7 @@ RES, LOGS, ERRS = [], [], []
 def check(name, ok, info=''):
     RES.append(bool(ok)); print(('  ✅ ' if ok else '  ❌ ') + name + (f'  [{info}]' if info != '' else ''))
 
-# Robot du mode Niveaux (image par image) : « good » lâche dès « SO » et attend le vrai retour, « greedy » court tout le temps
+# Robot du mode Niveaux (image par image) : « good » lâche au vrai mot et attend le vrai retour, « greedy » court tout le temps
 BOT = """
 window.LVBOT = (mode, frames, stopAt) => {
   const S = Soleil;
@@ -22,7 +22,7 @@ window.LVBOT = (mode, frames, stopAt) => {
     const L = S.Levels, m = L.m;
     if (m && L.phase === 'play') {
       const w = m.sun;
-      if (mode === 'good') S.pressing = !((w.state === 'chant' && (w.textKind === 'so' || w.textKind === 'trigger')) || w.state === 'turn' || w.state === 'look'
+      if (mode === 'good') S.pressing = !((w.state === 'chant' && w.textKind === 'trigger') || w.state === 'turn' || w.state === 'look'
         || w.state === 'peek' || w.state === 'hop' || (w.state === 'return' && w.retTo > 0));
       else S.pressing = mode === 'greedy';
     } else S.pressing = false;
@@ -729,7 +729,7 @@ window.__drive = (fps, maxS) => {                 // fait tourner le VRAI jeu im
   S.last = 0; S.acc = 0;
   const df = 1000 / fps, every = 1000 / 30;        // le robot décide toutes les 1/30 s : des instants où il y a une image aux 3 fréquences
   const decide = () => { const m = L.m, w = m && m.sun;   // il regarde le jeu À CET INSTANT (après l'image), et décide pour la suite
-    S.pressing = !!m && L.phase === 'play' && !((w.state === 'chant' && (w.textKind === 'so' || w.textKind === 'trigger')) || w.state === 'turn' || w.state === 'look'
+    S.pressing = !!m && L.phase === 'play' && !((w.state === 'chant' && w.textKind === 'trigger') || w.state === 'turn' || w.state === 'look'
       || w.state === 'peek' || w.state === 'hop' || (w.state === 'return' && w.retTo > 0)); };
   let t = 0, next = every, n = 0;
   decide();
@@ -900,11 +900,82 @@ async def t_languages(b):
     check('… au prochain lancement, la langue choisie est reprise (même sur un appareil en français)', await page.evaluate("Soleil.LANG + ' ' + Soleil.L.playBtn") == 'it GIOCA')
     await done(page, ctx)
 
+NO_SO = r"""(() => {
+  const S = Soleil, c = S.L.chant, pre = c.pre;       // pre (« SO », « RED »…) ne sert plus qu'à vérifier que les pièges commencent comme le vrai mot
+  const shown = new Set(), said = new Set(), pops = new Set(), modes = {};
+  // la voix est muette dans le navigateur de test : on note ce qu'elle DIRAIT ; et les petits textes qui sautent (popups)
+  S.Voice.active = () => true; S.Voice.say = t => { said.add(String(t)); };
+  const pop0 = S.popup; S.popup = function (t) { pops.add(String(t)); return pop0.apply(this, arguments); };
+  const note = (w, mode) => { if (w && w.state === 'chant' && w.text) { shown.add(w.text); modes[mode] = (modes[mode] || 0) + 1; } };
+  // course infinie : un robot qui court pendant le chant (sauf au vrai mot), s'arrête au mot, repart au vrai retour
+  const endless = (mode, z0, frames) => {
+    if (mode === 'tuto') { S.plays = 0; S.startRun('free'); } else S.startRun(mode);
+    if (z0) S.runner.z = z0;
+    for (let i = 0; i < frames && S.state === 'play'; i++) { const w = S.watcher;
+      S.pressing = w.state === 'pause' || (w.state === 'chant' && w.textKind !== 'trigger') || (w.state === 'return' && !w.retTo);
+      S.update(1 / 60); note(S.watcher, mode); }
+    S.pressing = false;
+  };
+  endless('tuto', 0, 60 * 40);                         // toute 1re partie (tutoriel)
+  endless('free', 0, 60 * 120);                        // course libre, depuis le départ
+  endless('free', 170, 60 * 120);                      // … et plus loin : recomptage, avion, reflet, boss
+  endless('daily', 40, 60 * 120);                      // défi du jour
+  S.startDuo();                                        // 2 joueurs : personne ne bouge, le soleil chante quand même
+  for (let i = 0; i < 60 * 40; i++) { S.update(1 / 60); note(S.watcher, 'duo'); }
+  // niveaux : le robot qui lâche au mot et attend le « ding » (1re rencontre, hésitations, bégaiement, express, 3 boss, nuage)
+  for (const id of ['w1-1', 'w1-2', 'w1-5', 'w1-6', 'w1-8', 'w2-8', 'w3-5', 'w3-8']) {
+    S.WorldMap.open(); S.Levels.open(id, false);
+    for (let i = 0; i < 60 * 70; i++) { const Lv = S.Levels, m = Lv.m;
+      if (Lv.phase === 'intro' || Lv.phase === 'boss') Lv.press();
+      if (m && Lv.phase === 'play') { const w = m.sun;
+        S.pressing = !((w.state === 'chant' && w.textKind === 'trigger') || w.state === 'turn' || w.state === 'look' || w.state === 'peek'
+          || w.state === 'hop' || (w.state === 'return' && w.retTo > 0));
+      } else S.pressing = false;
+      S.update(1 / 60);
+      if (Lv.m && Lv.phase === 'play') note(Lv.m.sun, 'niveaux');
+      if (['results', 'win', 'fail', 'caught'].includes(Lv.phase)) break;
+    }
+  }
+  S.pressing = false;
+  // ce qui est écrit pendant le chant : des chiffres, des mots pièges, le vrai mot — rien d'autre
+  const allowed = new Set(['1', '2', '3', c.sun, c.moon, c.hop, ...c.traps, ...c.moonTraps]);
+  const collapse = t => String(t).toUpperCase().replace(/[^\p{L}]/gu, '').replace(/(\p{L})\1+/gu, '$1');   // « Sooo… » → « SO »
+  const P = collapse(pre);
+  const odd = [...shown].filter(t => !allowed.has(t));
+  const bare = [...shown, ...pops, ...said].filter(t => collapse(t) === P);
+  // tous les textes de la langue (et des niveaux) : jamais « SO… », « SOOOO… », « SO » tout seul
+  const re = new RegExp('(^|[^\\p{L}])' + [...pre].map(ch => ch + '+').join('') + '(?=\\s*(…|\\.\\.\\.|»|”|"|$))', 'iu');
+  const hits = [], seen = new Set();
+  const look = (t, path) => { if (typeof t === 'string' && re.test(t)) hits.push(path + ' : ' + t.slice(0, 60)); };
+  const walk = (o, path) => {
+    if (typeof o === 'string') return look(o, path);
+    if (typeof o === 'function') { let r = ''; try { r = o({ type: 'top', n: 3, s: 30 }, 'Max', 3); } catch (e) { r = ''; } return look(r, path + '()'); }
+    if (!o || typeof o !== 'object' || seen.has(o)) return; seen.add(o);
+    if (typeof o.fr === 'string' && typeof o.en === 'string') return look(S.LANG === 'fr' ? o.fr : S.LANG === 'en' ? o.en : '', path);
+    for (const k of Object.keys(o)) if (!(path === 'chant' && k === 'pre')) walk(o[k], path ? path + '.' + k : k);
+  };
+  walk(S.TXT[S.LANG], ''); walk(S.WORLDS, 'WORLDS');
+  return { pre, odd, bare, hits: hits.slice(0, 6), shown: shown.size, said: said.size, saidNum: S.L.say.num.every(x => said.has(x)), saidSun: said.has(S.L.say.sun), modes };
+})()"""
+
+async def t_no_so(b):
+    print('\n30) v2.5 — plus de « SO » : ni écrit, ni dit, dans les 6 langues et dans tous les modes')
+    for lg in ('fr', 'en', 'es', 'pt', 'de', 'it'):
+        ctx, page = await new_page(b, url=URL + '?lang=' + lg, init_js="window.requestAnimationFrame = () => 0;")
+        r = await page.evaluate(NO_SO)
+        m = r['modes']
+        all_modes = all(m.get(k, 0) > 0 for k in ('tuto', 'free', 'daily', 'duo', 'niveaux'))
+        ok = not r['odd'] and not r['bare'] and not r['hits'] and all_modes and r['saidNum'] and r['saidSun']
+        info = (f"« {r['pre']}… » : {r['shown']} textes affichés, {r['said']} dits, modes {m}" if ok else
+                f"bizarres {r['odd'][:5]} · ancien début {r['bare'][:5]} · textes {r['hits']} · modes {m} · voix {r['saidNum']}/{r['saidSun']}")
+        check(f'{lg} : le chant n’affiche que « 1 », « 2 », « 3 », des mots entiers et le vrai mot ; la voix ne dit jamais « {r["pre"].capitalize()}… »', ok, info)
+        await done(page, ctx)
+
 TESTS = [t_new_player, t_soft_level1, t_returning, t_pause_endless, t_pause_level_daily, t_ads, t_fail_retry, t_hidden_blur,
          t_casier_duo, t_sdk_modes, t_scroll_debug, t_iframe_share, t_build,
          t_fix_toast, t_fix_pill, t_fix_late_ad, t_fix_typo,
          t_reward_revive_level, t_reward_refused, t_reward_hidden, t_reward_endless, t_reward_double, t_reward_trial,
-         t_bigscreen, t_fps_fair, t_quality, t_colorblind, t_languages, t_event_log]
+         t_bigscreen, t_fps_fair, t_quality, t_colorblind, t_languages, t_no_so, t_event_log]
 
 async def main():
     only = sys.argv[1:]

@@ -12,7 +12,7 @@ RES = []
 def check(name, ok, info=''):
     RES.append(ok); print(('  ✅ ' if ok else '  ❌ ') + name + (f'  [{info}]' if info != '' else ''))
 
-# Un joueur « robot » rejoué image par image (avance rapide) : lâche dès « SO », repart seulement au vrai retour (le « ding »)
+# Un joueur « robot » rejoué image par image (avance rapide) : lâche au vrai mot, repart seulement au vrai retour (le « ding »)
 FAST = """
 window.LVBOT = (mode, frames, stopAt) => {
   const S = Soleil;
@@ -21,7 +21,7 @@ window.LVBOT = (mode, frames, stopAt) => {
     if (mode !== 'none' && (L.phase === 'intro' || L.phase === 'boss')) L.press();
     if (m && L.phase === 'play') {
       const w = m.sun;
-      if (mode === 'good') S.pressing = !((w.state === 'chant' && (w.textKind === 'so' || w.textKind === 'trigger')) || w.state === 'turn' || w.state === 'look'
+      if (mode === 'good') S.pressing = !((w.state === 'chant' && w.textKind === 'trigger') || w.state === 'turn' || w.state === 'look'
         || w.state === 'peek' || w.state === 'hop' || (w.state === 'return' && w.retTo > 0));   // il attend le vrai « ding »
       else if (mode === 'greedy') S.pressing = true;
     } else S.pressing = false;
@@ -274,7 +274,7 @@ async def t_w2_signal(b):
     ERRS.extend(page.errs); await ctx.close()
 
 async def t_w2_fair(b):
-    print('\n13) Monde 2 juste : l’expert (sang-froid, lâche dès « SO », attend le « ding ») réussit chaque niveau')
+    print('\n13) Monde 2 juste : l’expert (sang-froid, lâche au vrai mot, attend le « ding ») réussit chaque niveau')
     ctx, page = await new_page(b)
     r = await page.evaluate("""(() => {
       const S = Soleil, res = {};
@@ -669,17 +669,23 @@ async def t_endless_lies(b):
     d = [await page.evaluate(DAILY), await page2.evaluate(DAILY)]
     check('défi du jour : les mêmes faux signaux, au même cycle, pour tout le monde (2 joueurs)', d[0] == d[1] and d[0] != '', d[0][:120])
     ERRS.extend(page2.errs); await ctx2.close()
-    await page.evaluate("""(() => { const S = Soleil;           // un joueur qui repart dès qu'un faux signal lui dit « c'est reparti »
-      for (let k = 0; k < 8 && !(S.lastRun && S.lastRun.lie); k++) { S.startRun('free'); S.runner.z = 92;
+    # un joueur qui repart dès qu'un faux signal lui dit « c'est reparti » : la carte de fin dit pourquoi. Elle peut
+    # aussi préférer un encouragement « presque » (record, rang ou moment de la journée à quelques mètres) : c'est
+    # voulu (js/ui/over.js) ; on refait alors une partie, jusqu'à voir le conseil du faux signal.
+    seen = await page.evaluate("""(() => { const S = Soleil, L = S.L, seen = [];
+      for (let k = 0; k < 16 && !seen.some(x => x.ok); k++) { S.startRun('free'); S.runner.z = 92;
         for (let i = 0; i < 60 * 120 && S.state === 'play'; i++) { const w = S.watcher;
           S.pressing = w.state === 'pause' || (w.state === 'chant' && w.textKind !== 'trigger') || (w.state === 'return' && !w.retTo)
             || (w.state === 'look' && !w.second && !!w.lie && w.lie.fired);
           S.bossQueue.length = 0; S.update(1 / 60); }
-        for (let i = 0; i < 200; i++) S.update(1 / 60); } })()""")
-    t = await page.evaluate("((Soleil.lastRun && Soleil.lastRun.lie) || '') + '|' + document.getElementById('over').innerText")
-    lie, txt = t.split('|', 1)
+        for (let i = 0; i < 200; i++) S.update(1 / 60);
+        const R = S.lastRun; if (!R || !R.lie || S.state !== 'over') continue;
+        const sub = document.getElementById('ovSub').textContent;
+        seen.push({ lie: R.lie, sub, ok: sub === L.temptFail[R.lie], generic: sub === L.tipLook || sub === '' }); }
+      return seen; })()""")
+    ok = any(x['ok'] for x in seen) and not any(x['generic'] for x in seen)
     check('grillé par un faux signal : le conseil de fin le dit (« Il comptait en te regardant… » / « L’avion mentait… »)',
-          lie in ('recount', 'planeGo') and ('comptait en te regardant' in txt or 'avion mentait' in txt), (lie + ' / ' + txt.replace(chr(10), ' '))[:140])
+          ok, ' | '.join(f"{x['lie']} : {x['sub']}" for x in seen)[:200])
     ERRS.extend(page.errs); await ctx.close()
 
 TESTS = [t_flow, t_fail, t_determinism, t_fair, t_rivals, t_map, t_save, t_boss, t_english, t_perf,
