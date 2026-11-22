@@ -90,6 +90,10 @@ const Sound = {
   doubled() { [1047, 1319, 1568, 2093].forEach((f, i) => this.tone(f, 0.16, 'square', 0.07, 0, i * 0.06)); },
   poof() { this.noise(0.25, 0.08, 'bandpass', 1300, 300, 0.9); },
   cloud() { this.noise(1.0, 0.05, 'lowpass', 520, 180, 0.6); },
+  plane() {                                      // v2.5 : l'avion menteur, « brrr » d'hélice qui arrive puis s'en va
+    for (let i = 0; i < 14; i++) this.noise(0.13, 0.055 * (1 - Math.abs(i - 7) / 8), 'bandpass', 330 - i * 6, 0, 5, i * 0.19);
+    this.tone(92, 2.6, 'sawtooth', 0.03, 84);
+  },
   wind(level) {                                  // vent continu dans la descente (0 = silence)
     const c = this.ctx; if (!c || !this.noiseBuf) return;
     if (Math.abs(level - (this.windL || 0)) < 0.03 && level !== 0) return;

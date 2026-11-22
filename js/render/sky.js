@@ -64,7 +64,8 @@ function drawCloud() {                             // gros nuage devant le solei
   g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, '#D6DCEA');
   path(); S.ctx.fillStyle = g; S.ctx.fill();
   const sx = Lt.cx, sy = Lt.sunY + S.watcher.offY + S.sunSink;   // la lueur du soleil (ou de la Lune) à travers le nuage
-  const col = S.watcher.type === 'moon' ? '185,205,255' : S.lookAmt > 0.3 ? '255,120,90' : '255,214,110';
+  // (v2.5 — niveaux : la lueur ne dit rien de son regard ; c'est le reflet dans l'eau qui le montre, render/lies.js)
+  const col = S.watcher.type === 'moon' ? '185,205,255' : S.lookAmt > 0.3 && S.state !== 'level' ? '255,120,90' : '255,214,110';
   const gl = S.ctx.createRadialGradient(sx, sy, R * 0.15, sx, sy, R * 1.3);
   gl.addColorStop(0, `rgba(${col},${(0.6 * S.cloudK).toFixed(3)})`); gl.addColorStop(1, `rgba(${col},0)`);
   path(); S.ctx.clip(); S.ctx.fillStyle = gl; S.ctx.fillRect(sx - R * 1.35, sy - R * 1.35, R * 2.7, R * 2.7);

@@ -16,12 +16,14 @@ function render() {
   drawSky();
   drawWatcher();
   drawCloud();
+  S.drawPlane();                                                   // v2.5 : l'avion menteur, devant le soleil (jamais sur ses yeux)
   drawHills();
   drawGround(camZ);
   if (!isDuo && !isLvl) drawPatches(camZ);
   drawMarkers(camZ);
   if (!isDuo && !isLvl) drawRecord(camZ);
   drawDecor(camZ);
+  S.drawReflection();                                              // v2.5 : le reflet du soleil dans l'eau, quand un nuage le cache
   if (!isDuo && !isLvl) drawStarItem(camZ);
   if (isDuo) { S.drawFinish(camZ); S.drawRacers(camZ); }
   else if (isLvl) {                                                // arrivée, rivaux devant, toi, rivaux tout près derrière

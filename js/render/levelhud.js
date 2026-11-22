@@ -75,8 +75,10 @@ function drawLevelHUD() {
     otext(tp.text, Lt.cx, Lt.yFeet - Lt.s * 2.45, s, '#FFD166');
     g.restore();
   }
-  // monde 2 : signaux du soleil et tentations (render/tempt.js)
-  S.drawSneezeEyes(); S.drawFarceurFace(); S.drawPeekEye(); S.drawTrueEnd(); S.drawTaunt();
+  // monde 2 : signaux du soleil et tentations (render/tempt.js). v2.5 : derrière le nuage, ils ne se voient que dans le reflet
+  const hide = clamp(S.cloudK * 1.5, 0, 1);
+  if (hide < 0.99) { g.save(); g.globalAlpha *= 1 - hide; S.drawSunMarks(); g.restore(); }
+  S.drawTaunt();
   // bannières (piège, hésitation, coups spéciaux du boss…)
   const b = LV.banner;
   if (b) drawBanner(b.title, b.sub, '', b.t, b.life, b.col);

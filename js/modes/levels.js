@@ -94,7 +94,7 @@ function open(id, retry, opts = {}) {
   m.sun.state = 'pause'; m.sun.rayA = Math.random() * 6;
   LV.hints = new Set(); LV.hold = null; LV.banner = null; LV.lastNum = -9; LV.heartT = 0; LV.jump = 0; LV.info = null;
   LV.fx = newFx(); LV.tip = null; LV.hand = null; LV.oops = null; Sound.buzz(false); m.sun.shut = 0; m.sun.bossFace = null;
-  LV.plocs = []; LV.cone = { a: 0, va: 0, pv: 0 }; LV.mountain = null; LV.noBurn = false; S.sunSink = 0;   // v2.5
+  LV.plocs = []; LV.cone = { a: 0, va: 0, pv: 0 }; LV.mountain = null; LV.noBurn = false; S.sunSink = 0; S.plane = null;   // v2.5
   LV.placeShown = LV.placeCand = Match.place(m); LV.placeT = 0;
   LV.glass = def.boss ? 0 : -1;                   // boss : il n'a pas encore ses lunettes
   if (def.boss && retry) { LV.glass = -1; dressBoss(); if (!Music.on) Music.start(def.bossKind || 'cool'); }
@@ -235,7 +235,6 @@ function events() {
         }
         if (e.ev.kind === 'trigger') hintsFor('trigger', m.cycle);
         if (e.ev.hes) LV.hesAt = m.t + 0.55;            // le « 3… » qui dure : la bannière « HÉSITATION… »
-        if (e.ev.kind === 'trigger') hintsFor('trigger', m.cycle);
         break;
       case 'reveal':                              // c'était un piège : il se marre
         w.laugh = 1; Sound.laugh();
@@ -284,6 +283,21 @@ function events() {
         break;
       }
       case 'tempt': onTempt(e.kind); break;
+      // v2.5 — les faux signaux : le recomptage (il compte en te regardant), l'avion menteur, le nuage et son reflet
+      case 'recount':                             // « 1… », « 2… » : comme un vrai chant… mais il te regarde
+        w.textT = S.gtime; w.bump = 1; w.textFadeT = 0; Sound.chant({ kind: 'num', n: e.n }, false);
+        break;
+      case 'recountEnd':                          // il se marre : c'était pour rire
+        w.laugh = 1; Sound.laugh();
+        popup(L.heh, Lt.cx + Lt.R * 1.15, Lt.sunY + S.sunSink - Lt.R * 0.2, '#06D6A0', Math.min(Lt.U * 0.05, 24), 0.9);
+        break;
+      case 'plane':                               // pendant le chant : « SOLEIL ! » sur une banderole (faux arrêt)
+        firstTime('planeStop'); S.startPlane('stop', S.chantW().sun);
+        break;
+      case 'cloud':                               // un nuage va cacher le soleil : regarde son reflet dans l'eau
+        w.cloudDir = m.cycle % 2 ? 1 : -1; Sound.cloud();
+        hintsFor('cloud'); firstTime('cloud');
+        break;
       case 'fakeSnap':                            // faux retour : il revient d'un coup
         popup(L.ha, Lt.cx, Lt.sunY - Lt.R * 1.35, '#FF4D6D', S.fit(L.ha, Math.min(Lt.U * 0.1, 52), S.W * 0.5), 0.8);
         Sound.ha(); w.bump = 1; S.shake = Math.max(S.shake, Lt.U * 0.012); vibrate(15);
@@ -342,7 +356,8 @@ function watchHand() {
 }
 function showBanner(kind) {
   const B = { trap: [L.trapTitle, L.trapSub(false), '#06D6A0'], hes: [L.hesTitle, L.hesSub, '#FFD166'], mud: [L.mudTitle, L.mudSub, '#C68B59'],
-              stutter: [L.stutterTitle, L.stutterSub, '#4CC9F0'], express: [L.expressTitle, L.expressSub, '#FF8FA3'] }[kind];
+              stutter: [L.stutterTitle, L.stutterSub, '#4CC9F0'], express: [L.expressTitle, L.expressSub, '#FF8FA3'],
+              cloud: [L.refletTitle, L.refletSub, '#4CC9F0'] }[kind];
   if (B) LV.banner = { title: B[0], sub: B[1], t: 0, life: 2.2, col: B[2] };
 }
 
@@ -362,6 +377,8 @@ function onTempt(kind) {
     case 'taunt': fx.taunt = { text: nextTaunt(), t: 0, life: 1.45, again: w.lookDur - w.t > 2.4 }; Sound.nyah(); w.laugh = 0.6; break;
     case 'fly': fx.fly = { t: 0, away: 0, landed: false }; Sound.buzz(true); break;
     case 'crack': break;                          // le BOUM arrive avec « rivalGrilled »
+    case 'planeGo': S.startPlane('go', L.planeGo); break;   // v2.5 : « ALLEZ-Y ! »… mais il te regarde encore
+    case 'recount': break;                        // v2.5 : le texte et le son arrivent avec « recount »
   }
 }
 function onTrueEnd(resisted) {                    // le VRAI retour : « ding », anneau vert, rayons qui tournent
@@ -536,7 +553,8 @@ function onCaught() {
   const why = res.why === 'hop' ? L.temptFail.hop : res.tempt ? L.temptFail[res.tempt] : exact;   // une tentation ? on dit laquelle
   const rem = Math.ceil(res.remaining);
   const almost = rem <= 40 ? L.failAlmost(rem) : res.place <= 2 && m.rivals.length ? L.failPlace(res.place) : L.failAlmost(rem);
-  LV.info = { def: LV.def, res, why, almost, tip: why !== exact ? exact : res.afterTrap && res.why !== 'early' ? L.failTipTrap : '' };
+  LV.info = { def: LV.def, res, why, almost,
+              tip: why !== exact ? exact : res.cloud ? L.refletTip : res.afterTrap && res.why !== 'early' ? L.failTipTrap : '' };   // v2.5 : le nuage
 }
 function onWin() {
   const m = LV.m, res = m.result, def = LV.def, r = rec(def.id);
@@ -581,7 +599,7 @@ function cleanup() {                              // on quitte le mode Niveaux (
   S.trialEnd();
   Music.stop(0.3); Sound.buzz(false);
   LV.m = null; LV.phase = 'off';
-  S.lvCaught = false; S.lvSkyZ = null; S.timeScale = 1; S.sunSink = 0;
+  S.lvCaught = false; S.lvSkyZ = null; S.timeScale = 1; S.sunSink = 0; S.plane = null; S.cloudK = 0;
 }
 function toMap() { cleanup(); S.WorldMap.open(); }
 function next() {                                 // Suivant : pause pub, puis la carte d'intro du niveau d'après
@@ -601,7 +619,7 @@ function revive() {
   w.angry = false; w.laugh = 0; w.angryUntil = 0; w.textFadeT = 0; w.bump = 0;
   S.lvCaught = false; S.caughtT = 0; S.timeScale = 1; S.shake = 0; S.flash = 0;
   if (LV.def.boss) Music.setDuck(false);
-  LV.info = null; LV.hand = null; LV.oops = null; LV.fx.star = null; LV.fx.sneeze = null; LV.fx.taunt = null;
+  LV.info = null; LV.hand = null; LV.oops = null; LV.fx.star = null; LV.fx.sneeze = null; LV.fx.taunt = null; S.plane = null;
   const nightBack = LV.noBurn && m.night;         // 2e chance après « LA NUIT TOMBE ! » : +10 s de jour
   LV.noBurn = false;
   setPhase('play');

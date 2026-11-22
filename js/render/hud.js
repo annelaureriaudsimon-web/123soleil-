@@ -15,8 +15,10 @@ function drawChant() {                               // « 1… 2… 3… SO… 
   }
   if (!w.text) return;
   let a = 1;
-  if (w.state !== 'chant' && w.state !== 'turn' && w.state !== 'peek' && w.state !== 'hop') a = clamp(1 - (S.gtime - w.textFadeT) / 0.3, 0, 1);
-  a *= clamp(1 - S.cloudK * 1.6, 0, 1);               // derrière le nuage : on n'entend que la voix
+  const recount = w.textKind === 'recount' && w.state === 'look';   // v2.5 : il recompte « 1… 2… » en te regardant (il ment)
+  if (w.state !== 'chant' && w.state !== 'turn' && w.state !== 'peek' && w.state !== 'hop' && !recount) a = clamp(1 - (S.gtime - w.textFadeT) / 0.3, 0, 1);
+  const cloudHides = S.state !== 'level';              // course infinie : derrière le nuage, on n'entend que la voix
+  if (cloudHides) a *= clamp(1 - S.cloudK * 1.6, 0, 1);   // (niveaux : pas de voix, le texte reste ; le reflet montre le soleil)
   if (a <= 0.01) return;
   const since = S.gtime - w.textT;
   const trapShown = w.textKind === 'trap' && since > 0.2;
@@ -35,7 +37,7 @@ function drawChant() {                               // « 1… 2… 3… SO… 
   if (loud) drawBurst(Math.min(tw * 0.56 + size * 0.22, S.W * 0.47), size * 0.82, a, S.gtime);
   otextC(w.text, size, col, a);
   if (trapShown) drawStrike(tw, size, clamp((since - 0.2) / 0.12, 0, 1), a);
-  if (w.textKind === 'num' && w.state === 'chant' && since > 0.42 && S.cloudK < 0.05) {   // il fait durer le suspense : « 3… »
+  if (((w.textKind === 'num' && w.state === 'chant') || recount) && since > 0.42 && (!cloudHides || S.cloudK < 0.05)) {   // il fait durer le suspense : « 3… »
     const n = 1 + (Math.floor((since - 0.42) / 0.22) % 3);
     S.ctx.font = `900 ${size}px ${FONT}`;
     const dw = S.ctx.measureText(w.text).width;

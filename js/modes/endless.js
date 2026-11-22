@@ -115,7 +115,7 @@ function startRun(m = 'free') {
   S.watcher = newWatcher();
   S.watcher.rayA = rayA; S.watcher.state = 'pause'; S.watcher.pauseDur = 0.75;
   S.runT = 0; S.cycleN = 0;
-  S.star = null; S.cloudK = 0; S.trapBanner = null; S.cloudBanner = null; S.trapTuto = false;
+  S.star = null; S.cloudK = 0; S.trapBanner = null; S.cloudBanner = null; S.trapTuto = false; S.plane = null;
   S.recordAtStart = S.best; S.passedRecord = false;
   S.phaseIdx = 0; S.phaseTitle = null; S.bossBanner = null; S.bossQueue = [];
   S.particles = []; S.shake = 0; S.flash = 0; S.timeScale = 1;

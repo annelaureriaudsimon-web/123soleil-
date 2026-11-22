@@ -149,5 +149,39 @@ Object.assign(TXT.en, {
   ploc: 'PLOP!',
   mountain: n => `ICE CREAM MOUNTAIN! ×${n}`
 });
+// v2.5 — les faux signaux : le recomptage, l'avion menteur, le nuage et son reflet (game/match.js, render/lies.js).
+// La banderole « ALLEZ-Y ! » (planeGo) n'est JAMAIS le mot de départ du jeu (L.go, « GO ! ») : seul le soleil compte.
+Object.assign(TXT.fr.temptHint, {
+  recount: 'Il compte en te regardant : il ment ! Attends le « ding » 🔔',
+  planeGo: 'Ce n’est pas le soleil qui parle ! Il te regarde encore',
+  planeStop: 'Un avion ? Seul le soleil compte ☀️',
+  cloud: 'Le nuage le cache : regarde son reflet dans l’eau !'
+});
+Object.assign(TXT.fr.temptFail, {
+  recount: 'Il comptait en te regardant : il mentait ! 😏',
+  planeGo: 'L’avion mentait : seul le soleil compte ☀️'
+});
+Object.assign(TXT.fr, {
+  planeGo: 'ALLEZ-Y !',
+  refletTitle: 'REGARDE SON REFLET !', refletSub: 'Dans l’eau, tu vois s’il te regarde',
+  refletTip: 'Derrière le nuage, regarde son reflet dans l’eau 💧'
+});
+Object.assign(TXT.fr.obst, { recount: 'recomptages', plane: 'avions menteurs', reflet: 'reflets dans l’eau' });
+Object.assign(TXT.en.temptHint, {
+  recount: 'He’s counting while looking at you: he’s lying! Wait for the “ding” 🔔',
+  planeGo: 'The sun isn’t the one talking! He’s still watching you',
+  planeStop: 'A plane? Only the sun counts ☀️',
+  cloud: 'The cloud hides him: watch his reflection in the water!'
+});
+Object.assign(TXT.en.temptFail, {
+  recount: 'He was counting while looking at you: he lied! 😏',
+  planeGo: 'The plane lied: only the sun counts ☀️'
+});
+Object.assign(TXT.en, {
+  planeGo: 'RUN NOW!',
+  refletTitle: 'WATCH HIS REFLECTION!', refletSub: 'In the water, you can see if he’s looking',
+  refletTip: 'Behind the cloud, watch his reflection in the water 💧'
+});
+Object.assign(TXT.en.obst, { recount: 'recounts', plane: 'lying planes', reflet: 'reflections' });
 S.typoAll(TXT.fr);                                 // typographie française : espaces insécables (core/i18n.js)
 })(window.Soleil);

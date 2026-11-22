@@ -375,8 +375,119 @@ async def t_w2_english(b):
     check('tous les nouveaux textes existent en français et en anglais', not keys, ', '.join(keys))
     ERRS.extend(page.errs); await ctx.close()
 
+# v2.5 — un niveau du monde 1 modifié à la volée (dans le moteur seulement) : ses réglages du soleil + ceux du test
+# (sans la nuit : on mesure le piège lui-même, pas le temps qu'il fait perdre)
+MK = """(sun => { const S = Soleil, base = S.levelById('w1-4'); return Object.assign({}, base, { night: 0, sun: Object.assign({}, base.sun, sun) }); })"""
+RUN = """((def, prof, a, onEv) => { const S = Soleil, m = S.Match.create(def, a, { playerBrain: prof });
+  while (!m.result && m.t < 150) { S.Match.step(m, 1/60); for (const e of m.out) if (onEv) onEv(e, m); m.out.length = 0; } return m.result; })"""
+
+async def t_v25_lies(b):
+    print('\n19) v2.5 — les faux signaux : le recomptage, l’avion menteur, le nuage et son reflet (moteur)')
+    ctx, page = await new_page(b)
+    r = await page.evaluate(f"""(() => {{
+      const S = Soleil, mk = {MK}, run = {RUN}, out = {{}};
+      const rate = (def, prof, n) => {{ let w = 0, t = 0, why = {{}}; for (let a = 1; a <= n; a++) {{ const res = run(def, prof, a);
+        if (res && res.win) {{ w++; t += res.time; }} else if (res) {{ const k = res.tempt || res.why; why[k] = (why[k] || 0) + 1; }} }}
+        return {{ w, t: w ? t / w : 0, why }}; }};
+      // le recomptage : « 1 », « 2 » pendant son regard, visage vers toi, puis il se marre ; jamais de « ding » au milieu
+      let rc = 0, bad = 0, open = false, ends = 0; const texts = new Set();
+      const R = mk({{ tempt: {{ recount: 1, max: 1 }} }});
+      for (let a = 1; a <= 20; a++) run(R, 'expert', a, (e, m) => {{
+        if (e.type === 'recount') {{ rc++; open = true; texts.add(m.sun.text + '/' + m.sun.textKind); if (m.sun.state !== 'look' || m.sun.turnP !== 1 || m.sun.second) bad++; }}
+        if (e.type === 'recountEnd') {{ ends++; open = false; if (m.sun.text) bad++; }}
+        if (e.type === 'clear' && open) bad++; }});
+      out.recount = {{ rc, bad, ends, texts: [...texts].sort().join(' '), E: rate(R, 'expert', 100), M: rate(R, 'moyen', 100) }};
+      // l'avion « ALLEZ-Y ! » : pendant son regard seulement
+      const G = mk({{ tempt: {{ planeGo: 1, max: 1 }} }}); let go = 0, goBad = 0;
+      for (let a = 1; a <= 20; a++) run(G, 'expert', a, (e, m) => {{ if (e.type === 'tempt' && e.kind === 'planeGo') {{ go++; if (m.sun.state !== 'look' || m.sun.turnP !== 1) goBad++; }} }});
+      out.planeGo = {{ go, goBad, E: rate(G, 'expert', 100), M: rate(G, 'moyen', 100) }};
+      // l'avion « SOLEIL ! » : pendant le chant, au moins 0,45 s avant le vrai mot ; il ne grille personne, il fait perdre du temps
+      const P = mk({{ planeStop: 1 }}), P0 = mk({{}}); let st = 0, stBad = 0;
+      for (let a = 1; a <= 20; a++) run(P, 'expert', a, (e, m) => {{ if (e.type === 'plane') {{ st++; if (m.sun.state !== 'chant' || m.sun.t > m.sun.chant.trig - 0.45 + 1/60 + 1e-6) stBad++; }} }});
+      out.planeStop = {{ st, stBad, E: rate(P, 'expert', 100), M: rate(P, 'moyen', 200), M0: rate(P0, 'moyen', 200) }};
+      // le nuage : il cache le soleil du chant jusqu'au vrai retour ; l'expert passe, les tentations font plus craquer le moyen
+      const C = mk({{ cloud: 1 }}), CT = mk({{ cloud: 1, fakeBack: 0.4, tempt: {{ star: 0.4, max: 1 }} }}), CT0 = mk({{ fakeBack: 0.4, tempt: {{ star: 0.4, max: 1 }} }});
+      let cl = 0, clBad = 0;
+      for (let a = 1; a <= 20; a++) run(C, 'expert', a, (e, m) => {{ if (e.type === 'cloud') cl++; if (e.type === 'clear' && !m.sun.cloud) clBad++; }});
+      out.cloud = {{ cl, clBad, E: rate(C, 'expert', 100), M: rate(CT, 'moyen', 200), M0: rate(CT0, 'moyen', 200) }};
+      // rien ne change pour un niveau qui n'utilise pas ces nouveautés (3e flux de dés)
+      const cfg = (def, a, n) => {{ const m = S.Match.create(def, a, {{}}), c = S.Match.cycleConfig(m, n); return [c.word, c.turn, c.look, c.traps, c.words.join(), (c.tempt || []).map(t => t.type + t.at).join()].join('|'); }};
+      let same = true; for (const id of ['w1-4', 'w2-3', 'w2-8']) for (let a = 1; a <= 5; a++) for (let n = 1; n <= 6; n++) {{
+        const d = S.levelById(id); if (cfg(d, a, n) !== cfg(Object.assign({{}}, d, {{ sun: Object.assign({{}}, d.sun, {{ planeStop: 0, cloud: 0 }}) }}), a, n)) same = false; }}
+      out.same = same;
+      const a1 = [], a2 = []; run(R, 'moyen', 7, e => a1.push(e.type + '@' + e.t.toFixed(3))); run(R, 'moyen', 7, e => a2.push(e.type + '@' + e.t.toFixed(3)));
+      out.det = a1.join() === a2.join();
+      return out; }})()""")
+    rc, pg, ps, cl = r['recount'], r['planeGo'], r['planeStop'], r['cloud']
+    check('recomptage : « 1 » puis « 2 » pendant son regard, visage tourné vers toi, puis il se marre (jamais de « ding » au milieu)',
+          rc['rc'] >= 30 and rc['bad'] == 0 and rc['ends'] * 2 == rc['rc'] and rc['texts'] == '1/recount 2/recount', json.dumps(rc)[:160])
+    check('recomptage : l’expert l’évite (≥ 95 %), le moyen s’y fait griller', rc['E']['w'] >= 95 and rc['M']['why'].get('recount', 0) >= 5, f"expert {rc['E']['w']} %, moyen grillé {rc['M']['why'].get('recount', 0)} fois")
+    check('avion « ALLEZ-Y ! » : seulement pendant son regard ; l’expert l’évite, le moyen s’y fait griller',
+          pg['go'] >= 20 and pg['goBad'] == 0 and pg['E']['w'] >= 95 and pg['M']['why'].get('planeGo', 0) >= 3, f"{pg['go']} avions, expert {pg['E']['w']} %, moyen grillé {pg['M']['why'].get('planeGo', 0)} fois")
+    check('avion « SOLEIL ! » : pendant le chant, ≥ 0,45 s avant le vrai mot ; il ne grille personne mais fait perdre du temps',
+          ps['st'] >= 20 and ps['stBad'] == 0 and ps['E']['w'] >= 95 and ps['M']['t'] > ps['M0']['t'] + 0.3, f"{ps['st']} avions, expert {ps['E']['w']} %, moyen {ps['M']['t']:.1f} s contre {ps['M0']['t']:.1f} s sans")
+    check('nuage : il reste jusqu’au vrai retour ; l’expert passe (≥ 95 %), les tentations font plus craquer le moyen',
+          cl['cl'] >= 20 and cl['clBad'] == 0 and cl['E']['w'] >= 95 and cl['M']['w'] < cl['M0']['w'], f"expert {cl['E']['w']} %, moyen {cl['M']['w']}/200 contre {cl['M0']['w']}/200 sans nuage")
+    check('les niveaux sans ces nouveautés tirent exactement les mêmes dés (3e flux séparé)', r['same'])
+    check('même essai : mêmes faux signaux au même moment', r['det'])
+    ERRS.extend(page.errs); await ctx.close()
+
+async def t_v25_lies_screen(b):
+    print('\n20) v2.5 — les faux signaux à l’écran : ce qu’on voit, ce qui grille, ce qu’on lit (6 langues)')
+    ctx, page = await new_page(b)
+    async def setup(sun):
+        await page.evaluate(f"(() => {{ const d = Soleil.levelById('w1-4'); d.sun = Object.assign({{}}, d.sun, {sun}); Soleil.WorldMap.open(); Soleil.Levels.open('w1-4', false); }})()")
+    async def fail_txt():
+        await page.evaluate("(() => { const S = Soleil; S.pressing = true; for (let i = 0; i < 200 && S.Levels.phase === 'play'; i++) S.update(1/60); for (let i = 0; i < 80; i++) S.update(1/60); })()")
+        return await page.evaluate("[Soleil.Levels.phase, document.getElementById('lvFail').innerText]")
+    await setup("{ tempt: { recount: 1, max: 1 } }")
+    ok = await page.evaluate("LVBOT('good', 60 * 60, () => Soleil.Levels.m.sun.textKind === 'recount') < 60 * 60")
+    st = await page.evaluate("(() => { const w = Soleil.Levels.m.sun; return [w.state, w.turnP, w.text, Soleil.Levels.tip && Soleil.Levels.tip.text]; })()")
+    check('recomptage à l’écran : « 1 » affiché pendant qu’il te regarde, avec l’indication', ok and st[0] == 'look' and st[1] == 1 and st[2] == '1' and 'il ment' in (st[3] or ''), str(st))
+    f = await fail_txt()
+    check('repartir pendant le recomptage = grillé : « Il comptait en te regardant… »', f[0] == 'fail' and 'comptait en te regardant' in f[1], f[1].split(chr(10))[0])
+    await setup("{ tempt: { planeGo: 1, max: 1 } }")
+    ok = await page.evaluate("LVBOT('good', 60 * 60, () => !!Soleil.plane) < 60 * 60")
+    st = await page.evaluate("(() => { const w = Soleil.Levels.m.sun; return [w.state, w.turnP, Soleil.plane.word, Soleil.plane.kind]; })()")
+    check('avion « ALLEZ-Y ! » pendant son regard (il te regarde toujours)', ok and st[0] == 'look' and st[1] == 1 and st[2] == 'ALLEZ-Y\u00a0!' and st[3] == 'go', str(st))
+    f = await fail_txt()
+    check('courir sur « ALLEZ-Y ! » = grillé : « L’avion mentait… »', f[0] == 'fail' and 'avion mentait' in f[1], f[1].split(chr(10))[0])
+    await setup("{ planeStop: 1 }")
+    ok = await page.evaluate("LVBOT('good', 60 * 60, () => !!Soleil.plane) < 60 * 60")
+    st = await page.evaluate("[Soleil.Levels.m.sun.state, Soleil.plane.word, Soleil.chantW().sun, Soleil.plane.kind]")
+    check('avion « SOLEIL ! » pendant le chant (c’est la banderole qui le dit, pas le soleil)', ok and st[0] == 'chant' and st[1] == st[2] and st[3] == 'stop', str(st))
+    r = await page.evaluate("LVBOT('good', 60 * 90, () => Soleil.Levels.phase === 'results') < 60 * 90")
+    check('… et le robot qui ne lâche qu’au vrai mot finit le niveau', r)
+    await setup("{ cloud: 1 }")
+    ok = await page.evaluate("LVBOT('good', 60 * 60, () => Soleil.Levels.m.sun.state === 'look' && Soleil.cloudK > 0.97) < 60 * 60")
+    px = await page.evaluate("""(() => { const S = Soleil, L = S.Lt;
+      const dark = (x, y, w) => { const d = S.ctx.getImageData(Math.round((x - w) * S.DPR), Math.round(y * S.DPR), Math.round(2 * w * S.DPR), 1).data;
+        let m = 255; for (let i = 0; i < d.length; i += 4) m = Math.min(m, (d[i] + d[i + 1] + d[i + 2]) / 3); return Math.round(m); };
+      const look = () => { S.render();
+        return { eye: dark(L.cx - L.R * 0.37, L.sunY + S.sunSink - L.R * 0.12, L.R * 0.22),   // le contour de son œil gauche
+                 pond: dark(L.cx - L.R * 1.3, L.hy + L.R * 0.62, 3) }; };                      // le bord de la flaque
+      const on = look(), k = S.cloudK; S.cloudK = 0; const off = look(); S.cloudK = k;
+      return { on, off, tip: S.Levels.tip && S.Levels.tip.text }; })()""")
+    check('nuage : il cache le soleil (plus d’yeux dans le ciel), la flaque et son reflet apparaissent ; l’indication dit de regarder le reflet',
+          ok and px['on']['eye'] > 140 and px['off']['eye'] < 100 and px['on']['pond'] < 70 and px['off']['pond'] > px['on']['pond'] + 25 and 'reflet' in (px['tip'] or ''), json.dumps(px)[:170])
+    f = await fail_txt()
+    check('grillé derrière le nuage : le conseil dit de regarder le reflet', f[0] == 'fail' and 'reflet' in f[1], f[1].replace(chr(10), ' / ')[:110])
+    keys = await page.evaluate("""(() => { const S = Soleil, bad = [];
+      for (const lang of ['fr', 'en', 'es', 'pt', 'de', 'it']) { const T = S.TXT[lang];
+        for (const k of ['recount', 'planeGo', 'planeStop', 'cloud']) if (!T.temptHint[k]) bad.push(lang + '.temptHint.' + k);
+        for (const k of ['recount', 'planeGo']) if (!T.temptFail[k]) bad.push(lang + '.temptFail.' + k);
+        for (const k of ['planeGo', 'refletTitle', 'refletSub', 'refletTip']) if (!T[k]) bad.push(lang + '.' + k);
+        for (const k of ['recount', 'plane', 'reflet']) if (!T.obst[k]) bad.push(lang + '.obst.' + k);
+        const norm = x => (x || '').replace(/[^\p{L}]/gu, '').toUpperCase();
+        if (norm(T.planeGo) === norm(T.go) || norm(T.planeGo).includes(norm(T.go)) || norm(T.planeGo) === norm(T.chant.sun)) bad.push(lang + '.planeGo = mot de départ');
+      }
+      return bad; })()""")
+    check('6 langues : tous les textes des faux signaux existent ; « ALLEZ-Y ! » n’est jamais le vrai mot de départ', not keys, ', '.join(keys))
+    ERRS.extend(page.errs); await ctx.close()
+
 TESTS = [t_flow, t_fail, t_determinism, t_fair, t_rivals, t_map, t_save, t_boss, t_english, t_perf,
-         t_w2_rule, t_w2_signal, t_w2_fair, t_w2_mud, t_w2_map, t_w2_reward, t_w2_boss, t_w2_english]
+         t_w2_rule, t_w2_signal, t_w2_fair, t_w2_mud, t_w2_map, t_w2_reward, t_w2_boss, t_w2_english,
+         t_v25_lies, t_v25_lies_screen]
 async def main():
     only = sys.argv[1:]
     async with async_playwright() as p:

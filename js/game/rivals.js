@@ -24,9 +24,16 @@ const { gauss } = S;   // core/rng.js
 // Monde 2 : certaines tentations font plus craquer que d'autres (les fausses fins imitent le début d'un vrai retour ;
 // la mouche et les moqueries mettent la pression sans donner d'« excuse » pour bouger).
 // Une tentation déjà rencontrée (dans l'essai, ou dans un niveau précédent pour le joueur) fait moins craquer : × learn.
-const TEMPT_K = { fakeRet: 1.2, fakeBack: 1.2, sneeze: 1, crack: 0.9, star: 0.8, fly: 0.3, taunt: 0.25 };
+// v2.5 : le recomptage imite le VRAI début d'un chant (c'est le plus dangereux) ; l'avion « ALLEZ-Y ! » dit de partir.
+const TEMPT_K = { fakeRet: 1.2, fakeBack: 1.2, sneeze: 1, crack: 0.9, star: 0.8, fly: 0.3, taunt: 0.25, recount: 1.3, planeGo: 1.0 };
 // Quand il craque, il appuie (« il bouge ») ce temps après le début de la tentation, plus son temps de réaction (s)
-const CRACK_AT = { star: 0, fakeRet: 0, fakeBack: 0.05, sneeze: 0.9, crack: 0, fly: 0.8, taunt: 0.1 };
+const CRACK_AT = { star: 0, fakeRet: 0, fakeBack: 0.05, sneeze: 0.9, crack: 0, fly: 0.8, taunt: 0.1, recount: 0.05, planeGo: 0.2 };
+// v2.5 — l'avion « SOLEIL ! » pendant le chant : il s'arrête pour rien avec la probabilité fooled × PLANE_STOP_K
+// (plus que pour un mot piège : la banderole porte LE vrai mot)
+const PLANE_STOP_K = 1.2;
+// v2.5 — le nuage (reflet dans l'eau) : il faut regarder le reflet, c'est plus dur. Pendant ce cycle, chaque tentation
+// fait plus craquer (× CLOUD_K) et il repart un peu plus tard au vrai retour (+ CLOUD_RESTART s : le temps de voir le « ding » dans l'eau)
+const CLOUD_K = 1.4, CLOUD_RESTART = 0.12;
 
 const PROFILES = {
   // Les 3 personnalités des rivaux (le tricheur arrivera en phase 3)
@@ -96,16 +103,25 @@ function brainSee(b, type, now, data) {
       if (wantsRun(b)) release(b, now + reactT(b) + Math.max(0, sample(b, p.greed)), 'soleil');
       break;
     case 'return':
-      if (!wantsRun(b)) go(b, now + reactT(b) * 0.8 + Math.max(0, sample(b, p.restart)));
+      if (!wantsRun(b)) go(b, now + reactT(b) * 0.8 + Math.max(0, sample(b, p.restart)) + (b.cloudy ? CLOUD_RESTART : 0));
+      b.cloudy = false;
       break;
     case 'tempt': case 'fakeRet': case 'fakeBack': {  // monde 2 : va-t-il craquer ? (il bougera… et sera grillé)
       const tt = type === 'tempt' ? data.type : type;
-      let pc = p.crack * (TEMPT_K[tt] || 1);
+      let pc = p.crack * (TEMPT_K[tt] || 1) * (b.cloudy ? CLOUD_K : 1);
       if (b.seen[tt]) pc *= p.learn;
       b.seen[tt] = true;
       if (r() < pc && !wantsRun(b)) go(b, now + (CRACK_AT[tt] || 0) + reactT(b));
       break;
     }
+    case 'planeStop': {                               // v2.5 : « SOLEIL ! » sur une banderole… ce n'est pas lui qui parle
+      let pf = p.fooled * PLANE_STOP_K;
+      if (b.seen.planeStop) pf *= p.learn;
+      b.seen.planeStop = true;
+      if (wantsRun(b) && r() < pf) { const t1 = now + reactT(b); release(b, t1, 'plane'); go(b, t1 + reactT(b) + 0.2); }
+      break;
+    }
+    case 'cloud': b.cloudy = true; break;             // v2.5 : le nuage cache le soleil jusqu'au vrai retour
   }
 }
 
@@ -124,9 +140,9 @@ function brainTick(b, now, soLong) {
 
 // Après un retour au départ (rival grillé) : il repart dès que c'est sûr
 function brainReset(b, now, safe) {
-  b.queue = []; b.press = false; b.impDone = true;
+  b.queue = []; b.press = false; b.impDone = true; b.cloudy = false;
   if (safe) go(b, now + reactT(b) + 0.2);
 }
 
-Object.assign(S, { PROFILES, TEMPT_K, CRACK_AT, newBrain, brainSee, brainTick, brainReset });
+Object.assign(S, { PROFILES, TEMPT_K, CRACK_AT, PLANE_STOP_K, CLOUD_K, CLOUD_RESTART, newBrain, brainSee, brainTick, brainReset });
 })(window.Soleil);

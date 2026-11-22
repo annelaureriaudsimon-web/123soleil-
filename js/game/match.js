@@ -23,9 +23,17 @@ const TEMPT = {
   sneeze:  { at: 0.2, need: 2.2, group: ['face', 'voice'], shut: [1.1, 1.6] },   // « Aaah… AAAH… ATCHOUM ! » (il parle)
   taunt:   { at: 0.25, need: 1.7, group: 'voice' },  // moquerie dans une bulle
   fly:     { at: 0.1, need: 2.0, group: 'runner' },  // la mouche
-  crack:   { at: 0.5, jit: 0.3, need: 1.5, group: 'rival' }   // un rival craque (BOUM)
+  crack:   { at: 0.5, jit: 0.3, need: 1.5, group: 'rival' },  // un rival craque (BOUM)
+  // v2.5 — les faux signaux (« il parle en te regardant, donc il ment » ; « seul le soleil compte »)
+  recount: { at: 0.35, jit: 0.35, need: 2.0, group: ['voice', 'chant'] },   // il recompte « 1… 2… » EN TE REGARDANT
+  planeGo: { at: 0.25, jit: 0.45, need: 1.7, group: 'sky' }                 // un avion passe : banderole « ALLEZ-Y ! »
 };
 const TEMPT_ORDER = ['star', 'fakeRet', 'sneeze', 'taunt', 'fly', 'crack'];   // ordre fixe des dés (ne pas changer)
+// v2.5 : les nouveautés ont leur PROPRE flux de dés (mixSeed(graine, 7000 + cycle)) : les niveaux d'avant ne bougent pas.
+// Ordre fixe (ne pas changer) : f[0..3] = présence, f[4..7] = moment ; alarm et herd arrivent avec les rivaux (partie D).
+const TEMPT_V25 = ['recount', 'planeGo', 'alarm', 'herd'];
+const RECOUNT = { gap: 0.55, laugh: 1.15 };   // le recomptage : « 1… », « 2… » 0,55 s plus tard, puis il se marre (s)
+const PLANE_STOP = [0.2, 0.45];               // l'avion « SOLEIL ! » du chant passe entre 0,2 s après « 1 » et 0,45 s avant le vrai mot
 const CRACK_RANGE = [-1, 30];  // rival qui craque : entre 1 m derrière toi et 30 m devant
 // Niveau « en douceur » (champ « soft » d'un niveau, le niveau 1) : vu en train de bouger, tu n'es pas grillé,
 // tu recules de soft.back mètres (« OUPS ! ») en KNOCK s, puis il faut lâcher avant de repartir.
@@ -57,9 +65,13 @@ const SUN_BASE = {
   words: null,                 // mots pièges du niveau : numéros dans L.chant.traps (null = toute la liste)
   // Monde 2
   tempt: null,                 // tentations : { star: 0.5, fakeRet: 0.3, …, max: 2 } (probabilité par regard)
+                               // v2.5 : aussi recount (il recompte en te regardant) et planeGo (l'avion « ALLEZ-Y ! »)
   fakeBack: 0,                 // probabilité d'un faux dos à la fin du regard
   peek: [0.5, 1.1],            // faux dos : durée de l'œil qui dépasse (s)
-  look2: [0.6, 1.0]            // faux dos : durée du second regard après « HOP ! » (s)
+  look2: [0.6, 1.0],           // faux dos : durée du second regard après « HOP ! » (s)
+  // v2.5 (probabilités par chant)
+  planeStop: 0,                // un avion passe PENDANT LE CHANT avec une banderole « SOLEIL ! » (faux arrêt : on perd du temps)
+  cloud: 0                     // un nuage cache le soleil ; son reflet dans l'eau montre s'il regarde
 };
 
 // Un niveau des fichiers levels/*.js, complété avec les valeurs par défaut
@@ -132,12 +144,15 @@ function cycleConfig(m, n) {
   const i1 = Math.floor(d[14] * list.length);
   let i2 = Math.floor(d[15] * list.length); if (i2 === i1) i2 = (i2 + 1) % list.length;
   c.words = [list[i1], list[i2]];
-  lookConfig(m, c, sc);
+  const r3 = mulberry32(mixSeed(m.seed, 7000 + n)), f = Array.from({ length: 16 }, () => r3());   // v2.5 : 3e flux de dés
+  liesConfig(m, c, sc, f);
+  lookConfig(m, c, sc, f);
   return c;
 }
 
-// Monde 2 : tentations et faux dos du cycle, avec un SECOND flux de dés (le monde 1 ne change donc pas du tout)
-function lookConfig(m, c, sc) {
+// Monde 2 : tentations et faux dos du cycle, avec un SECOND flux de dés (le monde 1 ne change donc pas du tout).
+// v2.5 : les nouvelles tentations (recount, planeGo…) tirent leurs dés dans le 3e flux (f), après les anciennes.
+function lookConfig(m, c, sc, f) {
   const P = m.level.sun, r = mulberry32(mixSeed(m.seed, 5000 + c.n));
   const e = Array.from({ length: 24 }, () => r());
   const pick = (a, x) => a[0] + (a[1] - a[0]) * x;
@@ -145,7 +160,11 @@ function lookConfig(m, c, sc) {
   c.peek = pick(P.peek, e[1]); c.look2 = pick(P.look2, e[2]);
   let list = [];
   if (sc.tempt) list = sc.tempt.slice();
-  else if (P.tempt) TEMPT_ORDER.forEach((k, i) => { if (e[3 + i] < (P.tempt[k] || 0)) list.push(k); });
+  else if (P.tempt) {
+    TEMPT_ORDER.forEach((k, i) => { if (e[3 + i] < (P.tempt[k] || 0)) list.push(k); });
+    TEMPT_V25.forEach((k, i) => { if (TEMPT[k] && f[i] < (P.tempt[k] || 0)) list.push(k); });
+  }
+  if (c.planeStop || c.cloud) list = list.filter(k => k !== 'planeGo');   // un seul avion par cycle, jamais derrière le nuage
   const max = sc.tempt ? 3 : (P.tempt && P.tempt.max) || 1, groups = new Set();
   let count = 0;
   list = list.filter(k => {                        // lisible : au plus « max », jamais deux au même endroit de l'écran
@@ -153,7 +172,18 @@ function lookConfig(m, c, sc) {
     if (count >= max || gs.some(g => groups.has(g))) return false;
     gs.forEach(g => groups.add(g)); count++; return true;
   });
-  c.tempt = list.map((k, i) => ({ type: k, at: TEMPT[k].at + (TEMPT[k].jit || 0) * e[9 + i] }));
+  c.tempt = list.map((k, i) => {
+    const v = TEMPT_V25.indexOf(k);                // anciennes tentations : mêmes dés qu'avant ; nouvelles : 3e flux
+    return { type: k, at: TEMPT[k].at + (TEMPT[k].jit || 0) * (v < 0 ? e[9 + i] : f[4 + v]) };
+  });
+}
+
+// v2.5 : ce qui se passe pendant le chant (l'avion « SOLEIL ! ») et le nuage du cycle (3e flux de dés, f[8..10])
+function liesConfig(m, c, sc, f) {
+  const P = m.level.sun;
+  c.cloud = sc.cloud != null ? !!sc.cloud : f[10] < P.cloud;
+  c.planeStop = !c.cloud && (sc.planeStop != null ? !!sc.planeStop : f[8] < P.planeStop);
+  c.planeU = f[9];                                 // où, dans le chant, passe l'avion (0 = tôt, 1 = juste avant le mot)
 }
 
 function emit(m, type, data) { if (m.out) m.out.push(Object.assign({ type, t: m.t }, data)); }
@@ -254,6 +284,9 @@ function stepSun(m, dt) {
       const ev = w.chant.events;
       while (w.evI < ev.length && ev[w.evI].t <= w.t) chantWord(m, ev[w.evI++]);
       if (w.textKind === 'trap' && !w.revealed && m.t - w.textAt > 0.2) { w.revealed = true; emit(m, 'reveal'); }   // il se marre
+      if (w.plane && !w.plane.fired && w.t >= w.plane.at) {   // v2.5 : l'avion « SOLEIL ! » (ce n'est pas lui qui parle)
+        w.plane.fired = true; emit(m, 'plane', { kind: 'stop' }); feed(m, 'planeStop');
+      }
       if (w.t >= w.chant.trig) { w.state = 'turn'; w.t = 0; w.turnP = 0; emit(m, 'turn', { dur: w.turnDur }); }
       break;
     }
@@ -333,6 +366,14 @@ function lookTimeline(m) {
       else { w.turnP = 1; if (!it.snapped) { it.snapped = true; emit(m, 'fakeSnap'); } }
     }
     if (it.type === 'sneeze' && it.fired) w.shut = w.t >= it.at - 0.2 + TEMPT.sneeze.shut[0] && w.t < it.at - 0.2 + TEMPT.sneeze.shut[1] ? 1 : 0;
+    if (it.type === 'recount' && it.fired) {       // v2.5 : « 1… 2… » en te regardant (il ment), puis il se marre
+      const k = w.t - it.at, n = k < RECOUNT.gap ? 0 : k < RECOUNT.laugh ? 1 : 2;
+      if (n !== it.n) {
+        it.n = n;
+        if (n < 2) { w.text = String(n + 1); w.textKind = 'recount'; w.textAt = m.t; emit(m, 'recount', { n }); }
+        else { w.text = ''; w.textKind = ''; emit(m, 'recountEnd'); }
+      }
+    }
   }
 }
 
@@ -342,7 +383,11 @@ function startChant(m) {
   w.chant = buildChant(c);
   w.state = 'chant'; w.t = 0; w.evI = 0; w.trapsThisChant = 0; w.revealed = true;
   w.turnDur = c.turn; w.lookDur = c.look;
+  w.cloud = c.cloud;                               // v2.5 : le nuage reste jusqu'au vrai retour (le « ding »)
+  const ev0 = w.chant.events[0].t + PLANE_STOP[0];
+  w.plane = c.planeStop ? { at: ev0 + Math.max(0, w.chant.trig - PLANE_STOP[1] - ev0) * c.planeU, fired: false } : null;
   emit(m, 'cycle', { n: c.n, move: c.move, cfg: c });
+  if (c.cloud) { emit(m, 'cloud'); feed(m, 'cloud'); }
 }
 
 function chantWord(m, ev) {
@@ -417,7 +462,8 @@ function lose(m, why, val) {
   const pl = m.player;
   m.result = { win: false, why, val, time: m.t, z: pl.z, remaining: Math.max(0, m.level.length - pl.z),
                place: place(m), total: m.rivals.length + 1, stats: m.stats, cycle: m.cycle, afterTrap: m.sun.trapsThisChant > 0,
-               tempt: m.look && m.sun.state === 'look' && !m.sun.second ? m.look.last : '', mud: !!m.player.mud };
+               tempt: m.look && m.sun.state === 'look' && !m.sun.second ? m.look.last : '', mud: !!m.player.mud,
+               cloud: !!m.sun.cloud && /^(turn|look|peek|hop)$/.test(m.sun.state) };   // v2.5 : grillé pendant que le nuage le cachait
   emit(m, 'grilled', { why, val });
 }
 
@@ -463,5 +509,5 @@ function goalMet(g, res) {
 const starsOf = (L, res) => [!!res.win, goalMet(L.goal, res), !res.revived && goalMet(L.challenge, res)];
 
 S.Match = { create, step, revive, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET, KNOCK,
-  NIGHT_BONUS, NIGHT_WARN };
+  NIGHT_BONUS, NIGHT_WARN, TEMPT_V25, RECOUNT, PLANE_STOP };
 })(window.Soleil);
