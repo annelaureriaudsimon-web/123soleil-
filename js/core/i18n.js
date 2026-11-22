@@ -28,7 +28,7 @@ const TXT = {
     early: s => `Reparti ${s} s trop tôt !`,
     hopCaught: 'Il te surveillait du coin de l’œil !',
     realOne: 'Cette fois, c’était le vrai !',
-    tipSo: 'Astuce : lâche dès que tu vois « SO »',
+    tipSo: 'Astuce : lâche dès que tu lis « SOLEIL ! »',
     tipMoon: 'La Lune se retourne dès « LUNE ! »',
     tipLook: 'Attends qu’il se remette de dos',
     tipHop: 'Tant qu’un œil dépasse, ne bouge pas !',
@@ -90,13 +90,13 @@ const TXT = {
     contBtn: 'CONTINUER', playBtn: 'JOUER', contHint: (n, w) => `Niveau ${n} · ${w}`, levelsShort: 'Niveaux', endlessShort: 'Infini',
     mapIntro: 'TA CARTE !', mapIntroSub: 'Choisis ton prochain niveau', yourTurn: 'À toi !',
     // v2.4 : langues. Le chant change avec la langue (même rythme partout : seuls les mots changent).
-    // pre = le début commun (« SO… », lâche dès qu'il apparaît), sun = le vrai signal, traps = 12 mots pièges
+    // pre = le début commun au vrai mot et aux pièges (JAMAIS affiché depuis la v2.5 : il sert au test 29), sun = le vrai signal, traps = 12 mots pièges
     // qui commencent pareil, moonTraps = 5 pièges de la Lune. Toujours 12 et 5 : le défi du jour reste le même.
     langLbl: 'Langue', title1: '1, 2, 3…', decimal: ',',
     chant: { pre: 'SO', sun: 'SOLEIL !', moon: 'LUNE !', hop: 'HOP !',
       traps: ['SOLDES !', 'SOUPE !', 'SODA !', 'SOMBRERO !', 'SOFA !', 'SOURIS !', 'SORBET !', 'SOLO !', 'SOUCOUPE !', 'SOLDAT !', 'SORCIÈRE !', 'SOMMET !'],
       moonTraps: ['LUGE !', 'LUTIN !', 'LUXE !', 'LUNETTES !', 'LUMIÈRE !'] },
-    say: { num: ['Un…', 'Deux…', 'Trois…'], so: 'So…', sun: 'Soleil !', moon: 'Lune !', hop: 'Hop !',
+    say: { num: ['Un…', 'Deux…', 'Trois…'], sun: 'Soleil !', moon: 'Lune !', hop: 'Hop !',
       heh: ['Hé hé !', 'Je t’ai eu !', 'Hi hi !'], hmm: ['Hmmm…', 'Hmm hmm…'], grilled: ['Grillé !', 'Trop lent !', 'Je t’ai vu !', 'Bien cuit !'],
       bossSun: ['Tu vas fondre…', 'Ça va chauffer…'], bossMoon: ['Chut… la nuit est à moi…', 'La nuit est à moi…'],
       bossBeaten: ['Pfff… la prochaine fois !', 'Pfff… coup de chance !'] }
@@ -111,7 +111,7 @@ const TXT = {
     early: s => `Moved ${s} s too early!`,
     hopCaught: 'It was watching from the corner of its eye!',
     realOne: 'This time it was the real one!',
-    tipSo: 'Tip: let go as soon as you see “RED”',
+    tipSo: 'Tip: let go as soon as you read “RED LIGHT!”',
     tipMoon: 'The Moon turns right after “MOON!”',
     tipLook: 'Wait until it turns its back',
     tipHop: 'While an eye still shows, don’t move!',
@@ -176,7 +176,7 @@ const TXT = {
     chant: { pre: 'RED', sun: 'RED LIGHT!', moon: 'MOON!', hop: 'HOP!',
       traps: ['RED HAT!', 'RED BUS!', 'RED FOX!', 'RED SOCKS!', 'RED BALL!', 'RED KITE!', 'RED NOSE!', 'RED NIGHT!', 'RED LINE!', 'RED BIKE!', 'RED BOOTS!', 'RED LEAF!'],
       moonTraps: ['MOOSE!', 'MOOD!', 'MOO!', 'MONKEY!', 'MOP!'] },
-    say: { num: ['One…', 'Two…', 'Three…'], so: 'Red…', sun: 'Red light!', moon: 'Moon!', hop: 'Hop!',
+    say: { num: ['One…', 'Two…', 'Three…'], sun: 'Red light!', moon: 'Moon!', hop: 'Hop!',
       heh: ['Heh heh!', 'Got you!', 'Hee hee!'], hmm: ['Hmmm…', 'Hmm hmm…'], grilled: ['Toasted!', 'Too slow!', 'I saw you!', 'Burnt toast!'],
       bossSun: ['You’re gonna melt…', 'It’s getting hot…'], bossMoon: ['Shh… the night is mine…', 'The night is mine…'],
       bossBeaten: ['Pfff… next time!', 'Pfff… lucky shot!'] }

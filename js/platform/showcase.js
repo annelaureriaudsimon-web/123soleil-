@@ -3,8 +3,8 @@
    index.html?showcase=race            un niveau joué par un bon joueur robot, qui recommence à la fin (défaut : w2-3)
    index.html?showcase=race&lv=w1-8    un autre niveau (ici le boss Soleil Cool)
    index.html?showcase=title           l'accueil : le soleil, le coureur et le logo (&nologo : sans le logo)
-   On peut ajouter &lang=en (ou es, pt, de, it). Le robot attend de LIRE le mot : il lâche au début commun
-   (« SO », « RED »…), repart au « ding », et fait parfois un « OUF » de justesse pour que ça vive. */
+   On peut ajouter &lang=en (ou es, pt, de, it). Le robot LIT le mot : il lâche au vrai « SOLEIL ! », court à travers
+   les pièges, repart au « ding », et fait parfois un « OUF » de justesse pour que ça vive. */
 (function (S) {
 'use strict';
 const q = location.search, m = q.match(/[?&]showcase=(\w+)/);
@@ -31,9 +31,9 @@ function start() {
     const lm = L.m;
     if (lm && L.phase === 'play') {
       const w = lm.sun;
-      const stop = (w.state === 'chant' && (w.textKind === 'so' || w.textKind === 'trigger')) || w.state === 'turn' || w.state === 'look'
+      const stop = (w.state === 'chant' && w.textKind === 'trigger') || w.state === 'turn' || w.state === 'look'
         || w.state === 'peek' || w.state === 'hop' || (w.state === 'return' && w.retTo > 0);
-      const late = w.state === 'chant' && w.textKind === 'so' && (n++ % 3 === 0) && lm.t - w.textAt < 0.12;   // un « OUF » de temps en temps
+      const late = w.state === 'chant' && w.textKind === 'trigger' && (n++ % 3 === 0) && lm.t - w.textAt < 0.1;   // un « OUF » de temps en temps
       S.pressing = !stop || late;
     } else S.pressing = false;
     orig(dt);

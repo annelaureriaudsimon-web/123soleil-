@@ -31,6 +31,7 @@ function drawSky() {
 }
 
 function drawHills() {
+  if (S.state === 'level' && S.Levels.def && S.Levels.def.world === 3) return;   // v2.5 : à la plage, l'horizon est la mer (render/beach.js)
   for (let layer = 0; layer < 2; layer++) {
     S.ctx.fillStyle = css(layer ? pal.hillNear : pal.hillFar);
     const amp = Lt.U * (layer ? 0.035 : 0.06);
@@ -63,8 +64,9 @@ function drawCloud() {                             // gros nuage devant le solei
   const g = S.ctx.createLinearGradient(0, top, 0, bot);
   g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, '#D6DCEA');
   path(); S.ctx.fillStyle = g; S.ctx.fill();
-  const sx = Lt.cx, sy = Lt.sunY + S.watcher.offY;   // la lueur du soleil (ou de la Lune) à travers le nuage
-  const col = S.watcher.type === 'moon' ? '185,205,255' : S.lookAmt > 0.3 ? '255,120,90' : '255,214,110';
+  const sx = Lt.cx, sy = Lt.sunY + S.watcher.offY + S.sunSink;   // la lueur du soleil (ou de la Lune) à travers le nuage
+  // (v2.5 — niveaux : la lueur ne dit rien de son regard ; c'est le reflet dans l'eau qui le montre, render/lies.js)
+  const col = S.watcher.type === 'moon' ? '185,205,255' : S.lookAmt > 0.3 && S.state !== 'level' ? '255,120,90' : '255,214,110';
   const gl = S.ctx.createRadialGradient(sx, sy, R * 0.15, sx, sy, R * 1.3);
   gl.addColorStop(0, `rgba(${col},${(0.6 * S.cloudK).toFixed(3)})`); gl.addColorStop(1, `rgba(${col},0)`);
   path(); S.ctx.clip(); S.ctx.fillStyle = gl; S.ctx.fillRect(sx - R * 1.35, sy - R * 1.35, R * 2.7, R * 2.7);

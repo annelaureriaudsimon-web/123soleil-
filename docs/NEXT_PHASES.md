@@ -1,6 +1,6 @@
 # Notes pour les phases suivantes
 
-Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout relire. Il est à jour à la fin de l'**étape Poki 2** (v2.3 : corrections et pubs récompensées), après l'étape Poki 1 (v2.2 : SDK Poki, pause, premiers pas, build Poki), la phase 2 (monde 2 « Le parc ») et la v2.1 (nouveau look).
+Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout relire. Il est à jour à la fin de la **v2.5** (les nouveaux pièges, le monde 3 « La plage »), après la v2.4 (étape Poki 3 : 6 langues, grands écrans, qualité), la v2.3 (étape Poki 2 : corrections et pubs récompensées), la v2.2 (étape Poki 1 : SDK Poki, pause, premiers pas, build Poki), la phase 2 (monde 2 « Le parc ») et la v2.1 (nouveau look).
 
 ## L'architecture en 30 secondes
 
@@ -15,7 +15,8 @@ Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout reli
 - **Hasard.** Toutes les décisions de jeu passent par `mulberry32` + `mixSeed` (`js/core/rng.js`). Il y a **deux suites de dés** par cycle :
   - `cycleConfig` (`match.js`) : **16 dés, toujours dans le même ordre**, pour le chant (mots, pièges, express…). C'est la suite de la phase 1.
   - `lookConfig` (`match.js`, phase 2) : **24 dés** tirés d'une suite à part, `mulberry32(mixSeed(seed, 5000 + n))`, pour le regard (faux dos, durée de l'œil, tentations).
-  - Pour une nouvelle mécanique, **ajoutez des dés à la fin** d'une suite (ou créez une 3e suite avec un autre décalage, par exemple `6000 + n`), sans décaler les autres : les niveaux existants gardent exactement le même comportement. C'est ce qui garantit que le monde 1 n'a pas bougé d'un chiffre en phase 2.
+  - v2.5 : une **3e suite**, `mulberry32(mixSeed(seed, 7000 + n))` (16 dés, `cycleConfig`), pour les nouveautés de la v2.5 (recomptage, avion, fausse alerte, troupeau, nuage). En course infinie, `chant.js` a aussi sa suite à part, `mixSeed(S.runSeed, 7000 + S.cycleN)` : le défi du jour reste le même pour tous.
+  - Pour une nouvelle mécanique, **ajoutez des dés à la fin** d'une suite (ou créez une 4e suite avec un autre décalage, par exemple `9000 + n`), sans décaler les autres : les niveaux existants gardent exactement le même comportement. C'est ce qui garantit que le monde 1 n'a pas bougé d'un chiffre en phase 2.
   - `Math.random()` est réservé aux effets visuels (particules, bulles des rivaux, ordre des moqueries).
 
 ## Poki (v2.2) : à respecter pour tout ce qui suit
@@ -40,7 +41,8 @@ Tout est décrit dans `docs/POKI_INTEGRATION.md` (le tableau de chaque moment du
 
 - Fait en v2.4 : 6 langues (avec leur chant), miniatures (`tools/thumbnails/make.py`), qualité automatique, grands écrans.
 - Le partage a été **retiré** en v2.4 (décision : personne ne l'utilise). Ne pas le remettre sans en reparler.
-- Les mondes 3 à 5 et les nouvelles mécaniques.
+- Fait en v2.5 : plus de « SO », les nouveaux pièges (`docs/TRAPS_DESIGN.md`), le monde 3 (`docs/WORLD3_DESIGN.md`), la courbe de difficulté (`docs/DIFFICULTY.md`).
+- Les mondes 4 et 5 et les nouvelles mécaniques.
 - **Pour tout nouveau texte** : l'écrire en français ET en anglais (`js/core/i18n.js` ou `T(fr, en)` dans un niveau), puis dans
   `js/core/lang/es.js`, `pt.js`, `de.js`, `it.js` (clé, ou phrase anglaise dans `phrases`). Le test 29 de `test_poki.py`
   liste ce qui manque. Ne jamais écrire « SO », « SOLEIL » ou un mot piège en dur : `S.chantW()` et `L.chant`.
@@ -64,7 +66,7 @@ Tout est décrit dans `docs/POKI_INTEGRATION.md` (le tableau de chaque moment du
    |---|---|
    | `ready` | 1re visite : le niveau 1 sans carte d'intro, le soleil attend, la main montre le geste (v2.2) |
    | `intro` | carte d'intro ; elle attend un appui (v2.2 : c'est l'appui qui envoie `gameplayStart`) |
-   | `boss` | cinématique du boss (lunettes noires ou lunettes-nez-moustache, selon `bossKind`) |
+   | `boss` | cinématique du boss (lunettes noires, lunettes-nez-moustache, ou chapeau de paille et lunettes en cœur, selon `bossKind` ; table `BOSS` de `modes/levels.js`) |
    | `play` | `Match.step(m, dt, S.pressing)` à chaque image |
    | `caught` → `fail` | grillé, puis carte de défaite |
    | `win` → `results` | victoire, puis écran de résultats |
@@ -74,7 +76,8 @@ Tout est décrit dans `docs/POKI_INTEGRATION.md` (le tableau de chaque moment du
    - les flaques (`drawLevelMud`, `render/tempt.js`) puis l'arrivée (`drawFinish`) ;
    - l'étoile tentatrice (`drawTemptStar`), les rivaux (`render/rivals.js`), la mouche (`drawFly`) ;
    - le HUD (`render/levelhud.js`), qui dessine aussi les yeux de l'éternuement, la tête du Soleil Farceur, l'œil du faux dos, l'anneau vert du vrai retour et les bulles de moquerie ;
-   - le décor du monde : `drawLevelDecor` choisit `render/playground.js` (monde 1) ou `render/park.js` (monde 2), et `tintLevel` choisit la palette.
+   - le décor du monde : `drawLevelDecor` choisit `render/playground.js` (monde 1), `render/park.js` (monde 2) ou `render/beach.js` (monde 3), et `tintLevel` choisit la palette ;
+   - v2.5 : l'avion, le reflet et la bulle de la fausse alerte (`render/lies.js`), la barre de la nuit, les transats, le cornet et la montagne de glace (`render/pressure.js`).
 6. La sauvegarde est dans `localStorage` :
 
    | Clé | Contenu |
@@ -84,6 +87,7 @@ Tout est décrit dans `docs/POKI_INTEGRATION.md` (le tableau de chaque moment du
    | `soleil.worldsShown` (phase 2) | mondes dont l'animation de déblocage a déjà été jouée |
    | `soleil.lastLevel` (phase 2) | dernier niveau gagné (la carte s'ouvre sur son monde) |
    | `soleil.onboard` (v2.2) | premiers pas : 0 jamais joué, 1 niveau 1 fini, 2 niveau 2 fini, 3 carte présentée (anciennes sauvegardes : 3) |
+   | `soleil.lieSeen` (v2.5) | faux signaux déjà rencontrés en course infinie (`recount`, `planeGo`, `reflet`) : la bannière ne revient pas |
 
    Chaque nouvelle étoile rapporte des ⭐ pour le casier (`COINS`), plus 1 ⭐ par tentation résistée si on finit le niveau.
 
@@ -92,16 +96,16 @@ Tout est décrit dans `docs/POKI_INTEGRATION.md` (le tableau de chaque moment du
 - Il naît à **un seul endroit** : `trueReturn(m)` dans `match.js`, qui émet `return` puis `clear`. N'émettez jamais `clear` ailleurs.
 - Sa mise en scène est dans `onTrueEnd()` (`modes/levels.js`) : `Sound.ding()`, anneau vert (`fx.halo`), tour rapide des rayons (`fx.spin`), visage complètement caché.
 - Une nouvelle fausse fin peut reprendre **un** de ces indices (tourner, se cacher), mais jamais les quatre, et jamais le son « ding ». Le test automatique « Le ding n'arrive qu'au vrai retour » (`tools/tests/test_levels.py`) le vérifie sur 125 essais.
-- `SIGNAL_WORLD` (`modes/levels.js`) : le « ding » et les « DÉPART ÉCLAIR ! » commencent au monde 2, pour que le monde 1 reste exactement comme avant.
+- `SIGNAL_WORLD` (`modes/levels.js`) : v2.5 : le « ding » et les « DÉPART ÉCLAIR ! » commencent **dès le monde 1** (`1`), parce que le recomptage et la fausse alerte y arrivent. Les faux signaux de la v2.5 (recomptage, avion, fausse alerte, troupeau) n'imitent aucun de ses quatre indices.
 
 ## Ajouter une tentation
 
 1. `match.js`, table `TEMPT` : quand elle arrive dans le regard (`at`, `jit`), la durée minimale du regard (`need`) et son groupe (`group` : deux tentations du même groupe ne vont jamais ensemble, car elles se liraient au même endroit de l'écran).
-2. `match.js`, `TEMPT_ORDER` : ajoutez-la **à la fin** (l'ordre fixe les dés).
+2. `match.js`, `TEMPT_ORDER` (dés de la 2e suite) ou, depuis la v2.5, `TEMPT_V25` (dés de la 3e suite) : ajoutez-la **à la fin** (l'ordre fixe les dés).
 3. `match.js`, `lookTimeline()` : si elle a un effet sur le soleil (comme le faux retour ou l'éternuement), c'est ici.
 4. `game/rivals.js` : son multiplicateur `TEMPT_K` et son moment `CRACK_AT`.
 5. `modes/levels.js`, `onTempt()` : le son et l'effet. Le dessin va dans `render/tempt.js`.
-6. `core/i18n-levels.js` : `temptHint` (1re rencontre) et `temptFail` (carte de défaite), en FR et en EN.
+6. `core/i18n-levels.js` : `temptHint` (1re rencontre) et `temptFail` (carte de défaite), en FR et en EN, puis dans `core/lang/*.js` (les 4 autres langues).
 7. Dans les niveaux : `sun.tempt: { nom: probabilité, max }`, ou forcée par cycle avec `script: { 2: { tempt: ['nom'] } }`, et `'tempt:nom'` dans `mechanics` (la simulation s'en sert pour la familiarité entre niveaux).
 
 ## Où brancher chaque future mécanique
@@ -124,9 +128,9 @@ Règle commune :
 | **La Lune** | `game/chant.js` (`MOON_TRAPS`) | La Lune existe en course infinie (nuit). Pour un niveau, il faudrait un champ `moon` dans `sun` et la palette de nuit (`render/sky.js`). Le « ding » doit rester le même signal pour la Lune. |
 | **Soleil-projecteur** | `match.js`, `stepSun` (`case 'look'`) | Le regard grille aujourd'hui tout le monde. Un projecteur ne verrait qu'une zone : un test de couloir/position dans la boucle des rivaux et du joueur du `case 'look'`, et un cône dessiné dans `render/levelhud.js`. |
 | **Voix du soleil** | `audio/voice.js` | Elle existe pour la course infinie : `Voice`, `sayEvent`, avance mesurée `Voice.lead`. En niveau, quand `'voice'` est dans `mechanics`, appelez `S.sayEvent(e.ev)` dans `events()` (`modes/levels.js`) **avant** l'affichage, de `Voice.lead` secondes. Les moqueries et l'éternuement pourraient aussi être dits. Le bouton 🗣️ est caché en mode Niveaux et pendant une partie, où ⏸ prend sa place (`syncButtons`, `ui/pause.js`). |
-| **Nuage** | `main.js` (`cloudOn`) + `render/sky.js` (`drawCloud`) | Le soleil d'un niveau a déjà le champ `cloud` (toujours `false`). Tirez-le avec un dé ajouté à la fin d'une suite si `'cloud'` est actif. Gardez la règle d'équité `audioOK()` : jamais de nuage si on n'entend pas le jeu. |
+| **Nuage** (fait en v2.5) | niveaux : champ `cloud` de `sun` (`match.js`, dé de la 3e suite) ; course infinie : `main.js` (`cloudOn`) | Le reflet (`render/lies.js`, `drawReflection`) montre le visage, l'œil du faux dos et l'anneau vert : dans les niveaux, le nuage n'a donc pas besoin du son, et le texte du chant reste affiché. En course infinie, il garde la règle d'équité `audioOK()` (jamais de nuage si on n'entend pas le jeu) ; dès 150 m, son reflet aussi. |
 | **Mode 2 joueurs** | `modes/duo.js` | Il existe et utilise le soleil de la course infinie. Pour un duo dans les niveaux, `Match` sait déjà gérer plusieurs coureurs : faites du 2e joueur un « rival » piloté au clavier (`press` imposé au lieu du cerveau, comme `r.forced`). |
-| **Mondes 3 à 5** | `levels/worlds.js` | Le monde 2 montre le chemin : passez `soon: false` et ajoutez `need: { world: 2, stars: N }` ; créez `levels/world3.js` ; ajoutez le `<script>` dans `index.html` **et** dans `FILES` de `tools/simulate.js` (avec ses objectifs dans `TARGETS`). Décor : un fichier `render/beach.js` (comme `park.js`), choisi dans `drawLevelDecor` et `tintLevel` (`render/tempt.js`). Carte : un fond comme `drawParkMap` (`ui/worldmap.js`). Le déblocage animé marche tout seul (`worldsShown`). |
+| **Mondes 4 et 5** | `levels/worlds.js` | La plage (v2.5) montre le chemin : passez `soon: false` et ajoutez `need: { world: 3, stars: N }` ; créez `levels/world4.js` ; ajoutez le `<script>` dans `index.html` **et** dans `FILES` de `tools/simulate.js` (avec ses objectifs dans `TARGETS`). Décor : un fichier comme `render/beach.js`, choisi dans `drawLevelDecor` et `tintLevel` (`render/tempt.js`) ; les collines de `render/sky.js` (`drawHills`) sont coupées à la plage, à voir pour la montagne. Carte : un fond comme `drawBeachMap` (`render/beach.js`), appelé par `ui/worldmap.js`. Boss : une ligne dans `BOSS` (`modes/levels.js`) et sa musique dans `audio/music.js`. Textes de fin : `worldDone4` (`ui/results.js`), `worldUnlockedSub4` (`ui/worldmap.js`), dans les 6 langues. Le déblocage animé marche tout seul (`worldsShown`). |
 
 ## Pièges à éviter
 

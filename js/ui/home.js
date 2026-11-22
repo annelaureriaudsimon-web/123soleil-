@@ -91,7 +91,7 @@ function goHome() {
   const rayA = S.watcher.rayA;
   S.watcher = newWatcher(); S.watcher.rayA = rayA;
   S.particles = []; S.shake = 0; S.flash = 0; S.timeScale = 1;
-  S.phaseTitle = null; S.bossBanner = null; S.bossQueue = []; S.trapWatch = null; S.combo = 0;
+  S.phaseTitle = null; S.bossBanner = null; S.bossQueue = []; S.trapWatch = null; S.combo = 0; S.plane = null;
   refreshUI();
 }
 $('home').addEventListener('click', e => {

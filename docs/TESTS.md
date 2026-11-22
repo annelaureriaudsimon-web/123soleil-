@@ -6,14 +6,16 @@ Astuce : si les tests de sauvegarde échouent avec le Chromium de Playwright, la
 
 | Quoi | Commande | Ce qui est vérifié |
 |---|---|---|
-| Simulation des 16 niveaux | `node tools/simulate.js` | Expert au moins 95 % partout, menace dans les 10 premières secondes, durées (25–35 s dans la cour, 30–40 s au parc, boss ≤ 45 s / ≤ 50 s), boss du moyen (15–35 % / 10–30 %), progression régulière, **niveau 1 en douceur : le débutant le finit au moins 90 % du temps, en moins de 45 s** (v2.2), niveau 1 du parc un peu plus dur que le niveau 4 de la cour, et **monde 1 identique à sa référence** (niveau 1 mis à jour en v2.2). 56 vérifications, toutes vertes. |
-| Intégration Poki dans un vrai navigateur | `python3 tools/tests/test_poki.py` (Playwright, faux SDK `tools/tests/fake_poki_sdk.js`) | 162 vérifications (v2.4), détaillées plus bas. **162/162**, aucune erreur JavaScript. |
+| Simulation des 24 niveaux | `node tools/simulate.js` | Expert au moins 95 % partout, menace dans les 10 premières secondes, durées (25–35 s dans la cour, 30–42 s au parc et à la plage, boss ≤ 45 s / ≤ 50 s), boss du moyen (15–35 % / 10–30 % / 10–20 %), progression régulière, **niveau 1 en douceur : le débutant le finit au moins 90 % du temps, en moins de 45 s** (v2.2), le 1-3 à environ 85 % pour le moyen, chaque monde qui commence plus dur que le début du précédent mais plus facile que son boss, **le robot prudent** (v2.5 : jamais ★★★, au plus 50 % à la fin de la cour, au plus 20 % ensuite), et **monde 1 identique à sa référence** `REF_W1` (réglée en v2.5). **126 vérifications, toutes vertes** (v2.5). |
+| Intégration Poki dans un vrai navigateur | `python3 tools/tests/test_poki.py` (Playwright, faux SDK `tools/tests/fake_poki_sdk.js`) | 168 vérifications (v2.5 : + le test 30, plus de « SO »), détaillées plus bas. **168/168**, aucune erreur JavaScript. |
 | Build Poki | `node tools/build-poki.js` | Fabrique `dist/poki/` et `dist/soleil-poki.zip`, puis vérifie : aucune adresse externe sauf le SDK, aucun lien sortant, `localStorage` toujours dans un try/catch, aucun `console.log` ni code de debug, moins de 8 Mo, `node --check` sur chaque JS, et chaque fichier entier après le retrait du debug. **TOUT EST OK.** |
-| Mode Niveaux dans un vrai navigateur | `python3 tools/tests/test_levels.py` (Playwright) | 66 vérifications (40 pour le monde 1, 26 pour le monde 2), détaillées plus bas. **66/66**, aucune erreur JavaScript. |
-| Comparaison avec la version d'avant, image par image | `python3 tools/tests/compare_frames.py <dossier de la v2.1>` | La course infinie et le monde 1 se dessinent exactement pareil (même graine, même hasard visuel, même robot ; SDK coupé, joueur qui revient). **94/94 images identiques** contre la v2.1 ; contre la v2.2 : 88/94, les 6 autres étant les images avec le vrai signal ou un mot piège à l'écran (étoile « POW » / mot rayé, v2.4). |
-| Syntaxe | `for f in js/*.js js/*/*.js levels/*.js tools/*.js; do node --check $f; done` | Aucune erreur de syntaxe (63 fichiers du jeu + les outils). |
+| Mode Niveaux dans un vrai navigateur | `python3 tools/tests/test_levels.py` (Playwright) | 112 vérifications (v2.5 : les 3 mondes, les faux signaux, les rivaux, la plage, la course infinie), détaillées plus bas. **112/112**, aucune erreur JavaScript. |
+| Comparaison avec la version d'avant, image par image | `python3 tools/tests/compare_frames.py <dossier de la version d'avant>` | La course infinie et le monde 1 se dessinent exactement pareil (même graine, même hasard visuel, même robot ; SDK coupé, joueur qui revient). **94/94 images identiques** contre la v2.1 ; contre la v2.2 : 88/94, les 6 autres étant les images avec le vrai signal ou un mot piège à l'écran (étoile « POW » / mot rayé, v2.4). **v2.5 contre la v2.4 : 18/94 identiques, 76 différences voulues** (les images des niveaux : plus de « SO », coucher du soleil), **0 non voulue** ; les 14 images de la course infinie sont identiques. Pour la suite, comparer avec la v2.5. |
+| Syntaxe | `for f in js/*.js js/*/*.js levels/*.js tools/*.js; do node --check $f; done` | Aucune erreur de syntaxe (74 fichiers du jeu + les outils ; le build Poki le refait). |
 
-### Ce que vérifie `test_poki.py` (v2.2, v2.3 : tests 15 à 24 pour les corrections et les pubs récompensées, v2.4 : tests 25 à 29)
+### Ce que vérifie `test_poki.py` (v2.2, v2.3 : tests 15 à 24 pour les corrections et les pubs récompensées, v2.4 : tests 25 à 29, v2.5 : test 30)
+
+- **v2.5** — 30 plus de « SO » : dans les 6 langues, une 1re partie (tutoriel), deux courses libres (dont une depuis 170 m : recomptages, avions, reflets, boss), le défi du jour, les 2 joueurs et 8 niveaux des 3 mondes (hésitations, bégaiement, express, nuage, les 3 boss) ; le chant n'affiche que « 1 », « 2 », « 3 », des mots pièges et le vrai mot ; ni le chant, ni les petits textes, ni la voix ne disent l'ancien début (« SO… », « RED… », « PO… », « BA… », « STE… », ni « SOOOO… ») ; aucun texte de la langue ne le contient. Vérifié en remettant exprès un « SO… » dans le chant et dans un texte : le test le voit.
 
 - **v2.4** — 25 grands écrans (1920×1080, 2560×1440, 2560×1080, 1680×1050, 1024×768 : interface agrandie, rien ne dépasse ; pause si la fenêtre change beaucoup) ; 26 même partie, même temps et même place à 30, 60 et 120 images/s ; 27 qualité qui baisse sur un processeur ralenti ×4 et ×6, seulement à un moment calme, et le réglage du menu pause ; 28 daltoniens (étoile « POW » mesurée en pixels derrière le vrai signal et le piège au début, plus d'étoile et un trait blanc sur le piège démasqué) ; 29 langues (les 6 langues ont tous les textes de l'anglais, les phrases des niveaux, missions et tenues, 12 mots pièges qui commencent comme le vrai signal ; même niveau joué par le même robot = même résultat au 1/10 000 de seconde dans les 6 langues ; même défi du jour ; bouton « FR » → carte des 6 langues → Deutsch sans recharger ; langue mémorisée ; pas de bouton de langue en partie).
 
@@ -38,11 +40,21 @@ Monde 1 (phase 1) :
 - le mot piège forcé, et l'absence de `Math.random()` dans le moteur, les cerveaux, la physique et les niveaux (monde 2 compris) ;
 - l'équité : l'expert réussit 120 essais sur 120 sur chaque niveau ;
 - les rivaux grillés, puis renvoyés au départ ;
-- les cadenas, « Bientôt » (mondes 3 à 5) et le clavier sur la carte ;
+- les cadenas, la plage verrouillée par les étoiles du parc, « Bientôt » (mondes 4 et 5) et le clavier sur la carte ;
 - les anciennes sauvegardes intactes ;
 - la mise en scène du boss ;
 - l'anglais, le paysage et le petit écran ;
 - le temps par image.
+
+v2.5 (tests 19 à 27) :
+- **les faux signaux** (moteur) : le recomptage « 1… 2… » pendant le regard, l'avion « ALLEZ-Y ! » (jamais le mot de départ) et l'avion « SOLEIL ! » pendant le chant, le nuage et son reflet ; bouger pendant l'un d'eux = grillé, avec la bonne explication ; les niveaux d'avant tirent les mêmes dés ;
+- **à l'écran, dans les 6 langues** : ce qu'on voit (le « 1 » du recomptage, la banderole, les yeux du soleil cachés par le nuage et visibles dans la flaque), ce qui grille, le conseil de fin ;
+- **les rivaux** : la fausse alerte (un rival qu'on voit crie, lui ne bouge pas ; sa bulle porte son prénom) et le troupeau (3 rivaux, tous grillés, une seule annonce « TOUS GRILLÉS ! », jamais avec moins de 3 rivaux) ; l'expert les ignore, le moyen s'y fait griller ;
+- **la plage juste** : l'expert réussit au moins 95 essais sur 100 de chaque niveau ; le robot prudent au plus 3 sur 30 ;
+- **la carte** : la plage verrouillée (« Gagne 12 ★ dans le monde 2… »), l'animation à 12 étoiles, son sable, le monde 4 « Bientôt » ;
+- **les transats et la glace** : sans transat, perdu sans 2e chance ; une boule fond toutes les 4 s, les étoiles viennent des boules qui restent, la montagne à l'arrivée ;
+- **le Soleil Vacancier** : intro, chapeau et lunettes en cœur, calypso (144 bpm), coups spéciaux annoncés, victoire, monde 3 terminé ;
+- **la course infinie** : le recomptage jamais avant 50 m, l'avion jamais avant 90 m, le même défi du jour (mêmes faux signaux, au même cycle) pour deux joueurs, le conseil de fin qui nomme le faux signal.
 
 Monde 2 (phase 2) :
 - **la règle** : bouger pendant l'éternuement (yeux fermés), le faux retour (à moitié tourné), l'œil du faux dos ou l'étoile = grillé, avec la bonne explication ;
@@ -63,13 +75,42 @@ Monde 2 (phase 2) :
 | Niveaux 1, 3, 5, 7 et 8 du monde 1, comparés image par image à la version d'avant (`compare_frames.py`) | 80 images sur 80 identiques au pixel près (portrait et paysage, boss compris). |
 | Simulation | v2.2 : seul le niveau 1 change (débutant 66 % → 100 %, niveau en douceur). Les 7 autres niveaux du monde 1 et tout le monde 2 : mêmes chiffres qu'en v2.1, à 0 point près. |
 
+## La v2.5 : 10 vérifications rapides sur ton téléphone et ton PC
+
+Les tests automatiques disent que tout marche et que c'est juste ; ils ne disent pas si c'est **lisible** et **amusant**
+sur un vrai téléphone. C'est ça qu'il faut regarder. Pour aller vite aux niveaux : joue-les dans l'ordre, ou teste en
+mode debug (`index.html?debug=1&fakead=1` pour les boutons 🎬).
+
+1. **Plus de « SO ».** Course libre, un niveau et 2 joueurs : le soleil dit « 1… 2… 3… » puis le mot, jamais « SO… ».
+   Avec la voix 🗣️ en course infinie : pareil. En anglais (`?lang=en`) : jamais « RED… » tout seul.
+2. **Le « ding » dès la cour (1-1).** À chaque vrai retour : « ding-ding », anneau vert, rayons qui tournent.
+3. **Le coucher du soleil (1-3).** Le soleil descend, le ciel passe au soir, la barre « jusqu'à la nuit » ; fais exprès
+   de t'arrêter à chaque « 3 » : « LA NUIT TOMBE ! », puis 🎬 « +10 s de jour ».
+4. **Le recomptage (1-4).** Il compte « 1… 2… » en te regardant. Est-ce qu'on comprend qu'il ment (son visage) ?
+   Bouge : « Il comptait en te regardant… ».
+5. **La fausse alerte (1-7) et le troupeau (2-7).** La bulle du cri a le prénom du rival, ne cache ni le soleil ni le
+   chant, en portrait comme en paysage. Le troupeau : trois enfants partent ensemble et brûlent, « TOUS GRILLÉS ! ».
+6. **La plage se débloque** (12 ★ dans le parc) : cadenas qui saute, « MONDE 3 DÉBLOQUÉ ! », la carte de la plage.
+7. **Les transats (3-1) et la glace (3-2).** Les transats à l'arrivée, « 🏖️ Inès s'assoit · encore 1 » ; arrivé
+   dernier : « Plus de transat ! », sans 🎬. La glace : « PLOC ! » toutes les 4 s, le cornet ne cache jamais le
+   soleil, la montagne de boules à l'arrivée.
+8. **L'avion menteur (3-3).** La banderole se lit bien sur téléphone ; le soleil reste visible. « SOLEIL ! » sur la
+   banderole pendant le chant : on comprend que ce n'est pas lui ? « ALLEZ-Y ! » pendant son regard : bouge → grillé.
+9. **Le reflet (3-5).** Derrière le nuage, le reflet dans le sable mouillé : visage, œil du faux dos, anneau vert.
+   **À regarder en plein soleil**, et en qualité « Basse » (menu pause) : il doit rester lisible.
+10. **Le Soleil Vacancier (3-8).** Chapeau et lunettes en cœur, calypso qui baisse quand il chante, 6 coups annoncés ;
+    victoire : « Mon chapeau !! », « SOLEIL VACANCIER BATTU ! 🏖️ », « Monde 3 terminé ! ».
+
+Et en course infinie : le recomptage après 50 m, l'avion après 90 m, le reflet après 150 m, chacun avec sa bannière la
+1re fois ; grillé par l'un d'eux, la carte de fin dit pourquoi.
+
 ## L'étape Poki 3 (v2.4) : 8 vérifications rapides sur ton téléphone et ton PC
 
 1. **Plus de partage** : fin de course, résultats, défi du jour joué : aucun bouton Partager ni Image.
 2. **Grand écran** : sur PC, mets le jeu en plein écran (ou une grande fenêtre) : les boutons et les panneaux grandissent, rien n'est coupé. Pendant une partie, passer en plein écran met le jeu en pause.
 3. **Qualité** : menu pause → « Qualité : Auto » ; appuie pour passer à Haute, puis Basse (image un peu moins nette, moins de confettis), puis Auto.
 4. **Daltoniens** : en course, « SOLEIL ! » a une étoile jaune pâle « POW » derrière lui ; un mot piège démasqué est rayé d'un trait blanc.
-5. **Langue** : accueil → bouton rond « FR » → « English » : tout passe en anglais tout de suite, le chant devient « 1, 2, 3… RED… RED LIGHT! ». Recharge la page : toujours en anglais. Remets « Français ».
+5. **Langue** : accueil → bouton rond « FR » → « English » : tout passe en anglais tout de suite, le chant devient « 1, 2, 3… RED LIGHT! » (v2.5 : sans « RED… » avant). Recharge la page : toujours en anglais. Remets « Français ».
 6. **Une autre langue** : `index.html?lang=de` (ou es, pt, it) : un niveau en entier, la défaite, les résultats, le casier, la pause : aucun texte qui dépasse, aucun texte français oublié.
 7. **Voix** : en espagnol, active la voix 🗣️ en course infinie : elle compte en espagnol (si ton appareil a une voix espagnole ; sinon, message « No hay voz en español… » et les sons 8-bit).
 8. **Miniatures** : `python3 tools/thumbnails/make.py --video` puis ouvre `dist/thumbnails/en/` : 9 images et une vidéo de 5 s.
@@ -147,7 +188,7 @@ La liste complète à faire dans le Poki Inspector est dans `docs/POKI_INTEGRATI
     - Intro « Tu vas rire… ou pleurer ! », lunettes-nez-moustache (« BOING »), musique de cirque qui baisse quand il chante, 6 farces annoncées.
     - Victoire : « Mon nez !! », feu d'artifice, « SOLEIL FARCEUR BATTU ! 🤡 », « Monde 2 terminé ! ».
     - Les ⭐ de sang-froid s'ajoutent bien au total du casier.
-    - Rejoue ensuite un niveau de la cour : il doit être exactement comme avant (pas de « ding »).
+    - Rejoue ensuite un niveau de la cour : depuis la v2.5, le « ding » y est aussi.
 
 ## À vérifier aussi, si tu as le temps
 
@@ -158,11 +199,11 @@ La liste complète à faire dans le Poki Inspector est dans `docs/POKI_INTEGRATI
 
 ## Les 10 tests manuels de la phase 1 (toujours valables)
 
-1. **Ouvrir sans connexion.** Coupe le Wi-Fi et les données, ouvre `index.html` (ou ton lien en ligne), touche **▶ NIVEAUX**. La carte s'affiche : la cour, l'école, les 8 ronds, le parc (verrouillé tant que tu n'as pas 12 ★) et les mondes 3 à 5 « Bientôt ».
-2. **Le tutoriel du niveau 1, sans lire de règles.** « MAINTIENS pour courir 👆 » disparaît dès que tu maintiens ; « LÂCHE ! » s'affiche au premier « SO » ; au 2e chant, le mot piège et la bannière « PIÈGE ! Il n'a pas dit SOLEIL 😏 ».
+1. **Ouvrir sans connexion.** Coupe le Wi-Fi et les données, ouvre `index.html` (ou ton lien en ligne), touche **▶ NIVEAUX**. La carte s'affiche : la cour, l'école, les 8 ronds, le parc (verrouillé tant que tu n'as pas 12 ★), la plage (12 ★ du parc) et les mondes 4 et 5 « Bientôt ».
+2. **Le tutoriel du niveau 1, sans lire de règles.** « MAINTIENS pour courir 👆 » disparaît dès que tu maintiens ; « LÂCHE ! » s'affiche au premier « SOLEIL ! » ; au 2e chant, le mot piège et la bannière « PIÈGE ! Il n'a pas dit SOLEIL 😏 ».
 3. **Défaite claire et relance immédiate.** Cours sans t'arrêter : « GRILLÉ ! », la carte dit pourquoi et à combien de l'arrivée ; un tap relance tout de suite, sans carte d'intro.
 4. **Victoire.** Confettis, étoiles qui s'allument une par une avec un son, classement, boutons Suivant / Rejouer / Carte, étoiles visibles ensuite sur la carte.
-5. **Les rivaux.** Au niveau 2, Hugo ⚡ repart souvent pendant les longs « SOOOO… » ; grillé, il devient noir, fume, dit « Nooon ! » et repart du début ; le soleil rigole.
+5. **Les rivaux.** Au niveau 2, Hugo ⚡ repart souvent pendant les longs « 3… » ; grillé, il devient noir, fume, dit « Nooon ! » et repart du début ; le soleil rigole.
 6. **Le boss du monde 1.** Lunettes qui tombent du ciel, musique qui baisse pendant le chant, coups spéciaux annoncés, victoire avec lunettes envolées, feu d'artifice et fanfare.
 7. **Fluidité.** Au niveau 7 (5 rivaux), rien ne doit saccader, même quand un rival fume.
 8. **Portrait et paysage.** Sur la carte, puis pendant un niveau : barre de progression à gauche en paysage, chant lisible, cartes qui tiennent à l'écran.

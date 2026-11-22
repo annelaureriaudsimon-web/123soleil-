@@ -16,17 +16,20 @@ function render() {
   drawSky();
   drawWatcher();
   drawCloud();
+  S.drawPlane();                                                   // v2.5 : l'avion menteur, devant le soleil (jamais sur ses yeux)
   drawHills();
   drawGround(camZ);
   if (!isDuo && !isLvl) drawPatches(camZ);
   drawMarkers(camZ);
   if (!isDuo && !isLvl) drawRecord(camZ);
   drawDecor(camZ);
+  S.drawReflection();                                              // v2.5 : le reflet du soleil dans l'eau, quand un nuage le cache
   if (!isDuo && !isLvl) drawStarItem(camZ);
   if (isDuo) { S.drawFinish(camZ); S.drawRacers(camZ); }
   else if (isLvl) {                                                // arrivée, rivaux devant, toi, rivaux tout près derrière
     S.drawLevelMud(camZ);                                            // flaques de boue du niveau (monde 2)
     S.drawFinish(camZ, S.Levels.m.level.length);
+    S.drawChairs(camZ);                                              // v2.5 : les transats à l'arrivée
     S.drawRivals(false);
     S.drawTemptStar(camZ);                                           // l'étoile tentatrice, devant toi
     const jy = S.Levels.jump, sp = S.Levels.spin;
@@ -34,6 +37,7 @@ function render() {
       const py = Lt.yFeet - Lt.s * 0.8 - jy;
       S.ctx.save(); S.ctx.translate(Lt.cx, py); S.ctx.rotate(sp); S.ctx.translate(-Lt.cx, -py - jy); drawRunner(); S.ctx.restore();
     } else if (jy) { S.ctx.save(); S.ctx.translate(0, -jy); drawRunner(); S.ctx.restore(); } else drawRunner();
+    S.drawCone();                                                    // v2.5 : la montagne de glace qu'il porte
     S.drawRivals(true);
     S.drawFly();                                                     // la mouche, par-dessus le coureur
   }
@@ -54,6 +58,7 @@ function render() {
     if (S.bossBanner) drawBanner(L.bossTitle, L.bossSub(S.bossBanner.moon), '', S.bossBanner.t, 1.8, '#FF4D6D');
     else if (S.trapBanner) drawBanner(L.trapTitle, L.trapSub(S.trapBanner.moon), '', S.trapBanner.t, 2.4, '#06D6A0');
     else if (S.cloudBanner) drawBanner(L.cloudTitle, L.cloudSub, '', S.cloudBanner.t, 2.4, '#FFFFFF');
+    else if (S.lieBanner) drawBanner(L.lieTitle[S.lieBanner.kind] || L.refletTitle, L.lieSub[S.lieBanner.kind] || L.refletSub, '', S.lieBanner.t, 2.4, '#4CC9F0');   // v2.5
     else if (S.phaseTitle) drawBanner(S.phaseTitle.title, S.phaseTitle.sub, S.phaseTitle.sub2, S.phaseTitle.t, 2.6, '#FFD166');
     drawHUD(); drawReplayHint();
   }

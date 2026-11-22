@@ -1,4 +1,4 @@
-# Envoyer le jeu à Poki : tout ce qu'il faut (v2.4)
+# Envoyer le jeu à Poki : tout ce qu'il faut (v2.5)
 
 Ce dossier contient ce que Poki demande au moment de proposer le jeu : le titre, les descriptions, les commandes,
 les catégories, les images, la vidéo et la liste des règles à respecter. Les textes en anglais sont prêts à copier
@@ -39,13 +39,13 @@ Le titre français reste **« 1, 2, 3… SOLEIL ! »** (c'est ce qui s'affiche d
 ### Longue (anglais)
 > **Red Light Sun** is the playground classic, with a cheeky sun that cheats.
 >
-> Hold to run. The sun counts “1, 2, 3… RED…” — let go before it shouts “RED LIGHT!” and turns around. If it sees you move, you're TOASTED!
+> Hold to run. The sun counts “1, 2, 3…” then shouts a word: if it's “RED LIGHT!”, stop before it turns around. If it sees you move, you're TOASTED!
 >
-> But the sun loves to trick you: “RED… RED HAT!” — that's a trap word, keep running! It hesitates, stutters, speeds up, pretends to turn away, sneezes, teases you and even sends a fly on your nose. Wait for the “ding” before you run again.
+> But the sun loves to trick you: “RED HAT!” — that's a trap word, keep running! It hesitates, stutters, speeds up, pretends to turn away, sneezes, recounts while staring at you, hides behind a cloud (watch its reflection!) and even hires a plane with a fake banner. Other kids shout “HE'S NOT LOOKING!” — don't believe them. Wait for the “ding” before you run again… but hurry: the sun is setting, there aren't enough deckchairs and your ice cream is melting!
 >
-> - 16 short levels in 2 worlds (the playground and the park), each with 3 stars to earn
+> - 24 short levels in 3 worlds (the playground, the park and the beach), each with 3 stars to earn
 > - Race against kids with their own personalities: the Careful, the Speedster, the Steady
-> - 2 bosses: the Cool Sun 😎 and the Prankster Sun 🤡
+> - 3 bosses: the Cool Sun 😎, the Prankster Sun 🤡 and the Holiday Sun 🏖️
 > - Endless run, daily challenge (one try per day, the same for everyone), 2-player mode on the same screen
 > - Outfits to unlock, daily missions, ranks and medals
 > - Plays in English, French, Spanish, Portuguese, German and Italian — with each country's own chant!
@@ -53,13 +53,13 @@ Le titre français reste **« 1, 2, 3… SOLEIL ! »** (c'est ce qui s'affiche d
 ### Longue (français)
 > **1, 2, 3… SOLEIL !** : le jeu de la cour de récré, avec un soleil qui triche.
 >
-> Maintiens pour courir. Le soleil compte « 1, 2, 3… SO… » : lâche avant qu'il crie « SOLEIL ! » et se retourne. S'il te voit bouger, tu es GRILLÉ !
+> Maintiens pour courir. Le soleil compte « 1, 2, 3… » puis crie un mot : si c'est « SOLEIL ! », arrête-toi avant qu'il se retourne. S'il te voit bouger, tu es GRILLÉ !
 >
-> Mais le soleil adore piéger : « SO… SOLDES ! », c'est un mot piège, continue ! Il hésite, bégaie, accélère, fait semblant de se retourner, éternue, se moque de toi et t'envoie même une mouche sur le nez. Attends le « ding » avant de repartir.
+> Mais le soleil adore piéger : « SOLDES ! », c'est un mot piège, continue ! Il hésite, bégaie, accélère, fait semblant de se retourner, éternue, recompte en te regardant, se cache derrière un nuage (regarde son reflet !) et fait même passer un avion avec une fausse banderole. Les autres enfants crient « IL REGARDE PAS ! » : ne les crois pas. Attends le « ding » avant de repartir… mais dépêche-toi : le soleil se couche, il n'y a pas assez de transats et ta glace fond !
 >
-> - 16 niveaux courts dans 2 mondes (la cour de récré et le parc), 3 étoiles à gagner dans chacun
+> - 24 niveaux courts dans 3 mondes (la cour de récré, le parc et la plage), 3 étoiles à gagner dans chacun
 > - Des enfants qui courent contre toi, chacun avec son caractère : le Prudent, le Fonceur, le Régulier
-> - 2 boss : le Soleil Cool 😎 et le Soleil Farceur 🤡
+> - 3 boss : le Soleil Cool 😎, le Soleil Farceur 🤡 et le Soleil Vacancier 🏖️
 > - Course infinie, défi du jour (un seul essai par jour, le même pour tout le monde), mode 2 joueurs sur le même écran
 > - Des tenues à débloquer, des missions du jour, des rangs et des médailles
 > - En français, anglais, espagnol, portugais, allemand et italien, avec le chant de chaque pays !
@@ -123,7 +123,7 @@ Pour tester : `index.html?lang=de`.
 **Le chant change avec la langue** (seuls les mots changent : le rythme, les dés et le défi du jour sont les mêmes
 partout, c'est testé) :
 
-| Langue | Début commun (lâche dès qu'il apparaît) | Vrai signal | Exemples de mots pièges | Lune |
+| Langue | Début commun des mots pièges (jamais affiché seul depuis la v2.5) | Vrai signal | Exemples de mots pièges | Lune |
 |---|---|---|---|---|
 | Français | SO… | SOLEIL ! | SOLDES, SOUPE, SOFA… | LUNE ! |
 | Anglais | RED… | RED LIGHT! | RED HAT, RED BUS, RED NIGHT… | MOON! |
@@ -142,11 +142,16 @@ de mot dans toutes les langues). La voix du soleil parle la langue choisie, si l
   de « ¡POLLITO! » (exprès, mais peut-être trop dur). « Sol Guay » (le boss) sonne espagnol d'Espagne.
 - **Portugais** : écrit pour le Brésil (« você », « tela », « fase »). « Sol Maneiro » est de l'argot brésilien.
 - **Allemand** : le vrai jeu s'appelle « Ochs am Berg, 1, 2, 3! » ; « SONNE! » a été choisi pour garder le soleil et
-  un début commun court (« SO… »). « SONNTAG! » commence comme « SONNE! » : piège exprès, à vérifier en jeu.
+  des mots pièges qui commencent pareil (« SO… »). « SONNTAG! » commence comme « SONNE! » : piège exprès, à vérifier en jeu.
   Le soleil est féminin en allemand (« sie ») : les textes suivent ça, sauf quelques phrases sur les rivaux.
 - **Italien** : « STEARINA », « STERPO », « STEVIA » sont des mots réels mais peu courants pour des enfants.
 - **Toutes** : les noms des boss et des rangs (« Maître du Soleil », « Roi Soleil »), les moqueries du soleil et
   les petites phrases des rivaux sont des adaptations libres, pas des traductions mot à mot.
+- **v2.5, à faire relire aussi** : le Soleil Vacancier (« Sol Veraneante », « Sol de Férias », « Urlaubssonne »,
+  « Sole in Vacanza »), la banderole de l'avion (« ¡ADELANTE! », « PODE CORRER! », « LAUF JETZT! », « AVANTI! »), le
+  cri de la fausse alerte (« ¡NO MIRA! ¡CORRE! », « ELE NÃO TÁ OLHANDO! CORRE! », « SIE SCHAUT NICHT! LAUF! »,
+  « NON GUARDA! CORRI! ») et les phrases des niveaux de la plage. En allemand, le soleil est « sie » : le cri dit
+  « SIE SCHAUT NICHT! ».
 
 Ajouter une langue : copier `js/core/lang/it.js`, traduire, ajouter la langue dans `LANGS` (`js/core/i18n.js`) et
 le `<script>` dans `index.html` ; le test 29 de `tools/tests/test_poki.py` dit s'il manque un texte.

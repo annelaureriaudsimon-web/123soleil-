@@ -76,7 +76,7 @@ function drawBubble(g, text, x, y, fs) {
 // Le regard qui grille, vers chaque rival pris
 function drawRivalBeams() {
   const m = S.Levels.m; if (!m) return;
-  const R = Lt.R, cy = Lt.sunY + S.watcher.offY, g = S.ctx;
+  const R = Lt.R, cy = Lt.sunY + S.watcher.offY + S.sunSink, g = S.ctx;
   g.lineCap = 'round';
   for (const rv of m.rivals) {
     if (rv.state !== 'grilled' || rv.burnT > 0.9) continue;

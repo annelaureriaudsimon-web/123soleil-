@@ -27,7 +27,12 @@ const TRACKS = {
   farceur: { bpm: 152,
     chords: [{ bass: [C3, 0, G2, 0], arp: [C4, E4, G4, E4] }, { bass: [G2, 0, 123.5, 0], arp: [B4 / 2, 293.7, G4, 293.7] },
              { bass: [F2, 0, C3, 0], arp: [F2 * 4, A4, C5, A4] }, { bass: [G2, 0, G2 * 2, 0], arp: [G4, B4, 293.7 * 2, B4] }],
-    lead: [E5, G5, E5, C5, D5, 0, B4, 0, C5, E5, G5, A5, G5, 0, E5, 0, F5, A5, F5, D5, E5, 0, C5, 0, D5, F5, E5, D5, C5, 0, 0, 0] }
+    lead: [E5, G5, E5, C5, D5, 0, B4, 0, C5, E5, G5, A5, G5, 0, E5, 0, F5, A5, F5, D5, E5, 0, C5, 0, D5, F5, E5, D5, C5, 0, 0, 0] },
+  // Monde 3 (v2.5) : le Soleil Vacancier joue un calypso (fa majeur, basse qui sautille)
+  vacancier: { bpm: 144,
+    chords: [{ bass: [F2, 0, C3, F2], arp: [174.6, A4 / 2, C4, A4 / 2] }, { bass: [116.5, 0, F2 * 2, 116.5], arp: [233.1, 293.7, 349.2, 293.7] },
+             { bass: [C3, 0, G2, C3], arp: [C4, E4, G4, E4] }, { bass: [F2, 0, C3, 0], arp: [174.6, A4 / 2, C4, A4 / 2] }],
+    lead: [A5, 0, A5, G5, F5, 0, C5, 0, D5, F5, 0, D5, C5, 0, 0, 0, 466.2, D5, F5, D5, E5, 0, G5, 0, A5, G5, F5, E5, F5, 0, 0, 0] }
 };
 
 const Music = {

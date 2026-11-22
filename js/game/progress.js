@@ -39,7 +39,8 @@ function touchStreak() {                       // première partie du jour : la 
 
 /* ---------- 28. Étoiles à attraper, nuage, descente ---------- */
 function phaseSubText(pi) {                        // annonce des obstacles qui arrivent dans cette phase (calculée depuis UNLOCK)
-  const items = Object.keys(UNLOCK).filter(key => UNLOCK[key] >= pi * PHASE_LEN && UNLOCK[key] < (pi + 1) * PHASE_LEN).map(key => L.obst[key]);
+  const items = Object.keys(UNLOCK).filter(key => UNLOCK[key] >= pi * PHASE_LEN && UNLOCK[key] < (pi + 1) * PHASE_LEN)
+    .sort((a, b) => UNLOCK[a] - UNLOCK[b]).map(key => L.obst[key]);   // dans l'ordre où on les rencontre
   if (PHASE_WATCHER[pi % 4] === 'moon' && pi < 4) items.unshift(L.moonCall);
   if (!items.length) return '';
   const txt = items.length === 1 ? items[0] : items.slice(0, -1).join(', ') + L.and + items[items.length - 1];

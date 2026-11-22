@@ -9,7 +9,7 @@ const { PHASE_LEN, SKIN } = S;   // déjà chargés
 const SUN_TRAPS = ['SOLDES !', 'SOUPE !', 'SODA !', 'SOMBRERO !', 'SOFA !', 'SOURIS !', 'SORBET !', 'SOLO !', 'SOUCOUPE !', 'SOLDAT !', 'SORCIÈRE !', 'SOMMET !'];
 const MOON_TRAPS = ['LUGE !', 'LUTIN !', 'LUXE !', 'LUNETTES !', 'LUMIÈRE !'];
 const CHANT_FR = { pre: 'SO', sun: 'SOLEIL !', moon: 'LUNE !', hop: 'HOP !' };
-const chantW = () => (S.L && S.L.chant) || CHANT_FR;   // « SO », « SOLEIL ! », « LUNE ! », « HOP ! » dans la langue du joueur
+const chantW = () => (S.L && S.L.chant) || CHANT_FR;   // « SOLEIL ! », « LUNE ! », « HOP ! » dans la langue du joueur (pre : le début commun des mots pièges, jamais affiché)
 const RANKS = [              // seuils en fractions de phase (avec PHASE_LEN = 60 : 0, 18, 48, 90, 150, 240 m)
   { min: 0, e: '🐌', fr: 'Escargot', en: 'Snail' },
   { min: PHASE_LEN * 0.3, e: '🐢', fr: 'Tortue', en: 'Turtle' },

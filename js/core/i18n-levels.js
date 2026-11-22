@@ -16,10 +16,11 @@ Object.assign(TXT.fr, {
     : g.type === 'oufs' ? `Fais ${g.n} OUF` : g.type === 'combo' ? `Fais un combo OUF ×${g.n}`
     : g.type === 'noTrap' ? 'Ne tombe dans aucun piège' : g.type === 'avoid' ? `Évite ${g.n} pièges sans t’arrêter`
     : g.type === 'time' ? `Finis en moins de ${g.s} s` : g.type === 'beat' ? `Bats ${who}`
-    : g.type === 'quick' ? `Fais ${g.n} départs éclair` : g.type === 'resist' ? `Résiste à ${g.n} tentations` : '',
+    : g.type === 'quick' ? `Fais ${g.n} départs éclair` : g.type === 'resist' ? `Résiste à ${g.n} tentations`
+    : g.type === 'scoops' ? `Arrive avec ${g.n} boules de glace` : '',
   tapStart: 'Touche pour commencer',
   posOf: (n, t) => `${ordFr(n)}/${t}`, toGo: m => `${m} m`,
-  failWhyRunning: 'Tu courais encore ! Lâche dès « SO »',
+  failWhyRunning: 'Tu courais encore ! Lâche dès que tu lis « SOLEIL ! »',
   failAlmost: m => `À ${m} m de l’arrivée !`, failPlace: p => `Tu étais ${ordFr(p)} !`, failTap: 'Touche pour réessayer',
   failTipTrap: 'Il t’a eu juste après un mot piège 😏',
   winTitle: 'BRAVO !', bossWinTitle: 'SOLEIL COOL BATTU ! 😎', you: 'Toi', notIn: 'pas arrivé',
@@ -60,10 +61,11 @@ Object.assign(TXT.en, {
     : g.type === 'oufs' ? `Get ${g.n} PHEWs` : g.type === 'combo' ? `Get a ×${g.n} PHEW combo`
     : g.type === 'noTrap' ? 'Don’t fall for any trap' : g.type === 'avoid' ? `Run through ${g.n} traps without stopping`
     : g.type === 'time' ? `Finish in under ${g.s} s` : g.type === 'beat' ? `Beat ${who}`
-    : g.type === 'quick' ? `Get ${g.n} lightning starts` : g.type === 'resist' ? `Resist ${g.n} temptations` : '',
+    : g.type === 'quick' ? `Get ${g.n} lightning starts` : g.type === 'resist' ? `Resist ${g.n} temptations`
+    : g.type === 'scoops' ? `Finish with ${g.n} scoops` : '',
   tapStart: 'Tap to start',
   posOf: (n, t) => `${ordEn(n)}/${t}`, toGo: m => `${m} m`,
-  failWhyRunning: 'You were still running! Let go on “RED”',
+  failWhyRunning: 'You were still running! Let go as soon as you read “RED LIGHT!”',
   failAlmost: m => `${m} m from the finish!`, failPlace: p => `You were ${ordEn(p)}!`, failTap: 'Tap to try again',
   failTipTrap: 'He got you right after a trap word 😏',
   winTitle: 'WELL DONE!', bossWinTitle: 'COOL SUN BEATEN! 😎', you: 'You', notIn: 'not in',
@@ -118,5 +120,87 @@ Object.assign(TXT.en, {
 // Qualité d'image (v2.4, js/render/quality.js)
 Object.assign(TXT.fr, { qualityLbl: m => `Qualité : ${{ auto: 'Auto', high: 'Haute', low: 'Basse' }[m] || m}` });
 Object.assign(TXT.en, { qualityLbl: m => `Quality: ${{ auto: 'Auto', high: 'High', low: 'Low' }[m] || m}` });
+// v2.5 — la pression : la nuit, les transats, la glace (game/match.js, render/pressure.js)
+Object.assign(TXT.fr, {
+  nightFall: 'LA NUIT TOMBE !',
+  nightWhy: 'Le soleil s’est couché avant ton arrivée !',
+  nightTip: 'Ne t’arrête pas pour rien : cours à travers les mots pièges !',
+  nightWarn: 'Vite, la nuit tombe !',
+  nightBonus: '+10 s DE JOUR !',
+  reviveNightBtn: '+10 s de jour',
+  reviveNightCap: 'Regarde une courte vidéo : le soleil remonte un peu',
+  chairsWhy: 'Plus de transat !',
+  chairsTip: 'Arrive avant que tous les transats soient pris !',
+  chairTaken: (n, f) => `🏖️ ${n} s’assoit${f ? ` · encore ${f}` : ' · plus aucun !'}`,
+  ploc: 'PLOC !',
+  mountain: n => `MONTAGNE DE GLACE ! ×${n}`
+});
+Object.assign(TXT.en, {
+  nightFall: 'NIGHT FALLS!',
+  nightWhy: 'The sun set before you got there!',
+  nightTip: 'Don’t stop for nothing: run through the trap words!',
+  nightWarn: 'Hurry, night is falling!',
+  nightBonus: '+10 s OF DAYLIGHT!',
+  reviveNightBtn: '+10 s of daylight',
+  reviveNightCap: 'Watch a short video: the sun rises a little',
+  chairsWhy: 'No deckchair left!',
+  chairsTip: 'Get there before all the deckchairs are taken!',
+  chairTaken: (n, f) => `🏖️ ${n} sits down${f ? ` · ${f} left` : ' · none left!'}`,
+  ploc: 'PLOP!',
+  mountain: n => `ICE CREAM MOUNTAIN! ×${n}`
+});
+// v2.5 — les faux signaux : le recomptage, l'avion menteur, le nuage et son reflet (game/match.js, render/lies.js).
+// La banderole « ALLEZ-Y ! » (planeGo) n'est JAMAIS le mot de départ du jeu (L.go, « GO ! ») : seul le soleil compte.
+Object.assign(TXT.fr.temptHint, {
+  recount: 'Il compte en te regardant : il ment ! Attends le « ding » 🔔',
+  planeGo: 'Ce n’est pas le soleil qui parle ! Il te regarde encore',
+  planeStop: 'Un avion ? Seul le soleil compte ☀️',
+  cloud: 'Le nuage le cache : regarde son reflet dans l’eau !'
+});
+Object.assign(TXT.fr.temptFail, {
+  recount: 'Il comptait en te regardant : il mentait ! 😏',
+  planeGo: 'L’avion mentait : seul le soleil compte ☀️'
+});
+Object.assign(TXT.fr, {
+  planeGo: 'ALLEZ-Y !',
+  refletTitle: 'REGARDE SON REFLET !', refletSub: 'Dans l’eau, tu vois s’il te regarde',
+  refletTip: 'Derrière le nuage, regarde son reflet dans l’eau 💧'
+});
+Object.assign(TXT.fr.obst, { recount: 'recomptages', plane: 'avions menteurs', reflet: 'reflets dans l’eau' });
+Object.assign(TXT.en.temptHint, {
+  recount: 'He’s counting while looking at you: he’s lying! Wait for the “ding” 🔔',
+  planeGo: 'The sun isn’t the one talking! He’s still watching you',
+  planeStop: 'A plane? Only the sun counts ☀️',
+  cloud: 'The cloud hides him: watch his reflection in the water!'
+});
+Object.assign(TXT.en.temptFail, {
+  recount: 'He was counting while looking at you: he lied! 😏',
+  planeGo: 'The plane lied: only the sun counts ☀️'
+});
+Object.assign(TXT.en, {
+  planeGo: 'RUN NOW!',
+  refletTitle: 'WATCH HIS REFLECTION!', refletSub: 'In the water, you can see if he’s looking',
+  refletTip: 'Behind the cloud, watch his reflection in the water 💧'
+});
+Object.assign(TXT.en.obst, { recount: 'recounts', plane: 'lying planes', reflet: 'reflections' });
+// v2.5 — les rivaux : la fausse alerte (un rival crie « VAS-Y ! ») et le troupeau (trois rivaux partent… et sont grillés)
+Object.assign(TXT.fr.temptHint, { alarm: 'Un rival te fait une blague : seul le soleil compte ☀️',
+  herd: 'Ils y vont tous ? Pas toi : seul le soleil compte !' });
+Object.assign(TXT.fr.temptFail, { alarm: 'Le rival mentait : le soleil te regardait encore ! 😜',
+  herd: 'Tu as suivi le troupeau 🐑 : seul le soleil compte !' });
+Object.assign(TXT.fr, { alarmShout: 'IL REGARDE PAS ! VAS-Y !', herdBurnt: 'TOUS GRILLÉS !' });
+Object.assign(TXT.en.temptHint, { alarm: 'A rival is pranking you: only the sun counts ☀️',
+  herd: 'They all go? Not you: only the sun counts!' });
+Object.assign(TXT.en.temptFail, { alarm: 'The rival lied: the sun was still watching you! 😜',
+  herd: 'You followed the herd 🐑: only the sun counts!' });
+Object.assign(TXT.en, { alarmShout: 'HE’S NOT LOOKING! RUN!', herdBurnt: 'ALL TOASTED!' });
+// v2.5 — le monde 3 « La plage » : son boss, le Soleil Vacancier (chapeau de paille et lunettes en cœur)
+Object.assign(TXT.fr, { bossTaunt3: 'Cette plage est à moi !', bossDown3: 'Mon chapeau !!', bossWin3: 'SOLEIL VACANCIER BATTU ! 🏖️', bossBar3: 'Soleil Vacancier', worldDone2: 'Monde 2 terminé ! La plage t’attend 🏖️', worldDone3: 'Monde 3 terminé ! La suite arrive bientôt 🎉', worldUnlockedSub3: 'La plage t’attend 🏖️' });
+Object.assign(TXT.en, { bossTaunt3: 'This beach is mine!', bossDown3: 'My hat!!', bossWin3: 'HOLIDAY SUN BEATEN! 🏖️', bossBar3: 'Holiday Sun', worldDone2: 'World 2 complete! The beach awaits 🏖️', worldDone3: 'World 3 complete! More coming soon 🎉', worldUnlockedSub3: 'The beach awaits 🏖️' });
+// v2.5 — course infinie : la bannière de la 1re fois qu'on voit un faux signal (game/watcher.js)
+Object.assign(TXT.fr, { lieTitle: { recount: 'IL RECOMPTE !', planeGo: 'L’AVION MENT !' },
+  lieSub: { recount: 'Il compte en te regardant : il ment !', planeGo: 'Ce n’est pas le soleil qui parle ☀️' } });
+Object.assign(TXT.en, { lieTitle: { recount: 'HE’S RECOUNTING!', planeGo: 'THE PLANE IS LYING!' },
+  lieSub: { recount: 'He counts while looking at you: he’s lying!', planeGo: 'The sun isn’t the one talking ☀️' } });
 S.typoAll(TXT.fr);                                 // typographie française : espaces insécables (core/i18n.js)
 })(window.Soleil);

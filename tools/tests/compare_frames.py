@@ -30,6 +30,11 @@ ENDLESS_Z = [0, 140, 260, 410, 560, 720, 900]      # course infinie : boue, verg
 LEVELS = ['w1-1', 'w1-3', 'w1-5', 'w1-7', 'w1-8']  # monde 1, boss compris
 # Différences voulues depuis la v2.2 : le niveau 1 est un départ en douceur avec un tutoriel dessiné (main ou touche Espace)
 EXPECTED = ('w1-1 ',)
+# v2.5 : contre la v2.4, TOUTES les images des niveaux changent, et c'est voulu : plus de « SO » (le chant et son rythme),
+# demi-tours plus longs, le « ding » dès le monde 1 et, à partir du niveau 3, le coucher du soleil (le ciel et le soleil
+# bougent, la barre « jusqu'à la nuit »). Seules les images de la course infinie (sans chant à l'écran) doivent rester
+# identiques. Pour la suite, comparer avec la v2.5.
+EXPECTED_V25 = ('w1-1 ', 'w1-3 ', 'w1-5 ', 'w1-7 ', 'w1-8 ')
 # Depuis la v2.4 (daltoniens) : les images où « SOLEIL ! » ou un mot piège est à l'écran ont l'étoile « POW » ou le mot rayé.
 # Vérifié : en retirant ces deux dessins (js/render/hud.js, drawBurst / drawStrike), les 94 images sont identiques à la v2.2.
 EXPECTED_CHANT = ('w1-3 image 320', 'w1-3 image 1600', 'w1-8 image 320')
@@ -66,10 +71,10 @@ async def main():
             a, c = await frames(b, old, w, h), await frames(b, NEW, w, h)
             for (name, h1), (_, h2) in zip(a, c):
                 tot += 1; same += h1 == h2
-                if h1 != h2 and (name.startswith(EXPECTED) or name in EXPECTED_CHANT): wanted += 1; print(f'  ✳️  {w}×{h} {name} : différent (voulu)')
+                if h1 != h2 and (name.startswith(EXPECTED) or name.startswith(EXPECTED_V25) or name in EXPECTED_CHANT): wanted += 1; print(f'  ✳️  {w}×{h} {name} : différent (voulu)')
                 elif h1 != h2: print(f'  ❌ {w}×{h} {name} : différent')
         bad = tot - same - wanted
-        extra = f', {wanted} différence{"s" if wanted > 1 else ""} voulue{"s" if wanted > 1 else ""} (niveau 1 ; chant pour daltoniens)' if wanted else ''
+        extra = f', {wanted} différence{"s" if wanted > 1 else ""} voulue{"s" if wanted > 1 else ""} (niveaux : v2.5, plus de « SO » et coucher du soleil)' if wanted else ''
         print(f'BILAN : {same}/{tot} images identiques{extra}, {bad} différence{"s" if bad > 1 else ""} non voulue{"s" if bad > 1 else ""}')
         await b.close()
         sys.exit(0 if bad == 0 else 1)

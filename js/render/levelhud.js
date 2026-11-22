@@ -32,8 +32,8 @@ function drawLevelHUD() {
   g.beginPath(); g.arc(x0 + w * k, y + BAR_H / 2, BAR_H * 0.62, 0, TAU); g.fill(); g.stroke();
   // l'arrivée : un petit soleil
   g.font = `${BAR_H * 1.5}px ${S.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-  const farceur = def.bossKind === 'farceur';
-  g.fillText(boss ? (farceur ? '🤡' : '😎') : '☀️', x1 + BAR_H * 0.2, y + BAR_H / 2 + 1);
+  const B = S.bossOf(def);
+  g.fillText(boss ? B.icon : '☀️', x1 + BAR_H * 0.2, y + BAR_H / 2 + 1);
   // position et distance restante
   const fs = clamp(Lt.U * 0.075, 22, 38), ty = y + BAR_H + 10 + fs * 0.55;
   const total = m.rivals.length + 1;
@@ -44,8 +44,10 @@ function drawLevelHUD() {
   }
   const rem = Math.max(0, Math.ceil(def.length - m.player.z));
   g.font = `900 ${fs * 0.62}px ${S.FONT}`;
-  const lab = boss ? `${farceur ? L.bossBar2 : L.bossBar} · ${L.toGo(rem)}` : L.toGo(rem);
+  const lab = boss ? `${L[B.bar]} · ${L.toGo(rem)}` : L.toGo(rem);
   otext(lab, x0 + (total > 1 ? fs * 2.9 : 0), ty + fs * 0.05, fs * 0.62, boss ? '#FF8FA3' : '#FFFFFF');
+  S.drawPressureHUD(x0, x1, ty + fs * 0.62, fs);   // v2.5 : jusqu'à la nuit, transats libres, boules de glace
+  S.drawMountain();                                 // v2.5 : la montagne de glace, à l'arrivée
   // rivaux derrière toi
   S.drawBehind();
   // consigne dessinée (main qui appuie ou lève le doigt, ou touche Espace) et son mot : « MAINTIENS », « LÂCHE ! »…
@@ -64,22 +66,26 @@ function drawLevelHUD() {
     g.textAlign = 'center';
     otext(t, Lt.cx, Lt.yFeet - Lt.s * 2.6, s, '#FFD166');
   }
+  // v2.5 : la fausse alerte d'un rival (bulle de cri) ; l'indication de 1re rencontre se met dessous
+  const alarmBot = S.drawAlarm();
   // 1re rencontre d'une tentation : une phrase courte au-dessus du coureur (ne cache ni le soleil ni la bannière)
   const tp = LV.tip;
   if (tp && S.gtime - tp.t0 < tp.life) {
     const k = S.gtime - tp.t0, a = Math.min(1, k / 0.15) * Math.min(1, (tp.life - k) / 0.3);
     const s = fit(tp.text, Math.min(Lt.U * 0.062, 32), S.W * 0.92) * (1 + Math.sin(S.gtime * 7) * 0.03);
     g.save(); g.globalAlpha = a; g.textAlign = 'center';
-    otext(tp.text, Lt.cx, Lt.yFeet - Lt.s * 2.45, s, '#FFD166');
+    otext(tp.text, Lt.cx, Math.max(Lt.yFeet - Lt.s * 2.45, alarmBot ? alarmBot + s * 0.9 : 0), s, '#FFD166');
     g.restore();
   }
-  // monde 2 : signaux du soleil et tentations (render/tempt.js)
-  S.drawSneezeEyes(); S.drawFarceurFace(); S.drawPeekEye(); S.drawTrueEnd(); S.drawTaunt();
+  // monde 2 : signaux du soleil et tentations (render/tempt.js). v2.5 : derrière le nuage, ils ne se voient que dans le reflet
+  const hide = clamp(S.cloudK * 1.5, 0, 1);
+  if (hide < 0.99) { g.save(); g.globalAlpha *= 1 - hide; S.drawSunMarks(); g.restore(); }
+  S.drawTaunt();
   // bannières (piège, hésitation, coups spéciaux du boss…)
   const b = LV.banner;
   if (b) drawBanner(b.title, b.sub, '', b.t, b.life, b.col);
   // le boss met ses lunettes
-  if (LV.glass >= 0) { if (def.bossKind === 'farceur') S.drawGrouchoDrop(LV.glass); else drawGlassesDrop(LV.glass); }
+  if (LV.glass >= 0) { if (def.bossKind === 'farceur') S.drawGrouchoDrop(LV.glass); else if (def.bossKind === 'vacancier') S.drawVacancierDrop(LV.glass); else drawGlassesDrop(LV.glass); }
 }
 
 // « OUPS ! » : trois petites étoiles qui tournent au-dessus de la tête, puis s'en vont
@@ -97,7 +103,7 @@ function drawDizzy(t) {
 
 // Les lunettes noires descendent du ciel jusque sur les yeux du soleil
 function drawGlassesDrop(k) {
-  const g = S.ctx, R = Lt.R, ty = Lt.sunY + S.watcher.offY - R * 0.16;
+  const g = S.ctx, R = Lt.R, ty = Lt.sunY + S.watcher.offY + S.sunSink - R * 0.16;
   const yy = lerp(-R * 1.2, ty, easeIn(clamp(k, 0, 1)));
   g.save(); g.translate(Lt.cx, yy); g.rotate((1 - k) * 0.5 * Math.sin(S.gtime * 5));
   g.fillStyle = '#16161F'; g.strokeStyle = INK; g.lineWidth = Math.max(2, R * 0.05);

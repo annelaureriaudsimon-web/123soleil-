@@ -14,7 +14,7 @@ const HALO_LIFE = 0.7;         // durée de l'anneau vert du vrai retour (s)
 const EYE_K = 0.27;            // taille de l'œil du faux dos (× rayon du soleil)
 
 const fx = () => S.Levels.fx;
-const sunC = () => ({ x: Lt.cx, y: Lt.sunY + S.watcher.offY, R: Lt.R });
+const sunC = () => ({ x: Lt.cx, y: Lt.sunY + S.watcher.offY + S.sunSink, R: Lt.R });
 
 // ⭐ L'étoile tentatrice : 1,6 m devant toi, elle brille et scintille. Au vrai retour, elle s'envole.
 function drawTemptStar(camZ) {
@@ -130,7 +130,7 @@ function drawGroucho(cx, cy, R, turnP, alpha) {
   if (turnP < 0.3 || alpha <= 0) return;
   const g = S.ctx, phi = Math.PI * (1 - turnP);
   const P = (lon, lat) => ({ x: cx + R * Math.sin(phi + lon) * Math.cos(lat), y: cy + R * Math.sin(lat), k: Math.cos(phi + lon) });
-  g.save(); g.globalAlpha = alpha; g.lineCap = 'round';
+  g.save(); g.globalAlpha *= alpha; g.lineCap = 'round';
   for (const sd of [-1, 1]) {                      // sourcils broussailleux
     const p = P(sd * 0.38, -0.42); if (p.k <= 0.05) continue;
     g.strokeStyle = '#1B1B24'; g.lineWidth = R * 0.09;
@@ -166,6 +166,10 @@ function drawGrouchoDrop(k) {                        // l'intro du boss : la far
   drawGroucho(c.x, y, c.R, 1, 1);
 }
 
+// Ce qui se dessine SUR le soleil (yeux plissés, farce du boss, œil du faux dos, anneau du « ding »).
+// v2.5 : derrière le nuage, on ne le voit plus dans le ciel… mais dans son reflet (render/lies.js le redessine dans l'eau).
+function drawSunMarks() { drawSneezeEyes(); drawFarceurFace(); drawPeekEye(); drawTrueEnd(); }
+
 // 🟤 Les flaques de boue d'un niveau (placées à la main dans les données : champ « mud »)
 function drawLevelMud(camZ) {
   const lv = S.Levels.m && S.Levels.m.level; if (!lv || !lv.mud.length) return;
@@ -179,9 +183,9 @@ function drawLevelMud(camZ) {
 
 // Décor et couleurs selon le monde du niveau
 const worldOf = () => (S.Levels.def && S.Levels.def.world) || 1;
-function drawLevelDecor(camZ) { if (worldOf() === 2) S.drawPark(camZ); else S.drawPlayground(camZ); }
-function tintLevel() { if (worldOf() === 2) S.tintPark(); else S.tintPlayground(); }
+function drawLevelDecor(camZ) { const w = worldOf(); if (w === 3) S.drawBeach(camZ); else if (w === 2) S.drawPark(camZ); else S.drawPlayground(camZ); }
+function tintLevel() { const w = worldOf(); if (w === 3) S.tintBeach(); else if (w === 2) S.tintPark(); else S.tintPlayground(); }
 
 Object.assign(S, { drawTemptStar, drawFly, drawTaunt, drawPeekEye, drawTrueEnd, drawSneezeEyes, drawGroucho, drawFarceurFace, drawGrouchoDrop,
-  drawLevelMud, drawLevelDecor, tintLevel, flyPos });
+  drawSunMarks, drawLevelMud, drawLevelDecor, tintLevel, flyPos });
 })(window.Soleil);

@@ -62,6 +62,7 @@ function draw() {
   sky.addColorStop(0, '#7CC8F8'); sky.addColorStop(1, '#D8F0FF');
   g.fillStyle = sky; g.fillRect(0, 0, S.W, S.H);
   if (MAP.world === 2) drawParkMap(g, A);
+  else if (MAP.world === 3) S.drawBeachMap(g, A);       // v2.5 : la plage (render/beach.js)
   else {
     drawSchool(g, A);
     g.fillStyle = '#C3CAD5'; rrp(g, -20, A.top - 10, S.W + 40, S.H - A.top + 30, 26); g.fill();
@@ -167,7 +168,7 @@ function drawUnlock(g) {
     drawPadlock(g, cx + k * 14, cy - k * 70, tab.r * 0.9, true);   // le cadenas ouvert s'envole
     g.restore();
   }
-  if (t > 0.75) drawBanner(L.worldUnlocked(u.id), L.worldUnlockedSub, '', t - 0.75, UNLOCK_DUR - 0.75, '#06D6A0');
+  if (t > 0.75) drawBanner(L.worldUnlocked(u.id), u.id === 3 ? L.worldUnlockedSub3 : L.worldUnlockedSub, '', t - 0.75, UNLOCK_DUR - 0.75, '#06D6A0');
   if (t > UNLOCK_DUR) MAP.unlock = null;
 }
 const n2s = r => r * 1.25;                         // taille du personnage selon la taille d'un rond
@@ -278,6 +279,7 @@ function drawNode(g, n, i, current) {
   drawTile(g, x, n.y, r, !open ? TILE.locked : lv.boss ? TILE.boss : TILE.open);
   if (!open) drawPadlock(g, x, n.y + r * 0.02, r * 0.85);
   else if (lv.boss && lv.bossKind === 'farceur') { g.fillStyle = '#FFD23A'; g.beginPath(); g.arc(x, n.y, r * 0.62, 0, TAU); g.fill(); S.drawGroucho(x, n.y, r * 0.62, 1, 1); }
+  else if (lv.boss && lv.bossKind === 'vacancier') { g.fillStyle = '#FFD23A'; g.beginPath(); g.arc(x, n.y + r * 0.08, r * 0.56, 0, TAU); g.fill(); S.drawVacancier(x, n.y + r * 0.08, r * 0.56, 1, 1); }
   else if (lv.boss) drawBossFace(g, x, n.y, r * 0.78);
   else inkText(g, String(lv.num), x, n.y + r * 0.04, r * 1.05, TILE.open[3]);
   for (let k = 0; k < 3; k++) {                    // 3 étoiles au-dessus, en arc

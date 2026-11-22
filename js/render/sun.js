@@ -16,7 +16,7 @@ function watcherColors() {
 function drawWatcher() {
   const w = S.watcher, C = watcherColors(), moon = w.type === 'moon';
   const R = Lt.R * (1 + w.bump * 0.05);
-  const cx = Lt.cx + Math.sin(S.gtime * 38) * w.laugh * Lt.R * 0.05, cy = Lt.sunY + w.offY - Math.abs(Math.sin(S.gtime * 19)) * w.laugh * Lt.R * 0.06;
+  const cx = Lt.cx + Math.sin(S.gtime * 38) * w.laugh * Lt.R * 0.05, cy = Lt.sunY + w.offY + S.sunSink - Math.abs(Math.sin(S.gtime * 19)) * w.laugh * Lt.R * 0.06;
   const danger = w.state === 'look' || w.state === 'caught' || w.state === 'peek';
   const gr = R * (moon ? 2.0 : 2.5);
   const g = S.ctx.createRadialGradient(cx, cy, R * 0.6, cx, cy, gr);
@@ -43,6 +43,7 @@ function drawWatcher() {
   S.ctx.restore();
   S.ctx.strokeStyle = INK; S.ctx.lineWidth = Math.max(2, R * 0.06);
   S.ctx.beginPath(); S.ctx.arc(cx, cy, R, 0, TAU); S.ctx.stroke();
+  if (w.bossFace === 'vacancier') S.drawVacancierFace(cx, cy, R);   // v2.5 : chapeau et lunettes en cœur (render/beach.js)
 }
 
 // Le visage est dessiné sur une « sphère » : quand il se retourne, les yeux glissent depuis le bord.

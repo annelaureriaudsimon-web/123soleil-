@@ -81,7 +81,7 @@ function updateParticles(dt) {
 function drawBeam() {                                // le regard qui grille
   if (!(S.state === 'caught' || S.state === 'over' || S.lvCaught) || S.caughtT > 0.9) return;
   const grow = clamp(S.caughtT / 0.3, 0, 1), fade = 1 - clamp((S.caughtT - 0.45) / 0.45, 0, 1);
-  const R = Lt.R, cy = Lt.sunY + S.watcher.offY, tx = Lt.cx, ty = Lt.yFeet - Lt.s * 0.75;
+  const R = Lt.R, cy = Lt.sunY + S.watcher.offY + S.sunSink, tx = Lt.cx, ty = Lt.yFeet - Lt.s * 0.75;
   const moon = S.watcher.type === 'moon';
   S.ctx.lineCap = 'round';
   for (const sd of [-1, 1]) {

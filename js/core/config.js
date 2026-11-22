@@ -19,7 +19,8 @@ const MUD_ACC = 9, MUD_SPEED = 0.55;   // dans la boue : démarrage au ralenti, 
 const V_EPS = 0.12;          // au-dessus de cette vitesse, le soleil te voit bouger
 const CLOSE = 0.18;          // arrêté moins de 0,18 s avant son regard = « OUF ! » (et combo)
 const PHASE_LEN = 60;        // matin, midi, soir, nuit : une phase (et un boss) tous les 60 m (~20 s). Presque tout en découle
-const TURN0 = 0.45, TURN_MIN = 0.26;   // temps pour réagir après « SOLEIL ! » : au départ, puis au plus dur
+const TURN0 = 0.70, TURN_MIN = 0.50;   // temps pour lire, réagir et freiner après « SOLEIL ! » : au départ, puis au plus dur
+                                       // (v2.5, plus de « SO » : l'expert a besoin de 0,20 s de réaction + 0,30 s de freinage à 12 m/s)
 const RET_DUR = 0.28;        // durée de son demi-tour quand il se remet de dos
 const HOP_DUR = 0.16;        // le « HOP ! » du faux dos est très rapide
 const PEEK_P = 0.56;         // pendant le faux dos, il reste tourné juste assez pour qu'un œil dépasse
@@ -28,7 +29,11 @@ const PRESSURE = 3;          // anti-camping : le soleil s'impatiente avec le te
 const OVER_START = 8 * PHASE_LEN, OVER_LEN = 3 * PHASE_LEN;   // au-delà, il s'emballe : aucune partie ne dure des heures
 // Apparition des pièges (m), en fractions de phase : avec PHASE_LEN = 60 → 30, 45, 60, 80, 100, 120, 120, 180
 const UNLOCK = { traps: PHASE_LEN / 2, stutter: PHASE_LEN * 3 / 4, mud: PHASE_LEN, cloud: PHASE_LEN * 4 / 3,
-                 fauxDos: PHASE_LEN * 5 / 3, rush: 2 * PHASE_LEN, slope: 2 * PHASE_LEN, ice: 3 * PHASE_LEN };
+                 fauxDos: PHASE_LEN * 5 / 3, rush: 2 * PHASE_LEN, slope: 2 * PHASE_LEN, ice: 3 * PHASE_LEN,
+                 // v2.5 — les faux signaux : le recomptage (50 m), l'avion menteur (90 m), le reflet du soleil dans une flaque (150 m)
+                 recount: PHASE_LEN * 5 / 6, plane: PHASE_LEN * 3 / 2, reflet: PHASE_LEN * 5 / 2 };
+// v2.5 — probabilité, par chant, du recomptage et de l'avion menteur dans la course infinie (de la phase 1 à la phase difficile)
+const LIE_P = { recount: [0.2, 0.3], plane: [0.22, 0.32] };   // (jamais pendant un boss : à grande vitesse, un cycle sur deux en est un)
 const FIRST_TRAP_CYCLE = 3;  // un mot piège forcé au 3e cycle de chaque partie (vers 12-15 s)
 const STAR_EVERY = PHASE_LEN / 4;   // une étoile de distance tous les 15 m
 // Étoiles à attraper (risque / récompense)
@@ -52,7 +57,7 @@ const BOSS_REST = 1.2;       // pause en plus après un boss battu, le temps qu'
 const DUO_FINISH = 120;      // ligne d'arrivée (m)
 const DUO_WIN = 2;           // manches gagnantes
 const DUO_D = 0.25;          // difficulté fixe du soleil (0 = facile, 1 = très dur)
-const DUO_TURN = 0.45;       // temps pour réagir après « SOLEIL ! » (s), comme au début du solo
+const DUO_TURN = 0.65;       // temps pour lire, réagir et freiner après « SOLEIL ! » (s) — v2.5 : plus de « SO »
 const DUO_TRAPS = 0.35;      // probabilité d'un mot piège dans un chant
 const DUO_FAUX = 0.25;       // probabilité d'un faux dos après un regard
 const DUO_RESPAWN = 1.1;     // durée de l'animation « grillé » avant le retour au départ (s)
@@ -69,5 +74,5 @@ Object.assign(S, { GAME_TITLE, VMAX0, VMAX_STEP, VMAX_CAP, ACC, DEC, ICE_DEC, MU
   TURN0, TURN_MIN, RET_DUR, HOP_DUR, PEEK_P, DIFF_SCALE, PRESSURE, OVER_START, OVER_LEN, UNLOCK,
   FIRST_TRAP_CYCLE, STAR_EVERY, STAR_P, BIG_P, STAR_PTS, BIG_PTS, STAR_MARGIN, BIG_MARGIN, STAR_R, CLOUD_P,
   SLOPE_SPEED, SLOPE_DEC, SLOPE_TILT, VOICE_MAX_LAG, BOSS_LEAD, BOSS_REST, DUO_FINISH, DUO_WIN, DUO_D, DUO_TURN,
-  DUO_TRAPS, DUO_FAUX, DUO_RESPAWN, DUO_LANE, DUO_INTRO, CAM_H, CAM_BACK, PATH_W, FAR, INK, SKIN, TAU, FONT });
+  DUO_TRAPS, DUO_FAUX, DUO_RESPAWN, DUO_LANE, DUO_INTRO, CAM_H, CAM_BACK, PATH_W, FAR, INK, SKIN, TAU, FONT, LIE_P });
 })(window.Soleil);

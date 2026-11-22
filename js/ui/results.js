@@ -22,10 +22,11 @@ function showLevelFail(info) {
   const el = lvCard('lvFail');
   el.className = 'lvcard fail';
   const revive = S.Reward.canRevive();            // 🎬 2e chance (pub récompensée) : avec son bouton normal « Réessayer »
+  const night = info.res && info.res.why === 'night';   // v2.5 : après « LA NUIT TOMBE ! », la 2e chance = +10 s de jour
   el.innerHTML = `<div class="why">${esc(info.why)}</div><div class="almost">${esc(info.almost)}</div>`
     + (info.tip ? `<div class="tipx">${esc(info.tip)}</div>` : '')
     + (revive ? S.Reward.pairHTML({ act: 'retry', label: L.tryAgain, icon: 'restart' },
-                                  { kind: 'revive', token: S.Reward.reviveToken(), label: L.reviveBtn, cap: L.reviveCap })
+                                  { kind: 'revive', token: S.Reward.reviveToken(), label: night ? L.reviveNightBtn : L.reviveBtn, cap: night ? L.reviveNightCap : L.reviveCap })
               : `<div class="tap">${S.touchUI ? '👆 ' : ''}${esc(S.forDevice(L.failTap, L.keyRetry))}</div>`)
     + `<div class="btns"><button class="btn sm c-white" type="button" data-act="map">${icon('grid')}${esc(L.mapBtn)}</button></div>`;
   el.classList.add('show');
@@ -50,13 +51,13 @@ function showLevelResults(info) {
   const extra = [info.newBest && res.time ? L.bestTime(fmt(res.time).replace(/[.,]\d$/, '')) : '', info.coins ? L.coins(info.coins) : ''].filter(Boolean).join(' · ')
     + (info.bonus ? ` (${L.bonusStars(info.bonus)})` : '');
   el.className = 'lvcard end' + (lv.boss ? ' boss' : '');
-  el.innerHTML = `<div class="ttl">${esc(lv.boss ? (lv.bossKind === 'farceur' ? L.bossWin2 : L.bossWinTitle) : L.winTitle)}</div>`
+  el.innerHTML = `<div class="ttl">${esc(lv.boss ? L[S.bossOf(lv).win] : L.winTitle)}</div>`
     + `<div class="lvl">${esc(L.levelN(lv.num))} · ${lv.emoji} ${esc(tr(lv.name))}</div>`
     + `<div class="stars">${[0, 1, 2].map(i => `<span data-i="${i}">★</span>`).join('')}</div>`
     + `<div class="goals">${lines.map(([t, ok], i) => `<div data-g="${i}"><b>${'★'.repeat(i + 1)}</b> ${esc(t)} <i></i></div>`).join('')}</div>`
     + (info.ranking.length > 1 ? `<div class="rank">${rows}</div>` : '')
     + (extra ? `<div class="extra">${esc(extra)}</div>` : '')
-    + (lv.boss && info.firstWin ? `<div class="extra">${esc(lv.world === 2 ? L.worldDone2 : L.worldDone)}</div>` : '')
+    + (lv.boss && info.firstWin ? `<div class="extra">${esc(L[lv.world === 3 ? 'worldDone3' : lv.world === 2 ? 'worldDone2' : 'worldDone'])}</div>` : '')
     + (S.Reward.canDouble()                       // 🎬 ×2 ⭐ : à côté du bouton normal vert (Suivant, ou Carte au dernier niveau)
         ? S.Reward.pairHTML(info.next ? { act: 'next', label: L.nextBtn, icon: 'play' } : { act: 'map', label: L.mapBtn, icon: 'grid' },
                             { kind: 'double', token: S.Reward.doubleToken(), label: L.doubleBtn, cap: L.doubleCap(info.coins) })

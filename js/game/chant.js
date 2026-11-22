@@ -1,9 +1,13 @@
-/* js/game/chant.js — Le chant du soleil : « 1… 2… 3… SO… SOLEIL ! », pièges, hésitations, boss */
+/* js/game/chant.js — Le chant du soleil : « 1… 2… 3… SOLEIL ! », pièges, hésitations, boss.
+   v2.5 : plus de « SO » nulle part. Le mot (vrai ou piège) arrive juste après le « 3… » : c'est lui qui prévient. */
 (function (S) {
 'use strict';
 const { BOSS_LEAD, CLOUD_P, DIFF_SCALE, DUO_D, DUO_FAUX, DUO_TRAPS, DUO_TURN, FIRST_TRAP_CYCLE, OVER_LEN,
-  OVER_START, PHASE_LEN, PRESSURE, TURN_MIN, TURN0, UNLOCK, VMAX_CAP, VMAX_STEP, VMAX0, L, MOON_TRAPS, SUN_TRAPS,
-  lerp, smooth, vibrate, Sound, SAY, Voice, Lt } = S;   // déjà chargés
+  OVER_START, PHASE_LEN, PRESSURE, TURN_MIN, TURN0, UNLOCK, LIE_P, VMAX_CAP, VMAX_STEP, VMAX0, L, MOON_TRAPS, SUN_TRAPS,
+  lerp, smooth, vibrate, mulberry32, mixSeed, Sound, SAY, Voice, Lt } = S;   // déjà chargés
+// v2.5 — les faux signaux de la course infinie (même réglage que les niveaux : game/match.js)
+const LIE_NEED = { recount: 2.0, planeGo: 1.7 };   // après le début du mensonge, il regarde encore au moins ce temps (s)
+const PLANE_STOP = [0.2, 0.45];                    // l'avion « SOLEIL ! » : entre 0,2 s après « 1 » et 0,45 s avant le vrai mot
 
 /* ---------- 13. Le chant du soleil : mots pièges, hésitations, boss ---------- */
 const effort = () => S.runner.z + PRESSURE * S.runT;
@@ -44,10 +48,9 @@ function makeChant(D, O, moon, z, R, boss, pTrapOver, forceTrap) {
   seq.forEach(n => { ev.push({ t, text: String(n + 1), kind: 'num', n }); t += w * J(); });
   for (let i = 0; ; i++) {
     const last = i >= traps;
-    if (!moon) {
-      ev.push({ t, text: S.chantW().pre, kind: 'so' });
-      t += hes && last ? lerp(0.55, 1.45, dHesLen) : w * 0.55 * J();
-    } else if (hes && last) t += lerp(0.55, 1.45, dHesLen);
+    // L'ancien « SO » avait son dé : il est toujours tiré, pour que le reste du chant (rires, « 3 ») ne bouge pas.
+    if (!moon && !(hes && last)) J();
+    if (hes && last) { ev[ev.length - 1].hes = true; t += lerp(0.55, 1.45, dHesLen); }   // l'hésitation : le « 3… » qui dure
     if (last) { ev.push({ t, text: moon ? S.chantW().moon : S.chantW().sun, kind: 'trigger' }); break; }
     ev.push({ t, text: words[i], kind: 'trap' });             // « SOLDES ! » : il ne se retourne pas…
     t += lerp(0.5, 0.75, r());                                // …il rigole…
@@ -78,6 +81,21 @@ function startChant() {
   w.faux = w.R[17] < pFaux || (w.boss && (w.boss - 1) % 4 % 2 === 1);   // boss du Soir et de l'Aube : faux dos garanti
   w.peekDur = 0.55 + w.R[18] * 0.6; w.peekPlan = w.peekDur; w.spotAt = 0;
   if (S.tutorial && S.cycleN === 1) w.turnDur = 1.0;              // toute première partie : on laisse le temps de comprendre
+  // v2.5 — le recomptage et l'avion menteur, avec leur PROPRE flux de dés (les 24 dés d'avant ne changent pas :
+  // le même défi du jour pour tout le monde). Jamais à deux, pendant un boss ou derrière un nuage.
+  const N = mulberry32(mixSeed(S.runSeed || 1, 7000 + S.cycleN)), nd = [N(), N(), N(), N(), N()];
+  w.lie = null; w.planeAt = -1;
+  if (!isDuo && !w.boss && !w.cloud) {
+    const pR = z >= UNLOCK.recount ? lerp(LIE_P.recount[0], LIE_P.recount[1], smooth(0.1, 0.7, D)) : 0;
+    const pP = z >= UNLOCK.plane ? lerp(LIE_P.plane[0], LIE_P.plane[1], smooth(0.2, 0.8, D)) : 0;
+    if (nd[0] < pR) w.lie = { type: 'recount', at: 0.3 + 0.4 * nd[1], n: -1, fired: false };
+    else if (nd[2] < pP && nd[3] < 0.5) w.lie = { type: 'planeGo', at: 0.25 + 0.45 * nd[4], fired: false };
+    else if (nd[2] < pP) {                                         // « SOLEIL ! » sur la banderole, pendant le chant
+      const e0 = w.chant.events[0].t + PLANE_STOP[0];
+      w.planeAt = e0 + Math.max(0, w.chant.trig - PLANE_STOP[1] - e0) * nd[4];
+    }
+    if (w.lie) w.lookDur = Math.max(w.lookDur, w.lie.at + LIE_NEED[w.lie.type]);
+  }
   if (w.boss) {
     S.bossBanner = { t: 0, moon }; S.phaseTitle = null;
     Sound.boss(); vibrate(30);
@@ -90,16 +108,16 @@ function chantEvent(ev) {
   w.text = ev.text; w.textKind = ev.kind; w.textT = S.gtime; w.bump = 1; w.revealed = false;
   Sound.chant(ev, w.type === 'moon');
   if (ev.kind === 'trap') { w.trapsThisChant++; if (S.mode !== 'duo') S.trapWatch = { t: S.runT, moving: S.runner.v > 2, stopped: false }; }
-  if (S.tutorial && S.cycleN === 1 && ev.kind === 'so') S.popup(L.letGo, Lt.cx, Lt.yFeet - Lt.s * 1.9, '#FFD166', Math.min(Lt.U * 0.08, 42), 1.3);
+  if (S.tutorial && S.cycleN === 1 && ev.kind === 'trigger') S.popup(L.letGo, Lt.cx, Lt.yFeet - Lt.s * 1.9, '#FFD166', Math.min(Lt.U * 0.08, 42), 1.3);
   if (ev.kind === 'num' && w.trapsThisChant > 0 && S.star && !S.star.taken && !S.star.gone) S.poofStar();   // c'était un piège : trop tard
   if (ev.kind === 'num' && ev.n === 2 && !w.starTried) { w.starTried = true; S.tryStar(); }   // au « 3 » : une étoile ?
 }
 
 /* ---------- 13 bis. Le chant d'un niveau (mode Niveaux) ----------
-   Mêmes événements que makeChant (num, so, trap, trigger), mais réglés par les données du niveau.
+   Mêmes événements que makeChant (num, trap, trigger), mais réglés par les données du niveau.
    c = réglages du cycle déjà tirés par le moteur (game/match.js, cycleConfig) :
-     word (durée d'un mot, s), jitter (variation ±), soK (durée du « SO » en mots), traps (0, 1 ou 2 mots pièges),
-     hesAt (index du « SO » qui hésite, -1 = aucun), hesLen (durée du « SOOOO… », s),
+     word (durée d'un mot, s), jitter (variation ±), soK (durée de l'ancien « SO » : son dé est encore tiré), traps (0, 1 ou 2),
+     hesAt (devant quel mot le « 3… » hésite, -1 = aucun), hesLen (durée de ce « 3… » qui dure, s),
      stutter (bégaiement « 2… 2… 3… »), stutterAt (0 ou 1), stutterRush (après le bégaiement, il accélère : × durée),
      express (tout deux fois plus vite), expressK (× durée), words (mots pièges), laugh (s), rnd (générateur du cycle). */
 function buildChant(c) {
@@ -116,8 +134,8 @@ function buildChant(c) {
   });
   for (let i = 0; ; i++) {
     const last = i >= c.traps;
-    ev.push({ t, text: S.chantW().pre, kind: 'so', hes: i === c.hesAt });
-    t += i === c.hesAt ? c.hesLen : w * c.soK * J() * rush;
+    const hes = i === c.hesAt;                                       // le « 3… » qui dure (l'ancien « SOOOO… »)
+    if (hes) { ev[ev.length - 1].hes = true; t += c.hesLen; } else J();   // le dé de l'ancien « SO » est toujours tiré
     if (last) { ev.push({ t, text: S.chantW().sun, kind: 'trigger' }); break; }
     ev.push({ t, text: c.words[i], kind: 'trap' });                  // « SOUPE ! » : il ne se retourne pas…
     t += c.laugh;                                                    // …il rigole…

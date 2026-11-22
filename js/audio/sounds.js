@@ -59,7 +59,6 @@ const Sound = {
   },
   chant(ev, moon) {
     if (ev.kind === 'num') this.tone(moon ? [262, 294, 330][ev.n] : [523, 587, 659][ev.n], 0.2, moon ? 'sine' : 'triangle', 0.24);
-    else if (ev.kind === 'so') this.tone(784, 0.18, 'triangle', 0.26);
     else if (moon) { this.tone(440, 0.55, 'sine', 0.3, 220); this.tone(660, 0.5, 'triangle', 0.08, 330); }
     else { this.tone(1047, 0.32, 'square', 0.12); this.tone(523, 0.32, 'triangle', 0.16); }   // trigger et pièges : même son !
   },
@@ -91,6 +90,13 @@ const Sound = {
   doubled() { [1047, 1319, 1568, 2093].forEach((f, i) => this.tone(f, 0.16, 'square', 0.07, 0, i * 0.06)); },
   poof() { this.noise(0.25, 0.08, 'bandpass', 1300, 300, 0.9); },
   cloud() { this.noise(1.0, 0.05, 'lowpass', 520, 180, 0.6); },
+  hat() { this.tone(500, 0.22, 'sine', 0.16, 1300); this.tone(1300, 0.25, 'sine', 0.12, 700, 0.2); },   // v2.5 : le chapeau du Soleil Vacancier (sifflet)
+  shout() { this.tone(620, 0.1, 'square', 0.1, 820); this.tone(840, 0.16, 'square', 0.1, 1050, 0.11); this.noise(0.12, 0.05, 'bandpass', 1500, 2200, 2, 0.02); },   // v2.5 : « VAS-Y ! »
+  stampede() { for (let i = 0; i < 9; i++) this.noise(0.06, 0.18, 'lowpass', 260, 0, 1.2, i * 0.045); },   // v2.5 : le troupeau qui démarre
+  plane() {                                      // v2.5 : l'avion menteur, « brrr » d'hélice qui arrive puis s'en va
+    for (let i = 0; i < 14; i++) this.noise(0.13, 0.055 * (1 - Math.abs(i - 7) / 8), 'bandpass', 330 - i * 6, 0, 5, i * 0.19);
+    this.tone(92, 2.6, 'sawtooth', 0.03, 84);
+  },
   wind(level) {                                  // vent continu dans la descente (0 = silence)
     const c = this.ctx; if (!c || !this.noiseBuf) return;
     if (Math.abs(level - (this.windL || 0)) < 0.03 && level !== 0) return;
