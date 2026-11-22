@@ -6,7 +6,8 @@
            node tools/simulate.js --md docs/LEVELS.md               (réécrit le tableau des résultats)
    Elle charge les MÊMES fichiers que le navigateur (moteur de niveau, chant, physique, cerveaux des rivaux,
    données des niveaux) dans un bac à sable : rien n'est recopié. Le joueur simulé est piloté par un « cerveau »
-   (game/rivals.js : profils expert, moyen, debutant, avec leur sang-froid face aux tentations), comme les rivaux. */
+   (game/rivals.js : profils expert, moyen, debutant, patient, avec leur sang-froid face aux tentations), comme les rivaux.
+   v2.5.1 : le moyen est un vrai joueur au téléphone (il lit le mot en 0,36 s, il repart au « ding » en 0,29 s). */
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -30,10 +31,10 @@ const TARGETS = {
   3: { dur: [30, 42], bossDur: 50, boss: [0.10, 0.20] }    // v2.5 : la plage, le dernier boss (10 à 20 % pour le moyen)
 };
 // Résultats du monde 1 (300 essais) : ils ne doivent pas bouger (à 3 points près) tant qu'on ne règle pas le monde 1.
-// v2.5 : plus de « SO » (demi-tours rallongés), le coucher du soleil (niveau 3), le recomptage (niveau 4), la fausse alerte
-// (niveau 7) et le recomptage du boss ; le robot « patient » échoue dès la nuit.
-const REF_W1 = { expert: [100, 100, 100, 98, 100, 100, 99, 100], moyen: [100, 100, 86, 77, 81, 63, 50, 31],
-                 debutant: [100, 91, 75, 19, 17, 6, 6, 3], patient: [100, 100, 0, 0, 1, 0, 0, 0] };
+// v2.5.1 : le moyen lit le mot en 0,36 s (vrai joueur au téléphone), le débutant en 0,45 s ; demi-tours et nuits
+// réglés à nouveau pour eux (la nuit tombait beaucoup trop vite dès le niveau 7).
+const REF_W1 = { expert: [100, 100, 100, 98, 100, 100, 98, 100], moyen: [100, 100, 90, 79, 72, 63, 52, 32],
+                 debutant: [100, 87, 17, 18, 4, 3, 4, 2], patient: [100, 100, 0, 1, 22, 14, 0, 0] };
 // Fichiers du jeu chargés, dans l'ordre de index.html (seulement ceux qui ne touchent pas à l'écran)
 const FILES = ['js/core/config.js', 'js/core/rng.js', 'js/game/content.js', 'js/game/physics.js', 'js/game/chant.js',
   'js/game/rivals.js', 'js/game/match.js', 'levels/worlds.js', 'levels/world1.js', 'levels/world2.js', 'levels/world3.js'];
@@ -101,7 +102,8 @@ function run(def, profile) {
     why: top ? `${label(top[0])} (${Math.round(top[1] / fails.length * 100)} %)` : '—',
     s2: wins.filter(r => r.stars[1]).length / N, s3: wins.filter(r => r.stars[2]).length / N,
     turn: Math.max(...res.map(r => r.firstTurn)), quick: mean(wins.map(r => r.stats.quick)), resisted: mean(wins.map(r => r.stats.resisted)),
-    oops: mean(res.map(r => r.stats.oops || 0))   // niveau en douceur : « OUPS ! » par essai
+    oops: mean(res.map(r => r.stats.oops || 0)),  // niveau en douceur : « OUPS ! » par essai
+    night: fails.filter(r => r.why === 'night').length / N   // v2.5.1 : essais perdus parce que la nuit est tombée
   };
 }
 
@@ -151,9 +153,12 @@ for (const w of worlds) {
   }
 }
 // v2.5 — la prudence ne suffit plus : le robot « patient » (il s'arrête à chaque « 3 », ne repart qu'au « ding ») échoue
-// au moins une fois sur deux à la fin du monde 1, 4 fois sur 5 dans le monde 2 et après, et n'a jamais ★★★ ;
+// au moins une fois sur deux à la fin du monde 1, 4 fois sur 5 dans le monde 2 et après, et n'a presque jamais ★★★
+// (au plus 2 % : il gagne parfois une course quand tous les rivaux se sont fait griller) ;
 // le joueur moyen réussit le début du monde 1 (niveau 3, le premier avec la nuit) environ 85 % du temps.
-rows.forEach(r => checks.push([`niveau ${tag(r)} : le robot prudent n'a jamais ★★★`, r.p.patient.s3 === 0, pct(r.p.patient.s3)]));
+// v2.5.1 — la nuit punit la prudence, pas le joueur moyen : elle lui fait perdre au plus 5 % de ses essais.
+rows.forEach(r => checks.push([`niveau ${tag(r)} : le robot prudent n'a presque jamais ★★★ (au plus 2 %)`, r.p.patient.s3 <= 0.02, pct(r.p.patient.s3)]));
+rows.filter(r => r.lv.night).forEach(r => checks.push([`niveau ${tag(r)} : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais)`, r.p.moyen.night <= 0.05, pct(r.p.moyen.night)]));
 for (const [w, n, max] of [[1, 7, 0.5], [1, 8, 0.5]]) {
   const r = find(w, n); if (r) checks.push([`niveau ${w}-${n} : le robot prudent échoue au moins une fois sur deux`, r.p.patient.win <= max, pct(r.p.patient.win)]);
 }

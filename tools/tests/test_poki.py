@@ -971,11 +971,56 @@ async def t_no_so(b):
         check(f'{lg} : le chant n’affiche que « 1 », « 2 », « 3 », des mots entiers et le vrai mot ; la voix ne dit jamais « {r["pre"].capitalize()}… »', ok, info)
         await done(page, ctx)
 
+NIGHT_STAND = r"""(secs => { const S = Soleil, Lv = S.Levels;   // le joueur ne bouge plus : seule la nuit peut le faire perdre
+  for (let i = 0; i < 60 * secs && Lv.phase === 'play'; i++) { S.pressing = false; S.update(1 / 60); }
+  return Lv.phase; })"""
+NIGHT_STATE = """(() => { const S = Soleil, m = S.Levels.m, L = S.L;
+  return { ph: S.Levels.phase, why: m.result && m.result.why, t: m.t, night: m.night, up: !!m.sunUp, sink: S.sunSink, sky: S.lvSkyZ,
+           R: S.Lt.R, pop: S.particles.filter(p => p.type === 'text').map(p => p.text),
+           btn: (document.querySelector('#lvFail [data-reward]') || {}).innerText || '', bonus: L.nightBonus, nbtn: L.reviveNightBtn, ncap: L.reviveNightCap,
+           card: (document.getElementById('lvFail') || {}).innerText || '' }; })()"""
+
+async def t_night_revive(b):
+    print('\n31) v2.5.1 — 🎬 2e chance quand la nuit tombe : le soleil remonte et ne se couche plus (et pareil après avoir été grillé)')
+    ctx, page = await new_page(b, ad=300)
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-7', false)"); await page.wait_for_timeout(200)
+    await page.keyboard.press('Space'); await frames(page)
+    ph = await page.evaluate(NIGHT_STAND + "(60)")
+    await page.wait_for_function("Soleil.Levels.phase === 'fail' && document.getElementById('lvFail').classList.contains('armed')", timeout=5000)
+    st = await page.evaluate(NIGHT_STATE)
+    check('la nuit tombe (on ne bouge plus) : la carte propose « 🎬 Le soleil remonte » et explique qu’il ne se couchera plus',
+          st['why'] == 'night' and st['nbtn'] in st['btn'] and st['ncap'] in st['card'], json.dumps({k: st[k] for k in ('why', 'btn')}, ensure_ascii=False))
+    night0, sink0 = st['night'], st['sink']
+    await page.click('#lvFail [data-reward]')
+    await page.wait_for_function("Soleil.Levels.phase === 'play'", timeout=4000)
+    st = await page.evaluate(NIGHT_STATE)
+    check('vidéo vue : on repart, « LE SOLEIL RESTE LEVÉ ! » s’affiche', st['up'] and st['bonus'] in st['pop'], json.dumps(st['pop'], ensure_ascii=False))
+    await page.evaluate(NIGHT_STAND + "(2.5)")
+    st = await page.evaluate(NIGHT_STATE)
+    check('en 2 s, le soleil remonte bien haut (et le ciel s’éclaircit)', st['sink'] < sink0 * 0.3 and st['sink'] <= st['R'] * 0.3, f"descente {sink0:.0f} px → {st['sink']:.0f} px")
+    sink1 = st['sink']
+    ph = await page.evaluate(NIGHT_STAND + "(25)")
+    st = await page.evaluate(NIGHT_STATE)
+    check('25 s plus tard : la nuit n’est pas retombée, le soleil n’a plus bougé', ph == 'play' and st['t'] > night0 + 20 and abs(st['sink'] - sink1) < 0.5,
+          f"{ph}, t = {st['t']:.1f} s (nuit à {night0} s), descente {st['sink']:.0f} px")
+    await page.evaluate("Soleil.Levels.restart()"); await page.wait_for_timeout(200)
+    await page.keyboard.press('Space'); await frames(page)
+    await page.evaluate("LVBOT('greedy', 60 * 40, () => Soleil.Levels.phase === 'caught')")
+    await page.wait_for_function("Soleil.Levels.phase === 'fail' && document.getElementById('lvFail').classList.contains('armed')", timeout=5000)
+    await page.click('#lvFail [data-reward]')
+    await page.wait_for_function("Soleil.Levels.phase === 'play'", timeout=4000)
+    st = await page.evaluate(NIGHT_STATE)
+    ph = await page.evaluate(NIGHT_STAND + "(60)")
+    st2 = await page.evaluate(NIGHT_STATE)
+    check('grillé puis 🎬 2e chance dans un niveau avec la nuit : le soleil reste levé aussi (plus de nuit pour cet essai)',
+          st['up'] and st['bonus'] in st['pop'] and ph == 'play' and st2['t'] > st2['night'], f"{ph}, t = {st2['t']:.1f} s, nuit à {st2['night']} s")
+    await done(page, ctx)
+
 TESTS = [t_new_player, t_soft_level1, t_returning, t_pause_endless, t_pause_level_daily, t_ads, t_fail_retry, t_hidden_blur,
          t_casier_duo, t_sdk_modes, t_scroll_debug, t_iframe_share, t_build,
          t_fix_toast, t_fix_pill, t_fix_late_ad, t_fix_typo,
          t_reward_revive_level, t_reward_refused, t_reward_hidden, t_reward_endless, t_reward_double, t_reward_trial,
-         t_bigscreen, t_fps_fair, t_quality, t_colorblind, t_languages, t_no_so, t_event_log]
+         t_bigscreen, t_fps_fair, t_quality, t_colorblind, t_languages, t_no_so, t_night_revive, t_event_log]
 
 async def main():
     only = sys.argv[1:]

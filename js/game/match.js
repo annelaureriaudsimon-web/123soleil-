@@ -47,7 +47,8 @@ const KNOCK = 0.5;
 //   night  : le coucher du soleil. Au bout de « night » s, le soleil touche l'horizon : « LA NUIT TOMBE ! », perdu.
 //   chairs : les transats. Il y en a un de moins que d'enfants : quand le dernier est pris par un rival, perdu.
 //   scoops : la glace. On part avec « scoops » boules, une fond toutes les « melt » s ; ce qui reste à l'arrivée = étoiles.
-const NIGHT_BONUS = 10;        // 2e chance après « LA NUIT TOMBE ! » : +10 s de jour, une seule fois
+// 2e chance (pub) dans un niveau avec la nuit : le soleil remonte et ne se couche plus pendant cet essai (m.sunUp).
+// v2.5.1 : « +10 s de jour » ne suffisait pas : le soleil continuait de descendre et la nuit retombait aussitôt.
 const NIGHT_WARN = 5;          // les 5 dernières secondes : la barre clignote, « Vite, la nuit tombe ! »
 
 // Réglages du soleil par défaut (chaque niveau peut les changer dans levels/*.js, champ « sun »)
@@ -219,7 +220,7 @@ function step(m, dt, input) {
   if (pl.knock) knockStep(pl, dt);                 // niveau en douceur : il recule après un « OUPS ! »
   else move(m, pl, unlocked(pl, press), dt);
   if (pl.z >= m.level.length) { win(m); return; }   // ligne franchie : gagné, même s'il finit de se retourner
-  if (m.night) {                                   // le coucher du soleil
+  if (m.night && !m.sunUp) {                       // le coucher du soleil (plus après une 2e chance)
     if (m.t >= m.night) { lose(m, 'night', 0); return; }
     if (!m.warned && m.night - m.t <= NIGHT_WARN) { m.warned = true; emit(m, 'nightWarn'); }
   }
@@ -503,7 +504,7 @@ const REVIVE_PAUSE = 1.2;                          // s : la pause du soleil ava
 function revive(m) {
   if (!m.result || m.result.win || m.revived || m.level.soft || m.result.why === 'chairs') return false;   // transats : on est à l'arrivée
   const pl = m.player, w = m.sun;
-  if (m.result.why === 'night') { m.night += NIGHT_BONUS; m.warned = false; }   // le soleil remonte un peu : +10 s de jour
+  if (m.night) { m.sunUp = true; m.warned = false; }   // le soleil remonte et ne se couche plus (après la nuit ou grillé)
   m.revived = true; m.result = null; m.look = null; m.trapTrack = null; m.quickT = -1;
   pl.v = 0; pl.press = false; pl.stopT = m.t; pl.lock = true; pl.knock = null;
   m.stats.combo = 0;
@@ -536,5 +537,5 @@ function goalMet(g, res) {
 const starsOf = (L, res) => [!!res.win, goalMet(L.goal, res), !res.revived && goalMet(L.challenge, res)];
 
 S.Match = { create, step, revive, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET, KNOCK,
-  NIGHT_BONUS, NIGHT_WARN, TEMPT_V25, RECOUNT, PLANE_STOP, ALARM_RANGE, HERD_N, HERD_RANGE };
+  NIGHT_WARN, TEMPT_V25, RECOUNT, PLANE_STOP, ALARM_RANGE, HERD_N, HERD_RANGE };
 })(window.Soleil);

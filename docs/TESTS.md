@@ -6,14 +6,16 @@ Astuce : si les tests de sauvegarde échouent avec le Chromium de Playwright, la
 
 | Quoi | Commande | Ce qui est vérifié |
 |---|---|---|
-| Simulation des 24 niveaux | `node tools/simulate.js` | Expert au moins 95 % partout, menace dans les 10 premières secondes, durées (25–35 s dans la cour, 30–42 s au parc et à la plage, boss ≤ 45 s / ≤ 50 s), boss du moyen (15–35 % / 10–30 % / 10–20 %), progression régulière, **niveau 1 en douceur : le débutant le finit au moins 90 % du temps, en moins de 45 s** (v2.2), le 1-3 à environ 85 % pour le moyen, chaque monde qui commence plus dur que le début du précédent mais plus facile que son boss, **le robot prudent** (v2.5 : jamais ★★★, au plus 50 % à la fin de la cour, au plus 20 % ensuite), et **monde 1 identique à sa référence** `REF_W1` (réglée en v2.5). **126 vérifications, toutes vertes** (v2.5). |
-| Intégration Poki dans un vrai navigateur | `python3 tools/tests/test_poki.py` (Playwright, faux SDK `tools/tests/fake_poki_sdk.js`) | 168 vérifications (v2.5 : + le test 30, plus de « SO »), détaillées plus bas. **168/168**, aucune erreur JavaScript. |
+| Simulation des 24 niveaux | `node tools/simulate.js` | Expert au moins 95 % partout, menace dans les 10 premières secondes, durées (25–35 s dans la cour, 30–42 s au parc et à la plage, boss ≤ 45 s / ≤ 50 s), boss du moyen (15–35 % / 10–30 % / 10–20 %), progression régulière, **niveau 1 en douceur : le débutant le finit au moins 90 % du temps, en moins de 45 s** (v2.2), le 1-3 à environ 85 % pour le moyen, chaque monde qui commence plus dur que le début du précédent mais plus facile que son boss, **le robot prudent** (v2.5 : presque jamais ★★★, au plus 2 % ; au plus 50 % à la fin de la cour, au plus 20 % ensuite), et **monde 1 identique à sa référence** `REF_W1` (réglée en v2.5.1), et (v2.5.1) **la nuit ne fait presque jamais perdre le moyen** (au plus 5 % de ses essais, dans chaque niveau ; le moyen lit le mot en 0,36 s, comme un vrai joueur). **148 vérifications, toutes vertes** (v2.5.1). |
+| Intégration Poki dans un vrai navigateur | `python3 tools/tests/test_poki.py` (Playwright, faux SDK `tools/tests/fake_poki_sdk.js`) | 173 vérifications (v2.5 : + le test 30, plus de « SO » ; v2.5.1 : + le test 31, la 2e chance quand la nuit tombe), détaillées plus bas. **173/173**, aucune erreur JavaScript. |
 | Build Poki | `node tools/build-poki.js` | Fabrique `dist/poki/` et `dist/soleil-poki.zip`, puis vérifie : aucune adresse externe sauf le SDK, aucun lien sortant, `localStorage` toujours dans un try/catch, aucun `console.log` ni code de debug, moins de 8 Mo, `node --check` sur chaque JS, et chaque fichier entier après le retrait du debug. **TOUT EST OK.** |
 | Mode Niveaux dans un vrai navigateur | `python3 tools/tests/test_levels.py` (Playwright) | 112 vérifications (v2.5 : les 3 mondes, les faux signaux, les rivaux, la plage, la course infinie), détaillées plus bas. **112/112**, aucune erreur JavaScript. |
 | Comparaison avec la version d'avant, image par image | `python3 tools/tests/compare_frames.py <dossier de la version d'avant>` | La course infinie et le monde 1 se dessinent exactement pareil (même graine, même hasard visuel, même robot ; SDK coupé, joueur qui revient). **94/94 images identiques** contre la v2.1 ; contre la v2.2 : 88/94, les 6 autres étant les images avec le vrai signal ou un mot piège à l'écran (étoile « POW » / mot rayé, v2.4). **v2.5 contre la v2.4 : 18/94 identiques, 76 différences voulues** (les images des niveaux : plus de « SO », coucher du soleil), **0 non voulue** ; les 14 images de la course infinie sont identiques. Pour la suite, comparer avec la v2.5. |
 | Syntaxe | `for f in js/*.js js/*/*.js levels/*.js tools/*.js; do node --check $f; done` | Aucune erreur de syntaxe (74 fichiers du jeu + les outils ; le build Poki le refait). |
 
-### Ce que vérifie `test_poki.py` (v2.2, v2.3 : tests 15 à 24 pour les corrections et les pubs récompensées, v2.4 : tests 25 à 29, v2.5 : test 30)
+### Ce que vérifie `test_poki.py` (v2.2, v2.3 : tests 15 à 24 pour les corrections et les pubs récompensées, v2.4 : tests 25 à 29, v2.5 : test 30, v2.5.1 : test 31)
+
+- **v2.5.1** — 31 la 2e chance quand la nuit tombe : au 1-7, on ne bouge plus jusqu'à la nuit ; la carte propose « 🎬 Le soleil remonte » ; après la vidéo, « LE SOLEIL RESTE LEVÉ ! », le soleil remonte bien haut en 2 s, et 25 s plus tard la nuit n'est toujours pas retombée ; pareil après une 2e chance quand on a été grillé. Vérifié avec l'ancien « +10 s de jour » : le test le voit (la nuit retombe).
 
 - **v2.5** — 30 plus de « SO » : dans les 6 langues, une 1re partie (tutoriel), deux courses libres (dont une depuis 170 m : recomptages, avions, reflets, boss), le défi du jour, les 2 joueurs et 8 niveaux des 3 mondes (hésitations, bégaiement, express, nuage, les 3 boss) ; le chant n'affiche que « 1 », « 2 », « 3 », des mots pièges et le vrai mot ; ni le chant, ni les petits textes, ni la voix ne disent l'ancien début (« SO… », « RED… », « PO… », « BA… », « STE… », ni « SOOOO… ») ; aucun texte de la langue ne le contient. Vérifié en remettant exprès un « SO… » dans le chant et dans un texte : le test le voit.
 
@@ -75,6 +77,16 @@ Monde 2 (phase 2) :
 | Niveaux 1, 3, 5, 7 et 8 du monde 1, comparés image par image à la version d'avant (`compare_frames.py`) | 80 images sur 80 identiques au pixel près (portrait et paysage, boss compris). |
 | Simulation | v2.2 : seul le niveau 1 change (débutant 66 % → 100 %, niveau en douceur). Les 7 autres niveaux du monde 1 et tout le monde 2 : mêmes chiffres qu'en v2.1, à 0 point près. |
 
+## La v2.5.1 : 3 vérifications rapides (la nuit)
+
+1. **La nuit au 1-7 et au boss.** Joue normalement (lis le mot, ne t'arrête pas à chaque « 3 ») : tu dois arriver avant
+   la nuit, avec un peu d'avance. Si tu t'arrêtes à chaque « 3 » et attends le « ding » même après un mot piège, elle
+   peut tomber : c'est voulu.
+2. **🎬 quand la nuit tombe.** Le titre dit « LA NUIT TOMBE ! » (pas « GRILLÉ ! »), le bouton « 🎬 Le soleil remonte » ;
+   après la vidéo, le soleil remonte et ne se couche plus, la barre de la nuit disparaît (`?debug=1&fakead=1` pour une
+   fausse vidéo).
+3. **🎬 après avoir été grillé** dans un niveau avec la nuit : pareil, le soleil remonte et reste levé.
+
 ## La v2.5 : 10 vérifications rapides sur ton téléphone et ton PC
 
 Les tests automatiques disent que tout marche et que c'est juste ; ils ne disent pas si c'est **lisible** et **amusant**
@@ -85,7 +97,8 @@ mode debug (`index.html?debug=1&fakead=1` pour les boutons 🎬).
    Avec la voix 🗣️ en course infinie : pareil. En anglais (`?lang=en`) : jamais « RED… » tout seul.
 2. **Le « ding » dès la cour (1-1).** À chaque vrai retour : « ding-ding », anneau vert, rayons qui tournent.
 3. **Le coucher du soleil (1-3).** Le soleil descend, le ciel passe au soir, la barre « jusqu'à la nuit » ; fais exprès
-   de t'arrêter à chaque « 3 » : « LA NUIT TOMBE ! », puis 🎬 « +10 s de jour ».
+   de t'arrêter à chaque « 3 » : « LA NUIT TOMBE ! » (pas « GRILLÉ ! »), puis 🎬 « Le soleil remonte » : il remonte
+   et ne se couche plus (v2.5.1).
 4. **Le recomptage (1-4).** Il compte « 1… 2… » en te regardant. Est-ce qu'on comprend qu'il ment (son visage) ?
    Bouge : « Il comptait en te regardant… ».
 5. **La fausse alerte (1-7) et le troupeau (2-7).** La bulle du cri a le prénom du rival, ne cache ni le soleil ni le

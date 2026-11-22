@@ -66,7 +66,7 @@ Sans ces champs, un niveau se joue exactement comme en phase 1.
 
 | Champ | Rôle |
 |---|---|
-| `night` | le coucher du soleil : au bout de `night` s, « LA NUIT TOMBE ! », perdu. Barre « jusqu'à la nuit » ; les 5 dernières secondes, elle clignote. 2e chance (🎬) : +10 s de jour, une fois. `0` = pas de nuit. |
+| `night` | le coucher du soleil : au bout de `night` s, « LA NUIT TOMBE ! », perdu. Barre « jusqu'à la nuit » ; les 5 dernières secondes, elle clignote. 2e chance (🎬) : le soleil remonte et ne se couche plus de l'essai (v2.5.1). `0` = pas de nuit. Réglage : juste au-dessus du joueur moyen de la simulation (`docs/DIFFICULTY.md`). |
 | `chairs` | les transats à l'arrivée. Mettez-en **un de moins que d'enfants** (rivaux + toi). Quand le dernier est pris par un rival : perdu, sans 2e chance. |
 | `scoops`, `melt` | la glace : on part avec `scoops` boules, une fond toutes les `melt` s. Ce qui reste compte pour l'objectif `scoops`. À l'arrivée : la montagne de boules. |
 

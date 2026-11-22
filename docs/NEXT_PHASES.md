@@ -1,6 +1,6 @@
 # Notes pour les phases suivantes
 
-Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout relire. Il est à jour à la fin de la **v2.5** (les nouveaux pièges, le monde 3 « La plage »), après la v2.4 (étape Poki 3 : 6 langues, grands écrans, qualité), la v2.3 (étape Poki 2 : corrections et pubs récompensées), la v2.2 (étape Poki 1 : SDK Poki, pause, premiers pas, build Poki), la phase 2 (monde 2 « Le parc ») et la v2.1 (nouveau look).
+Ce fichier dit **où** et **comment** brancher la suite, sans avoir à tout relire. Il est à jour à la fin de la **v2.5.1** (la nuit et la 2e chance, la difficulté réglée sur un vrai joueur), après la v2.5 (les nouveaux pièges, le monde 3 « La plage »), après la v2.4 (étape Poki 3 : 6 langues, grands écrans, qualité), la v2.3 (étape Poki 2 : corrections et pubs récompensées), la v2.2 (étape Poki 1 : SDK Poki, pause, premiers pas, build Poki), la phase 2 (monde 2 « Le parc ») et la v2.1 (nouveau look).
 
 ## L'architecture en 30 secondes
 

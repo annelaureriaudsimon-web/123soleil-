@@ -81,7 +81,13 @@ Maintenant, **partout** (niveaux, course infinie, défi du jour, 2 joueurs, tuto
 - **On le voit.** Le soleil descend pendant tout le niveau, le ciel passe au soir, la barre « jusqu'à la nuit »
   se vide ; les 5 dernières secondes, elle clignote.
 - **Ce qu'il faut faire.** Ne pas s'arrêter pour rien : courir à travers les mots pièges.
-- **2e chance** (🎬) : « +10 s de jour », une seule fois (`NIGHT_BONUS`).
+- **2e chance** (🎬, une seule par essai) : le soleil remonte et **ne se couche plus** pendant cet essai, la barre
+  disparaît, « LE SOLEIL RESTE LEVÉ ! ». Pareil après une 2e chance quand on a été grillé (v2.5.1 ; en v2.5, c'était
+  « +10 s de jour » : le soleil continuait de descendre et la nuit retombait aussitôt). Dans le moteur : `m.sunUp`.
+- **Réglage** (v2.5.1) : la nuit tombe juste après le joueur moyen (il lit le mot en 0,36 s) : elle lui fait perdre au
+  plus 1 % de ses essais. Elle punit celui qui s'arrête à chaque « 3 » et attend le « ding » même après un mot piège.
+- **Le titre** : « LA NUIT TOMBE ! » (jamais « GRILLÉ ! » : on n'a pas bougé devant lui) ; pour les transats,
+  « PLUS DE TRANSAT ! ».
 - **Où.** Du niveau 1-3 (« Avant la nuit ») jusqu'au boss de la plage. Pas au 1-1 (en douceur) ni au 1-2.
 
 ### 🏖️ Les transats (champ `chairs`)

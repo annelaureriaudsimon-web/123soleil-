@@ -3,7 +3,7 @@
    Toute la logique de jeu est dans game/match.js : ce fichier ne décide rien, il met en scène. */
 (function (S) {
 'use strict';
-const { CAM_BACK, PHASE_LEN, INK, L, tr, store, clamp, lerp, vibrate, fmt, Sound, Music, Lt, safe, Match, WORLDS, levelById,
+const { CAM_BACK, PHASE_LEN, INK, L, tr, store, clamp, lerp, easeOut, vibrate, fmt, Sound, Music, Lt, safe, Match, WORLDS, levelById,
   newWatcher, popup, sparks, confetti, smokeAt, dust, sweat } = S;
 
 // ---------- Réglages ----------
@@ -15,6 +15,8 @@ const WIN_DUR = 1.5, BOSS_WIN_DUR = 3.2;   // célébration avant l'écran de r�
 // v2.5 — le coucher du soleil : le soleil descend jusqu'à SINK_MAX × son rayon (son visage reste toujours visible),
 // et le ciel passe du moment du niveau (sky) au soir (NIGHT_SKY). Quand la nuit tombe, il plonge derrière l'horizon.
 const SINK_MAX = 0.78, NIGHT_SKY = 2.85;
+// 2e chance (pub) : le soleil remonte (à 30 % de sa descente au plus, en 1,6 s) et ne se couche plus de l'essai.
+const SUN_UP = 0.3, SUN_UP_T = 1.6;
 // La glace : le ressort qui fait tanguer la montagne de boules (raideur, amortissement, force des accélérations)
 const CONE_K = 38, CONE_C = 7, CONE_G = 0.018;
 const NEAR = 15;                 // « Touche le soleil ! » à 15 m de l'arrivée
@@ -103,7 +105,7 @@ function open(id, retry, opts = {}) {
   m.sun.state = 'pause'; m.sun.rayA = Math.random() * 6;
   LV.hints = new Set(); LV.hold = null; LV.banner = null; LV.lastNum = -9; LV.heartT = 0; LV.jump = 0; LV.info = null;
   LV.fx = newFx(); LV.tip = null; LV.hand = null; LV.oops = null; Sound.buzz(false); m.sun.shut = 0; m.sun.bossFace = null;
-  LV.plocs = []; LV.cone = { a: 0, va: 0, pv: 0 }; LV.mountain = null; LV.noBurn = false; S.sunSink = 0; S.plane = null;   // v2.5
+  LV.plocs = []; LV.cone = { a: 0, va: 0, pv: 0 }; LV.mountain = null; LV.noBurn = false; LV.rise = null; S.sunSink = 0; S.plane = null;   // v2.5
   LV.placeShown = LV.placeCand = Match.place(m); LV.placeT = 0;
   LV.glass = def.boss ? 0 : -1;                   // boss : il n'a pas encore ses lunettes
   if (def.boss && retry) { LV.glass = -1; dressBoss(); if (!Music.on) Music.start(def.bossKind || 'cool'); }
@@ -531,9 +533,18 @@ function pressure(dt) {
   const m = LV.m;
   if (!m) return;
   if (m.night && LV.phase === 'play') {           // le soleil descend, le ciel passe au soir
-    const k = clamp(m.t / m.night, 0, 1);
-    S.sunSink = SINK_MAX * Lt.R * k * 1.12;
-    S.lvSkyZ = (LV.def.sky + (Math.max(LV.def.sky, NIGHT_SKY) - LV.def.sky) * k) * PHASE_LEN;
+    const sky = k => (LV.def.sky + (Math.max(LV.def.sky, NIGHT_SKY) - LV.def.sky) * k) * PHASE_LEN;
+    if (m.sunUp) {                                 // après la 2e chance : il remonte doucement, puis ne bouge plus
+      const r = LV.rise || (LV.rise = { t: 0, sink0: S.sunSink, sky0: S.lvSkyZ, k: Math.min(SUN_UP, clamp(m.t / m.night, 0, 1)) });
+      r.t += dt;
+      const e = easeOut(clamp(r.t / SUN_UP_T, 0, 1));
+      S.sunSink = lerp(r.sink0, SINK_MAX * Lt.R * r.k * 1.12, e);
+      S.lvSkyZ = lerp(r.sky0, sky(r.k), e);
+    } else {
+      const k = clamp(m.t / m.night, 0, 1);
+      S.sunSink = SINK_MAX * Lt.R * k * 1.12;
+      S.lvSkyZ = sky(k);
+    }
   }
   if (m.level.scoops && LV.cone) {                // la montagne de boules tangue quand on accélère ou qu'on freine
     const c = LV.cone, v = m.player.v, acc = dt > 0 ? (v - c.pv) / dt : 0;
@@ -572,9 +583,7 @@ function onCaught() {
   Sound.buzz(false);
   if (res.tempt === 'fakeRet') { popup(L.ha, Lt.cx, Lt.sunY - Lt.R * 1.35, '#FF4D6D', S.fit(L.ha, Math.min(Lt.U * 0.1, 52), S.W * 0.5), 0.8); Sound.ha(); }
   if (res.why === 'night' || res.why === 'chairs') {   // v2.5 : pas grillé… mais perdu (la nuit, les transats)
-    LV.noBurn = true; S.timeScale = 0.35; w.angry = false; w.laugh = 1;
-    const big = res.why === 'night' ? L.nightFall : L.chairsWhy;
-    popup(big, Lt.cx, Lt.hy + (Lt.yFeet - Lt.hy) * 0.3, res.why === 'night' ? '#B79CFF' : '#FF8FA3', S.fit(big, Math.min(Lt.U * 0.11, 58), S.W * 0.9), 1.4);
+    LV.noBurn = true; S.timeScale = 0.35; w.angry = false; w.laugh = 1;   // le gros titre : render/hud.js (drawGrille)
     const rem = Math.ceil(res.remaining);
     LV.info = { def: LV.def, res, why: res.why === 'night' ? L.nightWhy : L.chairsWhy, almost: L.failAlmost(rem),
                 tip: res.why === 'night' ? L.nightTip : L.chairsTip };
@@ -652,12 +661,17 @@ function revive() {
   if (LV.def.boss) Music.setDuck(false);
   LV.info = null; LV.hand = null; LV.oops = null; LV.fx.star = null; LV.fx.sneeze = null; LV.fx.taunt = null; S.plane = null;
   LV.fx.alarm = null; LV.fx.herd = null;
-  const nightBack = LV.noBurn && m.night;         // 2e chance après « LA NUIT TOMBE ! » : +10 s de jour
-  LV.noBurn = false;
+  const nightBack = LV.noBurn && m.night;         // 2e chance après « LA NUIT TOMBE ! » : le soleil reste levé
+  LV.noBurn = false; LV.rise = null;              // le soleil remonte depuis là où il est (render : pressure())
   setPhase('play');
   S.releaseAll();
   S.grace = S.GRACE;                              // 1 s de protection : le monde reste figé, l'anneau se remplit
-  popup(nightBack ? L.nightBonus : L.revived, Lt.cx, Lt.chantY, nightBack ? '#FFB703' : '#C77DFF', S.fit(nightBack ? L.nightBonus : L.revived, Lt.chantSize, S.W * 0.85), 1.2);
+  // (le texte reste figé à sa taille d'entrée, ×1,6, pendant la seconde de grâce : on le prévoit assez étroit)
+  popup(nightBack ? L.nightBonus : L.revived, Lt.cx, Lt.chantY, nightBack ? '#FFB703' : '#C77DFF', S.fit(nightBack ? L.nightBonus : L.revived, Lt.chantSize, S.W * 0.58), 1.2);
+  if (m.night && !nightBack) {                    // grillé dans un niveau avec la nuit : le soleil reste levé, lui aussi
+    const fs = S.fit(L.nightBonus, Lt.chantSize * 0.55, S.W * 0.58);
+    popup(L.nightBonus, Lt.cx, Lt.chantY + Lt.chantSize * 0.95, '#FFB703', fs, 1.4);
+  }
   sparks(24, Lt.cx, Lt.yFeet - Lt.s * 1.2, '#E0AAFF'); Sound.start(); vibrate([20, 30, 40]);
   return true;
 }
@@ -672,6 +686,7 @@ S.Levels = {
   get hold() { return LV.hold; }, get banner() { return LV.banner; }, get tip() { return LV.tip; }, get glass() { return LV.glass; }, get jump() { return LV.jump; },
   get hand() { return LV.hand; }, get oops() { return LV.oops; }, get spin() { return spin(); }, get info() { return LV.info; }, get attempt() { return LV.attempt; },
   get plocs() { return LV.plocs; }, get cone() { return LV.cone; }, get mountain() { return LV.mountain; },   // v2.5 : la glace (render/pressure.js)
+  get noBurn() { return LV.noBurn; },             // v2.5.1 : perdu sans être grillé (la nuit, les transats) : render/hud.js
   isBossLevel: () => !!(LV.def && LV.def.boss)
 };
 })(window.Soleil);

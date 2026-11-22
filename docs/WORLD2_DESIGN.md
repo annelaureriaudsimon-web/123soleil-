@@ -108,7 +108,7 @@ Le freinage ne change pas : la boue fait perdre du temps, mais elle ne grille pe
 
 ## Les 8 niveaux
 
-Les durées visées sont de 30 à 42 s (v2.5 ; avant : 30 à 40 s), et jusqu'à 50 s pour le boss. Les taux sont ceux du joueur « moyen » en v2.5 (300 essais). Le niveau 1 doit être plus dur que le début de la cour et plus facile que le Soleil Cool (v2.5 ; avant : un peu plus dur que le niveau 4 de la cour). Chaque niveau a maintenant sa nuit (de 37 s au niveau 1 à 51 s au boss).
+Les durées visées sont de 30 à 42 s (v2.5 ; avant : 30 à 40 s), et jusqu'à 50 s pour le boss. Les taux sont ceux du joueur « moyen » en v2.5.1 (300 essais ; il lit le mot en 0,36 s, comme un vrai joueur au téléphone). Le niveau 1 doit être plus dur que le début de la cour et plus facile que le Soleil Cool (v2.5 ; avant : un peu plus dur que le niveau 4 de la cour). Chaque niveau a maintenant sa nuit (v2.5.1 : de 41,5 s au niveau 1 à 56,5 s au boss ; elle fait perdre au plus 1 % des essais du moyen).
 
 ### 1. L'étoile tentatrice ⭐
 - **Idée :** une étoile dorée apparaît devant toi pendant le regard.
@@ -117,7 +117,7 @@ Les durées visées sont de 30 à 42 s (v2.5 ; avant : 30 à 40 s), et jusqu'à 
 - **★★ :** Fais 2 départs éclair.
 - **★★★ :** Arrive 1er.
 - **Rivaux :** Hugo ⚡ (il craque sur l'étoile) et Zoé 🐢.
-- **Simulation :** moyen 66 %, expert 99 %, robot prudent 0 % (cour : 100 % au niveau 2, Soleil Cool : 31 %).
+- **Simulation :** moyen 73 %, expert 99 %, robot prudent 2 % (cour : 100 % au niveau 2, Soleil Cool : 32 %).
 
 ### 2. Le faux retour 🙃
 - **Idée :** il fait semblant de se retourner… « HA ! ».
@@ -126,7 +126,7 @@ Les durées visées sont de 30 à 42 s (v2.5 ; avant : 30 à 40 s), et jusqu'à 
 - **★★ :** Fais 3 départs éclair.
 - **★★★ :** Finis en moins de 36 s.
 - **Rivaux :** Max ⚡ et Jade 🎯.
-- **Simulation :** moyen 62 %, expert 98 %.
+- **Simulation :** moyen 66 %, expert 98 %.
 
 ### 3. La mouche et les moqueries 🪰
 - **Idée :** pure pression : la mouche se pose sur toi, il te nargue.
@@ -135,7 +135,7 @@ Les durées visées sont de 30 à 42 s (v2.5 ; avant : 30 à 40 s), et jusqu'à 
 - **★★ :** Arrive dans le top 2.
 - **★★★ :** Fais 3 OUF.
 - **Rivaux :** Nino ⚡, Lila 🐢 et Sam 🎯.
-- **Simulation :** moyen 55 %, expert 99 %.
+- **Simulation :** moyen 61 %, expert 99 %.
 
 ### 4. Les flaques de boue 🟤
 - **Idée :** cinq flaques posées sur le chemin, et des étoiles tentatrices.
@@ -144,7 +144,7 @@ Les durées visées sont de 30 à 42 s (v2.5 ; avant : 30 à 40 s), et jusqu'à 
 - **★★ :** Arrive dans le top 2.
 - **★★★ :** Arrive 1er malgré la boue.
 - **Rivaux :** Max ⚡, Inès 🎯 et Tom 🐢.
-- **Simulation :** moyen 51 %, expert 99 %.
+- **Simulation :** moyen 58 %, expert 99 %.
 
 ### 5. Le faux dos 👀
 - **Idée :** il se met de dos… mais un œil dépasse. « HOP ! ».
@@ -153,16 +153,16 @@ Les durées visées sont de 30 à 42 s (v2.5 ; avant : 30 à 40 s), et jusqu'à 
 - **★★ :** Fais 3 départs éclair.
 - **★★★ :** Finis en moins de 38 s.
 - **Rivaux :** Hugo ⚡ (il se fait avoir), Léo 🐢 et Jade 🎯.
-- **Simulation :** moyen 46 %, expert 98 %.
+- **Simulation :** moyen 48 %, expert 99 % (v2.5.1 : 145 m au lieu de 150).
 
 ### 6. Le grand jeu du Farceur 🎭
 - **Idée :** faux dos et tentations ensemble (étoile + faux retour, éternuement, rival qui craque ; v2.5 : recomptage, fausse alerte).
 - **Apprend :** à combiner tout ce qu'on a appris.
 - **Menace :** éternuement au 1er regard.
 - **★★ :** Fais 2 OUF.
-- **★★★ :** Arrive 1er.
+- **★★★ :** Finis en moins de 42 s (v2.5.1 ; avant : « Arrive 1er », trop facile : les rivaux craquent tous ici).
 - **Rivaux :** Sam 🎯, Nino ⚡ et Zoé 🐢.
-- **Simulation :** moyen 50 %, expert 97 %.
+- **Simulation :** moyen 41 %, expert 98 %.
 
 ### 7. La grande course du parc 🏃
 - **Idée :** tout mélangé, avec 5 rivaux. v2.5 : **le troupeau** : trois rivaux repartent ensemble pendant le regard… et sont grillés d'un coup.
@@ -171,7 +171,7 @@ Les durées visées sont de 30 à 42 s (v2.5 ; avant : 30 à 40 s), et jusqu'à 
 - **★★ :** Arrive dans le top 3.
 - **★★★ :** Arrive 1er.
 - **Rivaux :** Inès 🎯, Max ⚡, Jade 🎯, Léo 🐢 et Lila 🐢.
-- **Simulation :** moyen 38 %, expert 97 %.
+- **Simulation :** moyen 35 %, expert 99 % (v2.5.1 : 136 m au lieu de 140).
 
 ### 8. BOSS — Le Soleil Farceur 🤡
 - **Idée :** de longs regards remplis de tentations enchaînées, des faux dos et des faux retours.
@@ -186,7 +186,7 @@ Les durées visées sont de 30 à 42 s (v2.5 ; avant : 30 à 40 s), et jusqu'à 
 - **★★★ :** Arrive 1er.
 - **Rivaux :** Inès 🎯, Hugo ⚡ et Tom 🐢.
 - **Durée :** jusqu'à 50 s.
-- **Simulation :** moyen 27 % (visé : 10 à 30 %), expert 97 %, durée moyenne 47 s. v2.5 : recomptages et fausses alertes s'ajoutent à ses farces.
+- **Simulation :** moyen 28 % (visé : 10 à 30 %), expert 98 %, durée moyenne 47 s (v2.5.1 : 155 m au lieu de 160). v2.5 : recomptages et fausses alertes s'ajoutent à ses farces.
 
 ## La carte
 
