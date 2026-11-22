@@ -22,7 +22,7 @@ const DIST = path.join(ROOT, 'dist');
 const OUT = path.join(DIST, 'poki');
 const ZIP = path.join(DIST, 'soleil-poki.zip');
 const SDK = 'https://game-cdn.poki.com/scripts/v2/poki-sdk.js';
-const DEV_ONLY = ['js/platform/debug.js'];                 // le mode debug n'existe pas dans le build
+const DEV_ONLY = ['js/platform/debug.js', 'js/platform/showcase.js'];   // le mode debug et la vitrine n'existent pas dans le build
 const MAX_SIZE = 8 * 1024 * 1024;                          // limite de Poki : 8 Mo
 const NAMESPACES = ['http://www.w3.org/2000/svg'];         // des noms de format SVG, pas des adresses visitées
 
@@ -43,10 +43,11 @@ function stripDebug(src) {                                 // enlève tout ce qu
   }
   return out.join('\n');
 }
+const GAME_TITLE = (fs.readFileSync(path.join(ROOT, 'js/core/config.js'), 'utf8').match(/const GAME_TITLE = '([^']+)'/) || [])[1] || '1, 2, 3… SOLEIL !';   // js/core/config.js
 const sources = kept.map(f => [f, fs.readFileSync(path.join(ROOT, f), 'utf8')]);
 const stripped = sources.map(([f, src]) => [f, stripDebug(src)]);
 const parts = stripped.map(([f, src]) => `/* ===== ${f} ===== */\n` + src.trim() + '\n');
-const game = '/* 1, 2, 3… SOLEIL ! — version Poki (tools/build-poki.js). Les sources lisibles sont dans le projet. */\n'
+const game = `/* ${GAME_TITLE} (1, 2, 3… SOLEIL !) — version Poki (tools/build-poki.js). Les sources lisibles sont dans le projet. */\n`
   + 'window.Soleil = window.Soleil || {};\n' + parts.join(';\n');
 
 // ---------- 2. index.html du build ----------
@@ -175,7 +176,7 @@ check(lsBad.length === 0 && ls > 0 && open === 0, 'localStorage : chaque accès 
 
 // d) aucun console.log ni code de debug
 const DEBUG = [[/\bconsole\.(log|debug|info|trace|dir|table)\s*\(/g, 'console.log'], [/\bdebugger\b/g, 'debugger'], [/@debug/g, 'marque @debug'],
-  [/debugHook|fakePoki|debugLog|fakead/g, 'mode debug'], [/js\/platform\/debug\.js/g, 'debug.js']];
+  [/debugHook|fakePoki|debugLog|fakead/g, 'mode debug'], [/js\/platform\/debug\.js/g, 'debug.js'], [/js\/platform\/showcase\.js|showcaseStart/g, 'vitrine (showcase.js)']];
 const dbg = [];
 for (const [name, text] of Object.entries(files)) for (const [re, label] of DEBUG) for (const m of text.matchAll(re)) dbg.push(`${label} (${name}:${lineOf(text, m.index)})`);
 check(dbg.length === 0, 'Aucun console.log ni code de debug', dbg.join(' ; ') || `${debugLines} lignes @debug retirées, debug.js absent`);
@@ -221,7 +222,7 @@ check(inDist === 'game.js, index.html, style.css' && missing.length === 0, 'Seul
 
 // ---------- 6. Le rapport ----------
 const bad = checks.filter(c => !c.ok).length;
-console.log('BUILD POKI — 1, 2, 3… SOLEIL !');
+console.log(`BUILD POKI — ${GAME_TITLE} (1, 2, 3… SOLEIL !)`);
 console.log(`  ${kept.length} scripts réunis dans game.js, dans l'ordre de index.html (retiré : ${DEV_ONLY.join(', ')})`);
 console.log(`  dist/poki : ${sizes.map(([n, s]) => `${n} (${kb(s)})`).join(' · ')}`);
 console.log(`  ZIP : ${path.relative(ROOT, ZIP)} (${kb(zipSize)})`);

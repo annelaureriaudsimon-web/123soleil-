@@ -1,4 +1,4 @@
-# 1, 2, 3… SOLEIL ! — v2.3
+# 1, 2, 3… SOLEIL ! — v2.4
 
 Maintiens pour courir vers le soleil, et lâche avant qu'il se retourne. S'il te voit bouger, tu es **GRILLÉ**.
 
@@ -12,6 +12,8 @@ La course infinie, le défi du jour, le mode 2 joueurs, le casier, les tenues, l
 
 **Prêt pour Poki** (v2.2) : SDK Poki branché, vraie pause, premiers pas sans menu (on joue en moins de 3 secondes), et un build Poki vérifié automatiquement. Voir `docs/POKI_INTEGRATION.md`.
 
+**6 langues, grands écrans, qualité automatique, daltoniens** (v2.4) : français, anglais, espagnol, portugais, allemand et italien, chacune avec son chant (« RED LIGHT! », « ¡POLLITO! »…) au même rythme ; plus de partage. Pour envoyer le jeu à Poki : `docs/POKI_SUBMISSION.md`.
+
 **Pubs récompensées** (v2.3) : 🎬 2e chance (niveaux et course infinie), 🎬 ×2 ⭐ sur les résultats, 🎬 essayer une tenue dans le casier, en respectant toutes les règles de Poki. Elles n'apparaissent qu'avec le SDK Poki (en dev : `index.html?debug=1&fakead=1`).
 
 ## Jouer
@@ -19,6 +21,7 @@ La course infinie, le défi du jour, le mode 2 joueurs, le casier, les tenues, l
 - **Ouvrir :** double-clique sur `index.html`. Ça marche sans Internet et sans serveur : tout est dessiné et joué dans le navigateur, sans aucune image, police ou librairie téléchargée. Le seul fichier externe est le SDK Poki : sans lui (hors ligne, bloqueur de pub), le jeu marche pareil.
 - **Téléphone :** maintiens le doigt sur l'écran pour courir, lâche pour t'arrêter. Pause : ⏸ en haut à droite.
 - **PC :** maintiens Espace (ou ↑, W, Entrée), ou le clic. Sur la carte : ← → et Entrée. Pendant une partie, **Échap ou P : pause**. Ailleurs, Échap : retour. M : son.
+- **Langue :** celle de l'appareil (sinon l'anglais), ou le bouton rond « FR » de l'accueil ; pour tester : `index.html?lang=de`.
 - **Mode debug :** `index.html?debug=1` affiche chaque événement envoyé à Poki ; `index.html?debug=1&fakead=1` simule une pub de 2 secondes (et montre les boutons 🎬) ; `&pill=1` dessine la zone de la pilule Poki (`&pillside=right` pour l'autre côté).
 - **Les étoiles d'un niveau :**
   - ★ finir ;
@@ -32,15 +35,15 @@ La course infinie, le défi du jour, le mode 2 joueurs, le casier, les tenues, l
 ```
 index.html        la page : charge les scripts dans l'ordre
 css/style.css     styles des boutons, cartes et écrans
-js/core/          réglages, textes FR/EN, outils, hasard avec graine, sauvegarde, contrôles
-js/platform/      Poki : la couche SDK (poki.js), le fil du jeu et les pauses pub (flow.js), le mode debug (debug.js, dev seulement)
+js/core/          réglages, textes (FR/EN dans i18n.js, ES/PT/DE/IT dans lang/), outils, hasard avec graine, sauvegarde, contrôles
+js/platform/      Poki : la couche SDK (poki.js), le fil du jeu et les pauses pub (flow.js), le mode debug (debug.js) et la vitrine pour les miniatures (showcase.js), dev seulement
 js/audio/         sons 8-bit, voix (course infinie), musiques des boss
 js/game/          logique sans affichage : chant, soleil, coureur, physique, rivaux, moteur d'un niveau (match.js)
 js/render/        dessin : ciel, soleil, sol, coureurs, rivaux, décor de la cour et du parc, tentations, HUD, main du tutoriel
 js/modes/         course infinie, défi du jour, 2 joueurs, niveaux
-js/ui/            accueil, premiers pas, carte du monde, intro, résultats, pause, casier, partage, icônes (SVG)
+js/ui/            accueil, choix de la langue, premiers pas, carte du monde, intro, résultats, pause, casier, icônes (SVG)
 levels/           les mondes et leurs niveaux (données)
-tools/            simulation (simulate.js), build Poki (build-poki.js) et tests automatiques
+tools/            simulation (simulate.js), build Poki (build-poki.js), miniatures Poki (thumbnails/) et tests automatiques
 docs/             design des mondes 1 et 2, résultats de la simulation, tests, notes pour la suite
 ```
 

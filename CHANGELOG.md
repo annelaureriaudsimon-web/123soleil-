@@ -1,5 +1,25 @@
 # Journal des versions
 
+## v2.4 — étape Poki 3 : sans partage, grands écrans, qualité automatique, daltoniens, 6 langues, dossier Poki
+
+### Retiré
+- **Tout le partage** (« personne ne va l'utiliser ») : bouton Partager, image à envoyer, grille d'emojis, story, journal des événements de la partie. `js/ui/share.js` et `js/ui/story.js` sont supprimés ; le défi du jour garde seulement le jour, l'essai et la distance. Plus aucun lien ni presse-papiers (test 12).
+
+### Nouveau
+- **Plein écran** : c'est le bouton de Poki, on n'en ajoute pas. **Grands écrans** : l'interface grandit avec la fenêtre (jusqu'à ×1,6, variable CSS `--uiz` = `S.uiZoom`), le canvas aussi ; si la fenêtre change beaucoup pendant une partie (plein écran, rotation), le jeu se met en pause (test 25).
+- **Pas fixe de 1/120 s** (`js/main.js`) : le même joueur fait **exactement** la même partie à 30, 60 ou 120 images par seconde (test 26).
+- **Qualité d'image automatique** (`js/render/quality.js`) : haute / moyenne / basse (résolution, particules, distance du décor), qui baisse si l'appareil rame et remonte s'il va bien, seulement pendant un moment calme (jamais pendant que le soleil se retourne). Réglage « Qualité : Auto / Haute / Basse » dans le menu pause (test 27).
+- **Daltoniens** : le vrai signal (« SOLEIL ! ») a une étoile « POW » derrière lui, un mot piège démasqué perd l'étoile et se fait **rayer** (en plus de passer au vert et de trembler). Au début, piège et vrai signal se ressemblent toujours : il faut LIRE le mot, comme avant. Les étoiles vides de la carte sont plus petites et sombres. Vérifié en vision simulée (protanopie, deutéranopie, tritanopie) et par le test 28.
+- **6 langues** : français, anglais, espagnol, portugais (Brésil), allemand, italien (`js/core/lang/*.js`, `js/core/i18n-apply.js`). La langue de l'appareil, sinon l'anglais ; bouton rond « FR » sur l'accueil pour changer, sans recharger, mémorisé. **Le chant change avec la langue** : SOLEIL ! / RED LIGHT! / ¡POLLITO! / BATATINHA! / SONNE! / STELLA!, 12 mots pièges qui commencent pareil dans chaque langue, même rythme partout (même partie, même défi du jour : test 29). La voix parle la langue choisie. Les mots pièges d'un niveau sont maintenant des numéros dans la liste de la langue (`levels/README.md`).
+- **Dossier Poki** : `docs/POKI_SUBMISSION.md` (5 titres internationaux, titre réglable dans `GAME_TITLE` de `js/core/config.js`, descriptions EN/FR, commandes, catégories, règles de Poki, traductions à faire relire, ce qu'il te reste à faire).
+- **Miniatures et vidéo** fabriquées à partir du vrai jeu : `python3 tools/thumbnails/make.py [--lang fr] [--video]` (carrés 1024 px, paysage 1920×1080, portrait 1080×1920, avec et sans titre, miniature animée 1080×1080 à 60 i/s). Mode vitrine `index.html?showcase=race|title` (dev seulement, retiré du build).
+
+### Tests
+- `test_poki.py` : tests 25 à 29 (grands écrans, même partie à toutes les vitesses, qualité, daltoniens, langues) ; 162 vérifications.
+- `test_levels.py` : les tests de sauvegarde écrivent l'ancienne sauvegarde au chargement (plus fiable qu'un rechargement juste après un `localStorage.setItem`).
+- `compare_frames.py` : 88/94 images identiques à la v2.2 ; les 6 autres sont les images où le vrai signal ou un mot piège est à l'écran (étoile « POW » / mot rayé) — sans ces deux dessins, les 94 sont identiques.
+- En anglais, le chant est maintenant « RED LIGHT! » : les textes anglais qui parlaient de « SO » et « SOLEIL » ont suivi.
+
 ## v2.3 — étape Poki 2 : 4 corrections et les pubs récompensées
 
 ### Corrigé (vérification de la v2.2)

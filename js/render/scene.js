@@ -46,9 +46,9 @@ function render() {
   drawParticles(false);
   if (isDuo) S.drawDuoBeams(); else { drawBeam(); if (isLvl) S.drawRivalBeams(); }
   drawVignette();
-  if (S.state === 'title') drawTitle();
+  if (S.state === 'title') { if (!S.showcaseNoLogo) drawTitle(); }   // vitrine sans logo (mode de développement, absent du build)
   else if (isDuo) { drawChant(); S.drawDuoHUD(); S.drawDuoOverlay(); }
-  else if (isLvl) { drawChant(); drawGrille(); S.drawLevelHUD(); }
+  else if (isLvl) { drawChant(); drawGrille(); if (!S.showcase) S.drawLevelHUD(); }   // vitrine : le jeu, sans l'interface
   else {
     drawChant(); drawGrille();
     if (S.bossBanner) drawBanner(L.bossTitle, L.bossSub(S.bossBanner.moon), '', S.bossBanner.t, 1.8, '#FF4D6D');

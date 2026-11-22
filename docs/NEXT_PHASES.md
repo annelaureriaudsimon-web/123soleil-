@@ -38,10 +38,14 @@ Tout est décrit dans `docs/POKI_INTEGRATION.md` (le tableau de chaque moment du
 
 ## Les prochaines étapes Poki (pas faites à l'étape 1, exprès)
 
-- Autres langues que le français et l'anglais, et adaptation des mots pièges.
-- `PokiSDK.shareableURL` et le défi « Bats-moi » (le partage n'a plus d'adresse : c'est là qu'elle reviendra, fournie par Poki).
-- Les vignettes (images de présentation du jeu sur Poki).
+- Fait en v2.4 : 6 langues (avec leur chant), miniatures (`tools/thumbnails/make.py`), qualité automatique, grands écrans.
+- Le partage a été **retiré** en v2.4 (décision : personne ne l'utilise). Ne pas le remettre sans en reparler.
 - Les mondes 3 à 5 et les nouvelles mécaniques.
+- **Pour tout nouveau texte** : l'écrire en français ET en anglais (`js/core/i18n.js` ou `T(fr, en)` dans un niveau), puis dans
+  `js/core/lang/es.js`, `pt.js`, `de.js`, `it.js` (clé, ou phrase anglaise dans `phrases`). Le test 29 de `test_poki.py`
+  liste ce qui manque. Ne jamais écrire « SO », « SOLEIL » ou un mot piège en dur : `S.chantW()` et `L.chant`.
+- **Pour toute nouvelle information de jeu** : jamais par la couleur seule (forme, icône, mouvement ou texte en plus).
+- **Pour tout nouvel effet coûteux** (particules, décor) : respecter `S.Q` (`js/render/quality.js`).
 
 ## Le look (v2.1)
 
@@ -122,7 +126,6 @@ Règle commune :
 | **Voix du soleil** | `audio/voice.js` | Elle existe pour la course infinie : `Voice`, `sayEvent`, avance mesurée `Voice.lead`. En niveau, quand `'voice'` est dans `mechanics`, appelez `S.sayEvent(e.ev)` dans `events()` (`modes/levels.js`) **avant** l'affichage, de `Voice.lead` secondes. Les moqueries et l'éternuement pourraient aussi être dits. Le bouton 🗣️ est caché en mode Niveaux et pendant une partie, où ⏸ prend sa place (`syncButtons`, `ui/pause.js`). |
 | **Nuage** | `main.js` (`cloudOn`) + `render/sky.js` (`drawCloud`) | Le soleil d'un niveau a déjà le champ `cloud` (toujours `false`). Tirez-le avec un dé ajouté à la fin d'une suite si `'cloud'` est actif. Gardez la règle d'équité `audioOK()` : jamais de nuage si on n'entend pas le jeu. |
 | **Mode 2 joueurs** | `modes/duo.js` | Il existe et utilise le soleil de la course infinie. Pour un duo dans les niveaux, `Match` sait déjà gérer plusieurs coureurs : faites du 2e joueur un « rival » piloté au clavier (`press` imposé au lieu du cerveau, comme `r.forced`). |
-| **Nouveau partage** | `ui/share.js` (texte) et `ui/story.js` (image) | `Levels.info` (après une victoire) contient tout : temps, place, étoiles, classement, `bonus` (tentations résistées). |
 | **Mondes 3 à 5** | `levels/worlds.js` | Le monde 2 montre le chemin : passez `soon: false` et ajoutez `need: { world: 2, stars: N }` ; créez `levels/world3.js` ; ajoutez le `<script>` dans `index.html` **et** dans `FILES` de `tools/simulate.js` (avec ses objectifs dans `TARGETS`). Décor : un fichier `render/beach.js` (comme `park.js`), choisi dans `drawLevelDecor` et `tintLevel` (`render/tempt.js`). Carte : un fond comme `drawParkMap` (`ui/worldmap.js`). Le déblocage animé marche tout seul (`worldsShown`). |
 
 ## Pièges à éviter

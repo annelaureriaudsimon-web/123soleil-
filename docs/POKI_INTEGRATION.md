@@ -1,4 +1,4 @@
-# Intégration Poki — étape 1 : les fondations (v2.2) · étape 2 : corrections et pubs récompensées (v2.3)
+# Intégration Poki — étape 1 : les fondations (v2.2) · étape 2 : corrections et pubs récompensées (v2.3) · étape 3 : écrans, qualité, langues (v2.4)
 
 Ce document est le **plan** écrit avant de coder, puis tenu à jour (v2.2) : chaque moment du jeu, l'événement
 SDK envoyé (ou aucun), le schéma des états, les règles de la couche SDK, la pause, l'affichage, le build,
@@ -40,7 +40,7 @@ même quand l'onglet est caché et que les images s'arrêtent).
 | `init()` réussit, échoue, ou 2,5 s passent | — | `gameLoadingFinished()` (une seule fois) |
 | 1re visite | Directement le niveau 1, en « prêt » (main animée) | aucun |
 | Joueur qui revient | Accueil : gros « Continuer – Niveau X » | aucun |
-| Casier, son, voix, partage, carte, onglets de monde | — | aucun |
+| Casier, son, voix, langue, carte, onglets de monde | — | aucun |
 
 ### Mode Niveaux
 
@@ -79,7 +79,7 @@ même quand l'onglet est caché et que les images s'arrêtent).
 | Pause → Accueil | aucun |
 | GRILLÉ ! | **gameplayStop** |
 | Écran de fin : appui (= Rejouer) | **commercialBreak** → **gameplayStart** |
-| Écran de fin : casier, partager, image, 🏠 | aucun |
+| Écran de fin : casier, 🏠 | aucun |
 
 ### Défi du jour
 
@@ -369,3 +369,32 @@ Enchaînement des événements (2e chance) : `gameplayStop` (au « GRILLÉ ! »)
 
 Astuce : dans la version dev, `index.html?debug=1` montre le même journal directement dans le jeu (en rouge
 si quelque chose cloche), et `index.html?debug=1&fakead=1` simule une pub de 2 secondes.
+
+
+---
+
+## 12. Étape 3 (v2.4) : grands écrans, qualité, pas fixe, langues, partage retiré
+
+- **Plein écran** : Poki a son propre bouton ; le jeu n'en ajoute pas. Il remplit toujours la fenêtre.
+- **Grands écrans** (`js/render/canvas.js`) : `S.uiZoom` = entre 1 et 1,6 selon la fenêtre (`min(largeur/1300, hauteur/760)`,
+  arrondi au 0,05), copié dans la variable CSS `--uiz`. Les panneaux (accueil, cartes, fin de partie, pause, casier,
+  messages, boutons ronds) ont `zoom: var(--uiz)` ; les distances dessinées dans le canvas près des boutons sont
+  multipliées par `S.uiZoom`. Attention : avec `zoom`, `getBoundingClientRect` donne des tailles zoomées, mais une
+  position écrite en `left/top` est multipliée par le zoom (`js/ui/toast.js` et `js/ui/over.js` divisent par le zoom).
+  Si la fenêtre change de plus de 15 % pendant une partie (plein écran, rotation), le jeu se met en pause.
+- **Pas fixe** (`js/main.js`) : le jeu avance par pas de 1/120 s (au plus 12 par image), quelle que soit la vitesse
+  de l'écran. Le temps s'arrête pendant une pause, une pub et la seconde de grâce. La simulation et les tests
+  utilisent toujours `update(1/60)` directement : ils ne changent pas.
+- **Qualité automatique** (`js/render/quality.js`, `S.Q`) : 3 niveaux (résolution 2 / 1,5 / 1, particules, distance
+  du décor). Si une image prend plus de 23 ms pendant 1,5 s, on baisse ; moins de 15 ms pendant 8 s, on remonte ;
+  4 s au moins entre deux changements, et seulement à un moment calme (jamais pendant que le soleil se retourne,
+  regarde ou fait un faux dos). Le réglage du menu pause (Auto / Haute / Basse) est mémorisé.
+- **Langues** : `S.LANG`, `L` (un seul objet, rempli par `js/core/i18n-apply.js`, re-rempli par `S.setLang`). Le chant
+  vient de `L.chant` (début commun, vrai signal, 12 pièges, Lune) : les listes `SUN_TRAPS` / `MOON_TRAPS` sont
+  re-remplies sur place. Aucun texte, aucune durée et aucun dé ne dépend de la langue. Changer de langue n'est possible
+  que depuis l'accueil et n'envoie aucun événement au SDK.
+- **Partage retiré** : plus de `navigator.share`, de presse-papiers ni d'image à télécharger. `shareableURL` n'est pas
+  utilisé.
+- **Vitrine** (`js/platform/showcase.js`, dev seulement, retirée par le build) : `?showcase=race&lv=w2-3` ou
+  `?showcase=title[&nologo]`, sans interface, pour `tools/thumbnails/make.py`.
+- **Envoi à Poki** : tout est dans `docs/POKI_SUBMISSION.md`.
