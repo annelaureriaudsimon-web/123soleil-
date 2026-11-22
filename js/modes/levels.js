@@ -63,7 +63,8 @@ const LV = { def: null, m: null, phase: 'off', t: 0, attempt: 0, hints: new Set(
              lastNum: -9, placeShown: 0, placeCand: 0, placeT: 0, heartT: 0, glass: -1, info: null, jump: 0, fx: newFx(),
              hand: null, oops: null };
 // Ce que les tentations affichent (render/tempt.js) : étoile, mouche, bulle, éternuement, anneau du vrai retour…
-function newFx() { return { star: null, fly: null, taunt: null, sneeze: null, halo: 0, spin: 0, twT: 0, flushed: new Set(), mud: false }; }
+function newFx() { return { star: null, fly: null, taunt: null, sneeze: null, halo: 0, spin: 0, twT: 0, flushed: new Set(), mud: false,
+  alarm: null, herd: null }; }   // v2.5 : la fausse alerte (bulle de cri du rival), le troupeau
 const seenTempt = new Set(store.get('temptSeen', []));   // tentations déjà rencontrées (indication la 1re fois seulement)
 let tauntDeck = [];                                       // moqueries tirées sans répétition (choix visuel)
 function nextTaunt() {
@@ -255,6 +256,7 @@ function events() {
       case 'rivalGrilled': {
         const rv = e.r, p = S.rivalScreen(rv);
         rv.sizzled = false; rv.statue = 1;
+        if (e.herd) { onHerdGrilled(); break; }   // v2.5 : le troupeau grillé d'un coup (une seule annonce pour les trois)
         if (rv.cracked) {                         // le rival qui craque : un gros BOUM pour te faire sursauter
           rv.cracked = false; S.flash = 1; S.shake = Lt.U * 0.035; Sound.boom(); vibrate([40, 30, 60]);
           popup(L.boom, p.vis ? clamp(p.x, S.W * 0.2, S.W * 0.8) : Lt.cx, p.vis ? clamp(p.y - p.sc * 2.6, Lt.hy + 40, S.H * 0.7) : S.H * 0.5, '#FF7A3D', Math.min(Lt.U * 0.1, 54), 0.9);
@@ -282,7 +284,7 @@ function events() {
         if (chair) Sound.tone(520, 0.08, 'triangle', 0.16, 390);
         break;
       }
-      case 'tempt': onTempt(e.kind); break;
+      case 'tempt': onTempt(e.kind, e.item); break;
       // v2.5 — les faux signaux : le recomptage (il compte en te regardant), l'avion menteur, le nuage et son reflet
       case 'recount':                             // « 1… », « 2… » : comme un vrai chant… mais il te regarde
         w.textT = S.gtime; w.bump = 1; w.textFadeT = 0; Sound.chant({ kind: 'num', n: e.n }, false);
@@ -367,7 +369,7 @@ function firstTime(kind) {                        // la toute première rencontr
   seenTempt.add(kind); store.set('temptSeen', [...seenTempt]);
   LV.tip = { text: L.temptHint[kind], t0: S.gtime, life: 2.4 };
 }
-function onTempt(kind) {
+function onTempt(kind, item) {
   const m = LV.m, w = m.sun, fx = LV.fx;
   firstTime(kind);
   switch (kind) {
@@ -378,15 +380,33 @@ function onTempt(kind) {
     case 'fly': fx.fly = { t: 0, away: 0, landed: false }; Sound.buzz(true); break;
     case 'crack': break;                          // le BOUM arrive avec « rivalGrilled »
     case 'planeGo': S.startPlane('go', L.planeGo); break;   // v2.5 : « ALLEZ-Y ! »… mais il te regarde encore
+    case 'alarm':                                 // v2.5 : un rival crie « IL REGARDE PAS ! VAS-Y ! » (il ne bouge pas, lui)
+      fx.alarm = { r: item.r, t: 0, life: 1.6 }; item.r.say = null; Sound.shout(); vibrate(10);
+      break;
+    case 'herd':                                  // v2.5 : trois rivaux repartent ensemble… et le soleil les voit
+      fx.herd = { t: 0, n: 0 }; Sound.stampede();
+      for (const r of item.rs) { const p = S.rivalScreen(r); if (p.vis) smokeAt(p.x, p.y - p.sc * 0.15, p.sc * 0.7, 5, false); }   // la poussière du départ
+      break;
     case 'recount': break;                        // v2.5 : le texte et le son arrivent avec « recount »
   }
+}
+// v2.5 : le troupeau grillé — on rit une fois, puis une seule grosse annonce quand les trois sont pris
+function onHerdGrilled() {
+  const fx = LV.fx, w = LV.m.sun;
+  if (!fx.herd) fx.herd = { t: 0, n: 0 };
+  if (++fx.herd.n === 1) {
+    w.laugh = 1; w.angryUntil = S.gtime + 0.8; S.shake = Math.max(S.shake, Lt.U * 0.03); S.flash = 0.7;
+    Sound.busted(); setTimeout(() => Sound.laugh(), 320); vibrate([30, 30, 60]);
+    popup(L.haha, Lt.cx - Lt.R * 1.2, Lt.sunY + S.sunSink - Lt.R * 0.3, '#FFD166', Math.min(Lt.U * 0.055, 26), 1.0);
+  }
+  if (fx.herd.n === Match.HERD_N) popup(L.herdBurnt, Lt.cx, Lt.hy + (Lt.yFeet - Lt.hy) * 0.3, '#FF7A3D', S.fit(L.herdBurnt, Math.min(Lt.U * 0.1, 54), S.W * 0.9), 1.2);
 }
 function onTrueEnd(resisted) {                    // le VRAI retour : « ding », anneau vert, rayons qui tournent
   const fx = LV.fx;
   Sound.ding(); fx.halo = 0.001; fx.spin = 1;
   if (fx.star) { fx.star.away = 0.001; popup(L.pfff, Lt.cx + Lt.s * 0.8, Lt.yFeet - Lt.s * 2.6, '#FFD166', Math.min(Lt.U * 0.05, 26), 0.9); Sound.pfff(); }
   if (fx.fly) { fx.fly.away = 0.001; Sound.buzz(false); }
-  fx.taunt = null; fx.sneeze = null;
+  fx.taunt = null; fx.sneeze = null; fx.alarm = null;
   if (resisted && resisted.length) {              // SANG-FROID ! (+1 ⭐ par tentation, versées si tu finis)
     const t = `${L.sangFroid} +${resisted.length} ⭐`;
     popup(t, Lt.cx, Lt.yFeet - Lt.s * 2.9, '#8CF5B5', S.fit(t, Math.min(Lt.U * 0.07, 36), S.W * 0.9), 1.1);
@@ -411,6 +431,8 @@ function updateFx(dt) {
       if (f.landed) S.shake = Math.max(S.shake, Lt.U * 0.003 * Math.min(1, (f.t - 0.8) / 1.2));   // l'écran vibre un peu
     }
   }
+  if (fx.alarm && (fx.alarm.t += dt) > fx.alarm.life) fx.alarm = null;   // v2.5 : la bulle de la fausse alerte
+  if (fx.herd && (fx.herd.t += dt) > 2) fx.herd = null;
   if (fx.taunt) {
     fx.taunt.t += dt;
     if (fx.taunt.t > fx.taunt.life) {
@@ -620,6 +642,7 @@ function revive() {
   S.lvCaught = false; S.caughtT = 0; S.timeScale = 1; S.shake = 0; S.flash = 0;
   if (LV.def.boss) Music.setDuck(false);
   LV.info = null; LV.hand = null; LV.oops = null; LV.fx.star = null; LV.fx.sneeze = null; LV.fx.taunt = null; S.plane = null;
+  LV.fx.alarm = null; LV.fx.herd = null;
   const nightBack = LV.noBurn && m.night;         // 2e chance après « LA NUIT TOMBE ! » : +10 s de jour
   LV.noBurn = false;
   setPhase('play');

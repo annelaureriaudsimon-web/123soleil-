@@ -24,10 +24,13 @@ const { gauss } = S;   // core/rng.js
 // Monde 2 : certaines tentations font plus craquer que d'autres (les fausses fins imitent le début d'un vrai retour ;
 // la mouche et les moqueries mettent la pression sans donner d'« excuse » pour bouger).
 // Une tentation déjà rencontrée (dans l'essai, ou dans un niveau précédent pour le joueur) fait moins craquer : × learn.
-// v2.5 : le recomptage imite le VRAI début d'un chant (c'est le plus dangereux) ; l'avion « ALLEZ-Y ! » dit de partir.
-const TEMPT_K = { fakeRet: 1.2, fakeBack: 1.2, sneeze: 1, crack: 0.9, star: 0.8, fly: 0.3, taunt: 0.25, recount: 1.3, planeGo: 1.0 };
+// v2.5 : le recomptage imite le VRAI début d'un chant (c'est le plus dangereux) ; l'avion « ALLEZ-Y ! » dit de partir ;
+// la fausse alerte (un rival crie « VAS-Y ! ») ; le troupeau (trois rivaux partent d'un coup : on a envie de suivre).
+const TEMPT_K = { fakeRet: 1.2, fakeBack: 1.2, sneeze: 1, crack: 0.9, star: 0.8, fly: 0.3, taunt: 0.25, recount: 1.3, planeGo: 1.0,
+                  alarm: 1.1, herd: 1.3 };
 // Quand il craque, il appuie (« il bouge ») ce temps après le début de la tentation, plus son temps de réaction (s)
-const CRACK_AT = { star: 0, fakeRet: 0, fakeBack: 0.05, sneeze: 0.9, crack: 0, fly: 0.8, taunt: 0.1, recount: 0.05, planeGo: 0.2 };
+const CRACK_AT = { star: 0, fakeRet: 0, fakeBack: 0.05, sneeze: 0.9, crack: 0, fly: 0.8, taunt: 0.1, recount: 0.05, planeGo: 0.2,
+                   alarm: 0.15, herd: 0.05 };
 // v2.5 — l'avion « SOLEIL ! » pendant le chant : il s'arrête pour rien avec la probabilité fooled × PLANE_STOP_K
 // (plus que pour un mot piège : la banderole porte LE vrai mot)
 const PLANE_STOP_K = 1.2;
@@ -107,6 +110,7 @@ function brainSee(b, type, now, data) {
       b.cloudy = false;
       break;
     case 'tempt': case 'fakeRet': case 'fakeBack': {  // monde 2 : va-t-il craquer ? (il bougera… et sera grillé)
+      if (data && data.from && data.from.brain === b) break;   // v2.5 : celui qui crie « VAS-Y ! » sait que c'est faux
       const tt = type === 'tempt' ? data.type : type;
       let pc = p.crack * (TEMPT_K[tt] || 1) * (b.cloudy ? CLOUD_K : 1);
       if (b.seen[tt]) pc *= p.learn;

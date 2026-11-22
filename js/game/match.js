@@ -26,13 +26,18 @@ const TEMPT = {
   crack:   { at: 0.5, jit: 0.3, need: 1.5, group: 'rival' },  // un rival craque (BOUM)
   // v2.5 — les faux signaux (« il parle en te regardant, donc il ment » ; « seul le soleil compte »)
   recount: { at: 0.35, jit: 0.35, need: 2.0, group: ['voice', 'chant'] },   // il recompte « 1… 2… » EN TE REGARDANT
-  planeGo: { at: 0.25, jit: 0.45, need: 1.7, group: 'sky' }                 // un avion passe : banderole « ALLEZ-Y ! »
+  planeGo: { at: 0.25, jit: 0.45, need: 1.7, group: 'sky' },                // un avion passe : banderole « ALLEZ-Y ! »
+  alarm:   { at: 0.3, jit: 0.4, need: 1.7, group: ['rival', 'voice'] },     // un rival crie « IL REGARDE PAS ! VAS-Y ! » (c'est faux)
+  herd:    { at: 0.45, jit: 0.35, need: 1.6, group: 'rival' }              // trois rivaux repartent ensemble… et sont grillés
 };
 const TEMPT_ORDER = ['star', 'fakeRet', 'sneeze', 'taunt', 'fly', 'crack'];   // ordre fixe des dés (ne pas changer)
 // v2.5 : les nouveautés ont leur PROPRE flux de dés (mixSeed(graine, 7000 + cycle)) : les niveaux d'avant ne bougent pas.
 // Ordre fixe (ne pas changer) : f[0..3] = présence, f[4..7] = moment ; alarm et herd arrivent avec les rivaux (partie D).
 const TEMPT_V25 = ['recount', 'planeGo', 'alarm', 'herd'];
 const RECOUNT = { gap: 0.55, laugh: 1.15 };   // le recomptage : « 1… », « 2… » 0,55 s plus tard, puis il se marre (s)
+// La fausse alerte et le troupeau : des rivaux que tu VOIS (de 3,5 m derrière toi, encore à l'écran, jusqu'à 30 ou 45 m devant)
+const ALARM_RANGE = [-3.5, 30];               // le rival qui crie « IL REGARDE PAS ! VAS-Y ! » (personne à portée : pas d'alerte)
+const HERD_N = 3, HERD_RANGE = [-3.5, 45];    // le troupeau : 3 rivaux (sinon pas de troupeau dans ce regard)
 const PLANE_STOP = [0.2, 0.45];               // l'avion « SOLEIL ! » du chant passe entre 0,2 s après « 1 » et 0,45 s avant le vrai mot
 const CRACK_RANGE = [-1, 30];  // rival qui craque : entre 1 m derrière toi et 30 m devant
 // Niveau « en douceur » (champ « soft » d'un niveau, le niveau 1) : vu en train de bouger, tu n'es pas grillé,
@@ -104,7 +109,8 @@ function create(def, attempt, opts = {}) {
       const brain = newBrain(rd.kind, mulberry32(mixSeed(seed, 100 + i)), rd.brain);
       const lane = rd.lane != null ? rd.lane : LANES[i % LANES.length];
       return Object.assign(newBody(rd.id || 'r' + i, lane, VMAX0 * L.speed * brain.p.speed),
-        { idx: i, def: rd, kind: rd.kind, name: rd.name, brain, resp: 0, burnT: 9, grills: 0, anim: '', forced: false });
+        { idx: i, def: rd, kind: rd.kind, name: rd.name, brain, resp: 0, burnT: 9, grills: 0, anim: '', forced: false },
+        rd.z0 ? { z: rd.z0 } : {});      // v2.5 : z0 = il part devant (m) ; grillé, il repart quand même du début
     }),
     finishers: [],
     stats: { oufs: 0, combo: 0, comboMax: 0, trapsFell: 0, trapsAvoided: 0, looks: 0, cycles: 0, resisted: 0, quick: 0, oops: 0 },
@@ -348,15 +354,23 @@ function lookTimeline(m) {
     if (!it.fired && w.t >= it.at) {
       it.fired = true;
       if (it.type === 'crack') {                   // le rival le plus proche craque
-        const pz = m.player.z;
-        const near = m.rivals.filter(r => r.state === 'race' && r.z - pz >= CRACK_RANGE[0] && r.z - pz <= CRACK_RANGE[1])
-          .sort((a, b) => Math.abs(a.z - pz) - Math.abs(b.z - pz))[0];
+        const near = nearest(m, CRACK_RANGE)[0];
         if (!near) { it.skip = true; continue; }
         near.forced = true; near.cracked = true; it.r = near;
       }
+      if (it.type === 'alarm') {                   // v2.5 : le rival le plus proche crie (il ne bouge pas : c'est une blague)
+        const near = nearest(m, ALARM_RANGE)[0];
+        if (!near) { it.skip = true; continue; }
+        it.r = near;
+      }
+      if (it.type === 'herd') {                    // v2.5 : trois rivaux repartent ensemble (il faut 3 rivaux en course)
+        const herd = nearest(m, HERD_RANGE).slice(0, HERD_N);
+        if (herd.length < HERD_N) { it.skip = true; continue; }
+        herd.forEach(r => { r.forced = true; r.herded = true; }); it.rs = herd;
+      }
       lk.last = it.type;
       emit(m, 'tempt', { kind: it.type, item: it });
-      feed(m, it.type === 'fakeRet' ? 'fakeRet' : 'tempt', { type: it.type });
+      feed(m, it.type === 'fakeRet' ? 'fakeRet' : 'tempt', { type: it.type, from: it.type === 'alarm' ? it.r : null });
     }
     if (it.type === 'fakeRet' && it.fired) {       // il tourne à moitié… puis revient d'un coup : « HA ! »
       const k = w.t - it.at, F = FAKE_RET;
@@ -412,6 +426,13 @@ function trackTrap(m) {
   }
 }
 
+// Les rivaux en course entre range[0] et range[1] mètres de toi, du plus proche au plus loin
+function nearest(m, range) {
+  const pz = m.player.z;
+  return m.rivals.filter(r => r.state === 'race' && r.z - pz >= range[0] && r.z - pz <= range[1])
+    .sort((a, b) => Math.abs(a.z - pz) - Math.abs(b.z - pz));
+}
+
 // Le soleil vient de finir de se retourner : qui bouge encore ?
 function lookStart(m) {
   const pl = m.player, w = m.sun;
@@ -438,7 +459,8 @@ function grillRival(m, r, why) {
   r.state = 'grilled'; r.resp = RIVAL_RESPAWN; r.burnT = 0; r.v = 0; r.press = false; r.grills++; r.forced = false;
   r.anim = r.brain.rnd() < 0.5 ? 'fall' : 'stomp';  // il tombe, ou il trépigne
   r.brain.queue = []; r.brain.press = false;
-  emit(m, 'rivalGrilled', { r, why });
+  emit(m, 'rivalGrilled', { r, why, herd: !!r.herded });   // v2.5 : herd = il suivait le troupeau
+  r.herded = false;
 }
 
 const place = m => 1 + m.finishers.length + m.rivals.filter(r => r.state === 'race' && r.z > m.player.z).length;
@@ -509,5 +531,5 @@ function goalMet(g, res) {
 const starsOf = (L, res) => [!!res.win, goalMet(L.goal, res), !res.revived && goalMet(L.challenge, res)];
 
 S.Match = { create, step, revive, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET, KNOCK,
-  NIGHT_BONUS, NIGHT_WARN, TEMPT_V25, RECOUNT, PLANE_STOP };
+  NIGHT_BONUS, NIGHT_WARN, TEMPT_V25, RECOUNT, PLANE_STOP, ALARM_RANGE, HERD_N, HERD_RANGE };
 })(window.Soleil);

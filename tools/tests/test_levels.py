@@ -485,9 +485,73 @@ async def t_v25_lies_screen(b):
     check('6 langues : tous les textes des faux signaux existent ; « ALLEZ-Y ! » n’est jamais le vrai mot de départ', not keys, ', '.join(keys))
     ERRS.extend(page.errs); await ctx.close()
 
+# v2.5 — le niveau 7 du monde 1 (5 rivaux), rivaux partis devant (z0) pour qu'ils restent autour de toi
+MK7 = """(sun => { const S = Soleil, base = S.levelById('w1-7');
+  return Object.assign({}, base, { night: 0, rivals: base.rivals.map((r, i) => Object.assign({}, r, { z0: 25 + i * 5 })), sun: Object.assign({}, base.sun, sun) }); })"""
+
+async def t_v25_rivals(b):
+    print('\n21) v2.5 — les rivaux : la fausse alerte et le troupeau (moteur)')
+    ctx, page = await new_page(b)
+    r = await page.evaluate(f"""(() => {{
+      const S = Soleil, mk = {MK7}, run = {RUN}, out = {{}};
+      const rate = (def, prof, n) => {{ let w = 0, why = {{}}; for (let a = 1; a <= n; a++) {{ const res = run(def, prof, a);
+        if (res && res.win) w++; else if (res) {{ const k = res.tempt || res.why; why[k] = (why[k] || 0) + 1; }} }} return {{ w, why }}; }};
+      // la fausse alerte : un rival qu'on voit (entre 3,5 m derrière et 30 m devant) crie ; lui ne bouge pas
+      const A = mk({{ tempt: {{ alarm: 1, max: 1 }} }}); let al = 0, far = 0, self = 0;
+      for (let a = 1; a <= 30; a++) run(A, 'expert', a, (e, m) => {{
+        if (e.type === 'tempt' && e.kind === 'alarm') {{ al++; const d = e.item.r.z - m.player.z; if (d < -3.5 || d > 30 || m.sun.state !== 'look') far++; e.item.r._al = m.t; }}
+        if (e.type === 'rivalGrilled' && e.r._al && m.t - e.r._al < 1.2) self++; }});
+      out.alarm = {{ al, far, self, E: rate(A, 'expert', 100), M: rate(A, 'moyen', 100) }};
+      // le troupeau : exactement 3 rivaux repartent ensemble et sont grillés ; jamais avec moins de 3 rivaux autour
+      const H = mk({{ tempt: {{ herd: 1, max: 1 }} }}); let hd = 0, burnt = 0, bad = 0;
+      for (let a = 1; a <= 30; a++) run(H, 'expert', a, (e, m) => {{
+        if (e.type === 'tempt' && e.kind === 'herd') {{ hd++; if (e.item.rs.length !== 3 || m.sun.state !== 'look') bad++; }}
+        if (e.type === 'rivalGrilled' && e.herd) burnt++; }});
+      const H2 = Object.assign({{}}, H, {{ rivals: H.rivals.slice(0, 2) }}); let few = 0;
+      for (let a = 1; a <= 20; a++) run(H2, 'expert', a, e => {{ if (e.type === 'tempt' && e.kind === 'herd') few++; }});
+      out.herd = {{ hd, burnt, bad, few, E: rate(H, 'expert', 100), M: rate(H, 'moyen', 100) }};
+      return out; }})()""")
+    al, hd = r['alarm'], r['herd']
+    check('fausse alerte : un rival qu’on voit crie pendant le regard ; lui ne bouge pas', al['al'] >= 60 and al['far'] == 0 and al['self'] == 0, json.dumps({k: al[k] for k in ('al', 'far', 'self')}))
+    check('fausse alerte : l’expert l’ignore (≥ 95 %), le moyen s’y fait griller', al['E']['w'] >= 95 and al['M']['why'].get('alarm', 0) >= 5, f"expert {al['E']['w']} %, moyen grillé {al['M']['why'].get('alarm', 0)} fois")
+    check('troupeau : 3 rivaux repartent ensemble et sont grillés tous les trois', hd['hd'] >= 20 and hd['bad'] == 0 and hd['burnt'] == 3 * hd['hd'], f"{hd['hd']} troupeaux, {hd['burnt']} grillés")
+    check('troupeau : jamais avec moins de 3 rivaux', hd['few'] == 0)
+    check('troupeau : l’expert ne suit pas (≥ 95 %), le moyen suit parfois', hd['E']['w'] >= 95 and hd['M']['why'].get('herd', 0) >= 5, f"expert {hd['E']['w']} %, moyen grillé {hd['M']['why'].get('herd', 0)} fois")
+    ERRS.extend(page.errs); await ctx.close()
+
+async def t_v25_rivals_screen(b):
+    print('\n22) v2.5 — la fausse alerte et le troupeau à l’écran (6 langues)')
+    ctx, page = await new_page(b)
+    async def setup(sun):
+        await page.evaluate(f"""(() => {{ const d = Soleil.levelById('w1-7'); d.sun = Object.assign({{}}, d.sun, {sun});
+          d.rivals = d.rivals.map((r, i) => Object.assign({{}}, r, {{ z0: 25 + i * 5 }})); Soleil.WorldMap.open(); Soleil.Levels.open('w1-7', false); }})()""")
+    async def fail_txt():
+        await page.evaluate("(() => { const S = Soleil; S.pressing = true; for (let i = 0; i < 200 && S.Levels.phase === 'play'; i++) S.update(1/60); for (let i = 0; i < 80; i++) S.update(1/60); })()")
+        return await page.evaluate("[Soleil.Levels.phase, document.getElementById('lvFail').innerText]")
+    await setup("{ tempt: { alarm: 1, max: 1 } }")
+    ok = await page.evaluate("LVBOT('good', 60 * 60, () => !!Soleil.Levels.fx.alarm) < 60 * 60")
+    st = await page.evaluate("""(() => { const S = Soleil, al = S.Levels.fx.alarm, p = S.rivalScreen(al.r); S.render();
+      return [S.Levels.m.sun.state, p.vis, al.r.name, S.L.alarmShout, S.Levels.tip && S.Levels.tip.text]; })()""")
+    check('fausse alerte : la bulle « IL REGARDE PAS ! VAS-Y ! » d’un rival qu’on voit, pendant son regard', ok and st[0] == 'look' and st[1] and 'VAS-Y' in st[3] and 'blague' in (st[4] or ''), str(st))
+    f = await fail_txt()
+    check('courir sur la fausse alerte = grillé : « Le rival mentait… »', f[0] == 'fail' and 'rival mentait' in f[1], f[1].split(chr(10))[0])
+    await setup("{ tempt: { herd: 1, max: 1 } }")
+    ok = await page.evaluate("LVBOT('good', 60 * 60, () => !!Soleil.Levels.fx.herd && Soleil.Levels.fx.herd.n >= 3) < 60 * 60")
+    st = await page.evaluate("[Soleil.Levels.m.sun.state, Soleil.Levels.m.rivals.filter(r => r.state === 'grilled').length, Soleil.Levels.phase]")
+    check('troupeau : trois rivaux grillés d’un coup, une seule annonce « TOUS GRILLÉS ! »', ok and st[0] == 'look' and st[1] >= 3 and st[2] == 'play', str(st))
+    f = await fail_txt()
+    check('suivre le troupeau = grillé : « Tu as suivi le troupeau… »', f[0] == 'fail' and 'troupeau' in f[1], f[1].split(chr(10))[0])
+    keys = await page.evaluate("""(() => { const S = Soleil, bad = [];
+      for (const lang of ['fr', 'en', 'es', 'pt', 'de', 'it']) { const T = S.TXT[lang];
+        for (const k of ['alarm', 'herd']) { if (!T.temptHint[k]) bad.push(lang + '.temptHint.' + k); if (!T.temptFail[k]) bad.push(lang + '.temptFail.' + k); }
+        for (const k of ['alarmShout', 'herdBurnt']) if (!T[k]) bad.push(lang + '.' + k); }
+      return bad; })()""")
+    check('6 langues : tous les textes de la fausse alerte et du troupeau existent', not keys, ', '.join(keys))
+    ERRS.extend(page.errs); await ctx.close()
+
 TESTS = [t_flow, t_fail, t_determinism, t_fair, t_rivals, t_map, t_save, t_boss, t_english, t_perf,
          t_w2_rule, t_w2_signal, t_w2_fair, t_w2_mud, t_w2_map, t_w2_reward, t_w2_boss, t_w2_english,
-         t_v25_lies, t_v25_lies_screen]
+         t_v25_lies, t_v25_lies_screen, t_v25_rivals, t_v25_rivals_screen]
 async def main():
     only = sys.argv[1:]
     async with async_playwright() as p:

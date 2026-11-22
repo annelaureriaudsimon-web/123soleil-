@@ -183,5 +183,16 @@ Object.assign(TXT.en, {
   refletTip: 'Behind the cloud, watch his reflection in the water 💧'
 });
 Object.assign(TXT.en.obst, { recount: 'recounts', plane: 'lying planes', reflet: 'reflections' });
+// v2.5 — les rivaux : la fausse alerte (un rival crie « VAS-Y ! ») et le troupeau (trois rivaux partent… et sont grillés)
+Object.assign(TXT.fr.temptHint, { alarm: 'Un rival te fait une blague : seul le soleil compte ☀️',
+  herd: 'Ils y vont tous ? Pas toi : seul le soleil compte !' });
+Object.assign(TXT.fr.temptFail, { alarm: 'Le rival mentait : le soleil te regardait encore ! 😜',
+  herd: 'Tu as suivi le troupeau 🐑 : seul le soleil compte !' });
+Object.assign(TXT.fr, { alarmShout: 'IL REGARDE PAS ! VAS-Y !', herdBurnt: 'TOUS GRILLÉS !' });
+Object.assign(TXT.en.temptHint, { alarm: 'A rival is pranking you: only the sun counts ☀️',
+  herd: 'They all go? Not you: only the sun counts!' });
+Object.assign(TXT.en.temptFail, { alarm: 'The rival lied: the sun was still watching you! 😜',
+  herd: 'You followed the herd 🐑: only the sun counts!' });
+Object.assign(TXT.en, { alarmShout: 'HE’S NOT LOOKING! RUN!', herdBurnt: 'ALL TOASTED!' });
 S.typoAll(TXT.fr);                                 // typographie française : espaces insécables (core/i18n.js)
 })(window.Soleil);

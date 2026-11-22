@@ -66,13 +66,15 @@ function drawLevelHUD() {
     g.textAlign = 'center';
     otext(t, Lt.cx, Lt.yFeet - Lt.s * 2.6, s, '#FFD166');
   }
+  // v2.5 : la fausse alerte d'un rival (bulle de cri) ; l'indication de 1re rencontre se met dessous
+  const alarmBot = S.drawAlarm();
   // 1re rencontre d'une tentation : une phrase courte au-dessus du coureur (ne cache ni le soleil ni la bannière)
   const tp = LV.tip;
   if (tp && S.gtime - tp.t0 < tp.life) {
     const k = S.gtime - tp.t0, a = Math.min(1, k / 0.15) * Math.min(1, (tp.life - k) / 0.3);
     const s = fit(tp.text, Math.min(Lt.U * 0.062, 32), S.W * 0.92) * (1 + Math.sin(S.gtime * 7) * 0.03);
     g.save(); g.globalAlpha = a; g.textAlign = 'center';
-    otext(tp.text, Lt.cx, Lt.yFeet - Lt.s * 2.45, s, '#FFD166');
+    otext(tp.text, Lt.cx, Math.max(Lt.yFeet - Lt.s * 2.45, alarmBot ? alarmBot + s * 0.9 : 0), s, '#FFD166');
     g.restore();
   }
   // monde 2 : signaux du soleil et tentations (render/tempt.js). v2.5 : derrière le nuage, ils ne se voient que dans le reflet
