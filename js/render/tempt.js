@@ -14,7 +14,7 @@ const HALO_LIFE = 0.7;         // durée de l'anneau vert du vrai retour (s)
 const EYE_K = 0.27;            // taille de l'œil du faux dos (× rayon du soleil)
 
 const fx = () => S.Levels.fx;
-const sunC = () => ({ x: Lt.cx, y: Lt.sunY + S.watcher.offY, R: Lt.R });
+const sunC = () => ({ x: Lt.cx, y: Lt.sunY + S.watcher.offY + S.sunSink, R: Lt.R });
 
 // ⭐ L'étoile tentatrice : 1,6 m devant toi, elle brille et scintille. Au vrai retour, elle s'envole.
 function drawTemptStar(camZ) {

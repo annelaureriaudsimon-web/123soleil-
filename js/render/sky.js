@@ -63,7 +63,7 @@ function drawCloud() {                             // gros nuage devant le solei
   const g = S.ctx.createLinearGradient(0, top, 0, bot);
   g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, '#D6DCEA');
   path(); S.ctx.fillStyle = g; S.ctx.fill();
-  const sx = Lt.cx, sy = Lt.sunY + S.watcher.offY;   // la lueur du soleil (ou de la Lune) à travers le nuage
+  const sx = Lt.cx, sy = Lt.sunY + S.watcher.offY + S.sunSink;   // la lueur du soleil (ou de la Lune) à travers le nuage
   const col = S.watcher.type === 'moon' ? '185,205,255' : S.lookAmt > 0.3 ? '255,120,90' : '255,214,110';
   const gl = S.ctx.createRadialGradient(sx, sy, R * 0.15, sx, sy, R * 1.3);
   gl.addColorStop(0, `rgba(${col},${(0.6 * S.cloudK).toFixed(3)})`); gl.addColorStop(1, `rgba(${col},0)`);

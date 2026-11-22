@@ -509,7 +509,7 @@ async def t_fix_typo(b):
     check('aucun « ! ? : ; » français précédé d’une espace ordinaire (insécable partout)', r['n'] == 0 and '\u00a0!' in r['late'] and '0,08\u00a0s' in r['late'], json.dumps(r, ensure_ascii=False))
     await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w1-3', false)"); await page.wait_for_timeout(300)
     t = await page.evaluate("document.getElementById('lvIntro').innerText")
-    check('carte d’intro du niveau 3 : « lâcher\u00a0! » (le « ! » ne peut plus être seul sur une ligne)', 'lâcher\u00a0!' in t, t.split('\n')[2] if len(t.split('\n')) > 2 else t)
+    check('carte d’intro du niveau 3 : « pièges\u00a0! » (le « ! » ne peut plus être seul sur une ligne)', 'pièges\u00a0!' in t, t.split('\n')[2] if len(t.split('\n')) > 2 else t)
     await done(page, ctx)
     for w, h, touch in [(640, 360, False), (836, 470, False), (1031, 580, False), (390, 844, True), (844, 390, True), (320, 568, True)]:
         ctx, page = await new_page(b, w=w, h=h, touch=touch)
@@ -815,10 +815,10 @@ async def t_colorblind(b):
             if (Math.abs(d[i] - 255) < 4 && Math.abs(d[i + 1] - 244) < 6 && Math.abs(d[i + 2] - 194) < 8) burst++;
             if (d[i] > 250 && d[i + 1] > 250 && d[i + 2] > 250) white++; }}
           return {{ burst, white }}; }})()""")
-    sig, trap0, trap1, so = await look('trigger', 'SOLEIL !', 0.15), await look('trap', 'SOLDES !', 0.1), await look('trap', 'SOLDES !', 0.5), await look('so', 'SO', 0.3)
+    sig, trap0, trap1, so = await look('trigger', 'SOLEIL !', 0.15), await look('trap', 'SOLDES !', 0.1), await look('trap', 'SOLDES !', 0.5), await look('trap', 'SOLDES !', 0.19)
     check('« SOLEIL ! » : une étoile « POW » derrière le mot (une forme, pas seulement du rouge)', sig['burst'] > 2000, json.dumps(sig))
     check('mot piège au début : même étoile (on doit LIRE le mot, comme avant)', trap0['burst'] > 2000, json.dumps(trap0))
-    check('piège démasqué : plus d’étoile, et le mot est rayé d’un gros trait blanc', trap1['burst'] < 50 and trap1['white'] > so['white'] + 300, f"{json.dumps(trap1)} / SO {json.dumps(so)}")
+    check('piège démasqué : plus d’étoile, et le mot est rayé d’un gros trait blanc', trap1['burst'] < 50 and trap1['white'] > so['white'] + 300, f"{json.dumps(trap1)} / juste avant {json.dumps(so)}")
     await done(page, ctx)
 
 LANG_CHECK = """(() => {

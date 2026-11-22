@@ -22,10 +22,11 @@ function showLevelFail(info) {
   const el = lvCard('lvFail');
   el.className = 'lvcard fail';
   const revive = S.Reward.canRevive();            // 🎬 2e chance (pub récompensée) : avec son bouton normal « Réessayer »
+  const night = info.res && info.res.why === 'night';   // v2.5 : après « LA NUIT TOMBE ! », la 2e chance = +10 s de jour
   el.innerHTML = `<div class="why">${esc(info.why)}</div><div class="almost">${esc(info.almost)}</div>`
     + (info.tip ? `<div class="tipx">${esc(info.tip)}</div>` : '')
     + (revive ? S.Reward.pairHTML({ act: 'retry', label: L.tryAgain, icon: 'restart' },
-                                  { kind: 'revive', token: S.Reward.reviveToken(), label: L.reviveBtn, cap: L.reviveCap })
+                                  { kind: 'revive', token: S.Reward.reviveToken(), label: night ? L.reviveNightBtn : L.reviveBtn, cap: night ? L.reviveNightCap : L.reviveCap })
               : `<div class="tap">${S.touchUI ? '👆 ' : ''}${esc(S.forDevice(L.failTap, L.keyRetry))}</div>`)
     + `<div class="btns"><button class="btn sm c-white" type="button" data-act="map">${icon('grid')}${esc(L.mapBtn)}</button></div>`;
   el.classList.add('show');

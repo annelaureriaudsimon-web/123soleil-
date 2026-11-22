@@ -14,7 +14,7 @@ S.TXT.it = {
   early: s => `Sei ripartito ${s} s troppo presto!`,
   hopCaught: 'Ti guardava con la coda dell’occhio!',
   realOne: 'Stavolta era quella vera!',
-  tipSo: 'Consiglio: molla appena vedi «STE»',
+  tipSo: 'Consiglio: molla appena leggi «STELLA!»',
   tipMoon: 'La Luna si gira subito dopo «LUNA!»',
   tipLook: 'Aspetta che si rigiri di spalle',
   tipHop: 'Finché spunta un occhio, non muoverti!',
@@ -75,7 +75,7 @@ S.TXT.it = {
   chant: { pre: 'STE', sun: 'STELLA!', moon: 'LUNA!', hop: 'OPLÀ!',
     traps: ['STECCO!', 'STELO!', 'STEREO!', 'STEMMA!', 'STEPPA!', 'STERZO!', 'STENDINO!', 'STERLINA!', 'STECCATO!', 'STEVIA!', 'STEARINA!', 'STERPO!'],
     moonTraps: ['LUPO!', 'LUCE!', 'LUMACA!', 'LUSSO!', 'LUCCIOLA!'] },
-  say: { num: ['Uno…', 'Due…', 'Tre…'], so: 'Ste…', sun: 'Stella!', moon: 'Luna!', hop: 'Oplà!',
+  say: { num: ['Uno…', 'Due…', 'Tre…'], sun: 'Stella!', moon: 'Luna!', hop: 'Oplà!',
     heh: ['Eh eh!', 'Ti ho beccato!', 'Ih ih!'], hmm: ['Mmmh…', 'Mmh mmh…'], grilled: ['Beccato!', 'Troppo lento!', 'Ti ho visto!', 'Ben cotto!'],
     bossSun: ['Ti scioglierai…', 'Fa caldo qui…'], bossMoon: ['Shh… la notte è mia…', 'La notte è mia…'],
     bossBeaten: ['Pfff… la prossima volta!', 'Pfff… colpo di fortuna!'] },
@@ -88,10 +88,11 @@ S.TXT.it = {
     : g.type === 'oufs' ? `Fai ${g.n} UFF` : g.type === 'combo' ? `Fai una combo UFF ×${g.n}`
     : g.type === 'noTrap' ? 'Non cadere in nessuna trappola' : g.type === 'avoid' ? `Supera ${g.n} trappole senza fermarti`
     : g.type === 'time' ? `Finisci in meno di ${g.s} s` : g.type === 'beat' ? `Batti ${who}`
-    : g.type === 'quick' ? `Fai ${g.n} partenze lampo` : g.type === 'resist' ? `Resisti a ${g.n} tentazioni` : '',
+    : g.type === 'quick' ? `Fai ${g.n} partenze lampo` : g.type === 'resist' ? `Resisti a ${g.n} tentazioni`
+    : g.type === 'scoops' ? `Arriva con ${g.n} palline di gelato` : '',
   tapStart: 'Tocca per iniziare',
   posOf: (n, t) => `${n}/${t}`, toGo: m => `${m} m`,
-  failWhyRunning: 'Stavi ancora correndo! Molla appena vedi «STE»',
+  failWhyRunning: 'Stavi ancora correndo! Molla appena leggi «STELLA!»',
   failAlmost: m => `A ${m} m dall’arrivo!`, failPlace: p => `Eri ${ord(p)}!`, failTap: 'Tocca per riprovare',
   failTipTrap: 'Ti ha beccato subito dopo una parola trappola 😏',
   winTitle: 'BRAVO!', bossWinTitle: 'SOLE FIGO SCONFITTO! 😎', you: 'Tu', notIn: 'non arrivato',
@@ -130,11 +131,24 @@ S.TXT.it = {
   trialTag: n => `Prova: ${n}`, trialBadge: 'Prova',
   noVideo: 'Video non disponibile', rewardDone: 'Fatto', revived: '2ª POSSIBILITÀ!', noChallengeRevive: 'impossibile dopo una 2ª possibilità',
   qualityLbl: m => `Qualità: ${{ auto: 'Auto', high: 'Alta', low: 'Bassa' }[m] || m}`,
+  // v2.5 — la pression : la nuit, les transats, la glace
+  nightFall: 'CALA LA NOTTE!',
+  nightWhy: 'Il sole è tramontato prima del tuo arrivo!',
+  nightTip: 'Non fermarti per niente: corri attraverso le parole trappola!',
+  nightWarn: 'Presto, cala la notte!',
+  nightBonus: '+10 s DI LUCE!',
+  reviveNightBtn: '+10 s di luce',
+  reviveNightCap: 'Guarda un breve video: il sole risale un po’',
+  chairsWhy: 'Niente più sdraio!',
+  chairsTip: 'Arriva prima che prendano tutte le sdraio!',
+  chairTaken: (n, f) => `🏖️ ${n} si siede${f ? ` · ne restano ${f}` : ' · più nessuna!'}`,
+  ploc: 'PLOF!',
+  mountain: n => `MONTAGNA DI GELATO! ×${n}`,
   phrases: {
     'The playground': 'Il cortile della scuola', 'The park': 'Il parco', 'The beach': 'La spiaggia', 'The mountain': 'La montagna', 'The night': 'La notte',
     'First steps': 'Primi passi', 'Hold to run. Let go before “RED LIGHT!”': 'Tieni premuto per correre. Molla prima di «STELLA!»',
     'HOLD': 'TIENI', 'LET GO!': 'MOLLA!', 'GO!': 'VIA!', 'Touch the sun! ☀️': 'Tocca il sole! ☀️',
-    'The hesitations': 'Le esitazioni', 'He stretches the “REEED…”: don’t restart!': 'Allunga lo «STEEEE…»: non ripartire!',
+    'The hesitations': 'Le esitazioni', 'He stretches the “3…”: wait for the word!': 'Allunga il «3…»: aspetta la parola!',
     'Raining traps': 'Pioggia di trappole', 'RED HAT, RED BUS, RED FOX… Read the word before letting go!': 'STECCO, STELO, STEREO… Leggi la parola prima di mollare!',
     'The Speedster': 'Lo Scattante', 'Max runs really fast… but he gets toasted!': 'Max corre velocissimo… ma si fa beccare!', 'Beat Max! ⚡': 'Batti Max! ⚡',
     'The stutter': 'Il balbettio', '“2… 2… 3…”: don’t count, listen!': '«2… 2… 3…»: non contare, ascolta!',
@@ -163,6 +177,8 @@ S.TXT.it = {
     'Reach the evening (120 m)': 'Arriva alla sera (120 m)', 'See the Moon (180 m)': 'Vedi la Luna (180 m)', 'Survive a fake turn': 'Resisti a una falsa girata',
     'Get a ×3 combo': 'Fai una combo ×3', 'Cross 2 ice patches': 'Attraversa 2 lastre di ghiaccio', 'Beat 2 bosses in one run': 'Sconfiggi 2 boss in una partita',
     'Catch a big star': 'Prendi una stella grande', 'Cross 2 slopes': 'Attraversa 2 discese',
+    'Before nightfall': 'Prima della notte', 'The sun is setting: read fast and run through the traps!': 'Il sole tramonta: leggi veloce e corri attraverso le trappole!',
+    'Get there before nightfall! 🌅': 'Arriva prima che cali la notte! 🌅',
     'Classic': 'Classico', 'Cap': 'Cappellino', 'Tennis': 'Tennis', 'Tourist': 'Turista', 'Pyjamas': 'Pigiama', 'Vampire': 'Vampiro', 'Dino': 'Dino', 'Sun King': 'Re Sole'
   }
 };

@@ -46,6 +46,8 @@ function drawLevelHUD() {
   g.font = `900 ${fs * 0.62}px ${S.FONT}`;
   const lab = boss ? `${farceur ? L.bossBar2 : L.bossBar} · ${L.toGo(rem)}` : L.toGo(rem);
   otext(lab, x0 + (total > 1 ? fs * 2.9 : 0), ty + fs * 0.05, fs * 0.62, boss ? '#FF8FA3' : '#FFFFFF');
+  S.drawPressureHUD(x0, x1, ty + fs * 0.62, fs);   // v2.5 : jusqu'à la nuit, transats libres, boules de glace
+  S.drawMountain();                                 // v2.5 : la montagne de glace, à l'arrivée
   // rivaux derrière toi
   S.drawBehind();
   // consigne dessinée (main qui appuie ou lève le doigt, ou touche Espace) et son mot : « MAINTIENS », « LÂCHE ! »…
@@ -97,7 +99,7 @@ function drawDizzy(t) {
 
 // Les lunettes noires descendent du ciel jusque sur les yeux du soleil
 function drawGlassesDrop(k) {
-  const g = S.ctx, R = Lt.R, ty = Lt.sunY + S.watcher.offY - R * 0.16;
+  const g = S.ctx, R = Lt.R, ty = Lt.sunY + S.watcher.offY + S.sunSink - R * 0.16;
   const yy = lerp(-R * 1.2, ty, easeIn(clamp(k, 0, 1)));
   g.save(); g.translate(Lt.cx, yy); g.rotate((1 - k) * 0.5 * Math.sin(S.gtime * 5));
   g.fillStyle = '#16161F'; g.strokeStyle = INK; g.lineWidth = Math.max(2, R * 0.05);

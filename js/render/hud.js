@@ -23,7 +23,7 @@ function drawChant() {                               // « 1… 2… 3… SO… 
   let size = Lt.chantSize * (w.textKind === 'trigger' || w.textKind === 'trap' ? 1.15 : w.textKind === 'hmm' ? 0.75 : 1);
   size = fit(w.text, size, S.W * 0.92);
   const sc = 1 + 0.5 * Math.exp(-since * 13);
-  const col = trapShown ? '#06D6A0' : (w.textKind === 'trigger' || w.textKind === 'trap') ? '#FF4D6D' : w.textKind === 'so' ? '#FFD166' : '#FFFFFF';
+  const col = trapShown ? '#06D6A0' : (w.textKind === 'trigger' || w.textKind === 'trap') ? '#FF4D6D' : '#FFFFFF';
   S.ctx.save(); S.ctx.translate(Lt.cx, Lt.chantY);
   if (trapShown) S.ctx.rotate(Math.sin(S.gtime * 22) * 0.06 * Math.max(0, 1 - (since - 0.2) * 1.5));
   S.ctx.scale(sc, sc);
@@ -35,7 +35,7 @@ function drawChant() {                               // « 1… 2… 3… SO… 
   if (loud) drawBurst(Math.min(tw * 0.56 + size * 0.22, S.W * 0.47), size * 0.82, a, S.gtime);
   otextC(w.text, size, col, a);
   if (trapShown) drawStrike(tw, size, clamp((since - 0.2) / 0.12, 0, 1), a);
-  if ((w.textKind === 'num' || w.textKind === 'so') && w.state === 'chant' && since > 0.42 && S.cloudK < 0.05) {   // il fait durer le suspense…
+  if (w.textKind === 'num' && w.state === 'chant' && since > 0.42 && S.cloudK < 0.05) {   // il fait durer le suspense : « 3… »
     const n = 1 + (Math.floor((since - 0.42) / 0.22) % 3);
     S.ctx.font = `900 ${size}px ${FONT}`;
     const dw = S.ctx.measureText(w.text).width;
@@ -132,7 +132,7 @@ function drawHUD() {
   }
   if (S.tutorial && S.state === 'play' && S.cycleN <= 1) {   // 1re course : le geste dessiné (main ou touche Espace) et un mot
     const w = S.watcher;
-    const stop = (w.state === 'chant' && (w.textKind === 'so' || w.textKind === 'trigger')) || w.state === 'turn' || w.state === 'look';   // « SO… » : on lâche
+    const stop = (w.state === 'chant' && w.textKind === 'trigger') || w.state === 'turn' || w.state === 'look';   // « SOLEIL ! » : on lâche
     S.drawTut(stop ? 'release' : 'hold');
     S.drawTutWord(stop ? L.letGo : L.holdWord, stop ? '#FF8FA3' : '#FFD166');
   }

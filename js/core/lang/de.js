@@ -14,7 +14,7 @@ S.TXT.de = {
   early: s => `${s} s zu früh losgelaufen!`,
   hopCaught: 'Sie hat dich aus dem Augenwinkel beobachtet!',
   realOne: 'Diesmal war es echt!',
-  tipSo: 'Tipp: Lass los, sobald du „SO“ siehst',
+  tipSo: 'Tipp: Lass los, sobald du „SONNE!“ liest',
   tipMoon: 'Der Mond dreht sich gleich nach „MOND!“ um',
   tipLook: 'Warte, bis sie dir den Rücken zudreht',
   tipHop: 'Solange ein Auge hervorschaut: nicht bewegen!',
@@ -75,7 +75,7 @@ S.TXT.de = {
   chant: { pre: 'SO', sun: 'SONNE!', moon: 'MOND!', hop: 'HOPP!',
     traps: ['SOFA!', 'SOCKE!', 'SOMMER!', 'SOSSE!', 'SOJA!', 'SOLO!', 'SONAR!', 'SORTE!', 'SOLDAT!', 'SONNTAG!', 'SOHLE!', 'SOMBRERO!'],
     moonTraps: ['MOPS!', 'MOOS!', 'MOTOR!', 'MONAT!', 'MOHN!'] },
-  say: { num: ['Eins…', 'Zwei…', 'Drei…'], so: 'So…', sun: 'Sonne!', moon: 'Mond!', hop: 'Hopp!',
+  say: { num: ['Eins…', 'Zwei…', 'Drei…'], sun: 'Sonne!', moon: 'Mond!', hop: 'Hopp!',
     heh: ['Hehe!', 'Hab dich!', 'Hihi!'], hmm: ['Hmmm…', 'Hmm hmm…'], grilled: ['Erwischt!', 'Zu langsam!', 'Ich hab dich gesehen!', 'Knusprig!'],
     bossSun: ['Du wirst schmelzen…', 'Jetzt wird’s heiß…'], bossMoon: ['Pssst… die Nacht gehört mir…', 'Die Nacht gehört mir…'],
     bossBeaten: ['Pfff… nächstes Mal!', 'Pfff… reines Glück!'] },
@@ -88,10 +88,11 @@ S.TXT.de = {
     : g.type === 'oufs' ? `Schaff ${g.n}× PUH` : g.type === 'combo' ? `Schaff eine PUH-Kombo ×${g.n}`
     : g.type === 'noTrap' ? 'Fall auf keine Falle rein' : g.type === 'avoid' ? `Lauf durch ${g.n} Fallen, ohne anzuhalten`
     : g.type === 'time' ? `Schaff es in unter ${g.s} s` : g.type === 'beat' ? `Schlag ${who}`
-    : g.type === 'quick' ? `Schaff ${g.n} Blitzstarts` : g.type === 'resist' ? `Widersteh ${g.n} Versuchungen` : '',
+    : g.type === 'quick' ? `Schaff ${g.n} Blitzstarts` : g.type === 'resist' ? `Widersteh ${g.n} Versuchungen`
+    : g.type === 'scoops' ? `Komm mit ${g.n} Eiskugeln an` : '',
   tapStart: 'Tippen zum Starten',
   posOf: (n, t) => `${n}/${t}`, toGo: m => `${m} m`,
-  failWhyRunning: 'Du bist noch gelaufen! Lass bei „SO“ los',
+  failWhyRunning: 'Du bist noch gelaufen! Lass los, sobald du „SONNE!“ liest',
   failAlmost: m => `Nur ${m} m vor dem Ziel!`, failPlace: p => `Du warst ${ord(p)}!`, failTap: 'Tippen für einen neuen Versuch',
   failTipTrap: 'Sie hat dich direkt nach einem Fallenwort erwischt 😏',
   winTitle: 'SUPER!', bossWinTitle: 'COOLE SONNE BESIEGT! 😎', you: 'Du', notIn: 'nicht im Ziel',
@@ -130,11 +131,24 @@ S.TXT.de = {
   trialTag: n => `Test: ${n}`, trialBadge: 'Test',
   noVideo: 'Video nicht verfügbar', rewardDone: 'Erledigt', revived: '2. CHANCE!', noChallengeRevive: 'nicht möglich nach einer 2. Chance',
   qualityLbl: m => `Qualität: ${{ auto: 'Auto', high: 'Hoch', low: 'Niedrig' }[m] || m}`,
+  // v2.5 — la pression : la nuit, les transats, la glace
+  nightFall: 'DIE NACHT BRICHT AN!',
+  nightWhy: 'Die Sonne ist untergegangen, bevor du da warst!',
+  nightTip: 'Halt nicht umsonst an: lauf durch die Fallenwörter!',
+  nightWarn: 'Schnell, es wird Nacht!',
+  nightBonus: '+10 s TAGESLICHT!',
+  reviveNightBtn: '+10 s Tageslicht',
+  reviveNightCap: 'Schau ein kurzes Video: Die Sonne steigt ein bisschen',
+  chairsWhy: 'Kein Liegestuhl mehr frei!',
+  chairsTip: 'Komm an, bevor alle Liegestühle besetzt sind!',
+  chairTaken: (n, f) => `🏖️ ${n} setzt sich${f ? ` · noch ${f}` : ' · keiner mehr!'}`,
+  ploc: 'PLOPP!',
+  mountain: n => `EIS-BERG! ×${n}`,
   phrases: {
     'The playground': 'Der Schulhof', 'The park': 'Der Park', 'The beach': 'Der Strand', 'The mountain': 'Der Berg', 'The night': 'Die Nacht',
     'First steps': 'Erste Schritte', 'Hold to run. Let go before “RED LIGHT!”': 'Halten zum Laufen. Vor „SONNE!“ loslassen',
     'HOLD': 'HALTEN', 'LET GO!': 'LOSLASSEN!', 'GO!': 'LOS!', 'Touch the sun! ☀️': 'Berühr die Sonne! ☀️',
-    'The hesitations': 'Das Zögern', 'He stretches the “REEED…”: don’t restart!': 'Sie zieht das „SOOOO…“ in die Länge: nicht loslaufen!',
+    'The hesitations': 'Das Zögern', 'He stretches the “3…”: wait for the word!': 'Sie zieht die „3…“ in die Länge: warte auf das Wort!',
     'Raining traps': 'Fallenregen', 'RED HAT, RED BUS, RED FOX… Read the word before letting go!': 'SOFA, SOCKE, SOMMER… Lies das Wort, bevor du loslässt!',
     'The Speedster': 'Der Draufgänger', 'Max runs really fast… but he gets toasted!': 'Max rennt superschnell… wird aber erwischt!', 'Beat Max! ⚡': 'Schlag Max! ⚡',
     'The stutter': 'Das Stottern', '“2… 2… 3…”: don’t count, listen!': '„2… 2… 3…“: nicht zählen, hinhören!',
@@ -163,6 +177,8 @@ S.TXT.de = {
     'Reach the evening (120 m)': 'Erreiche den Abend (120 m)', 'See the Moon (180 m)': 'Sieh den Mond (180 m)', 'Survive a fake turn': 'Überstehe eine falsche Drehung',
     'Get a ×3 combo': 'Schaff eine ×3-Kombo', 'Cross 2 ice patches': 'Überquer 2 Eisflächen', 'Beat 2 bosses in one run': 'Besiege 2 Bosse in einem Lauf',
     'Catch a big star': 'Fang einen großen Stern', 'Cross 2 slopes': 'Überquer 2 Hänge',
+    'Before nightfall': 'Vor der Nacht', 'The sun is setting: read fast and run through the traps!': 'Die Sonne geht unter: Lies schnell und lauf durch die Fallen!',
+    'Get there before nightfall! 🌅': 'Komm an, bevor es Nacht wird! 🌅',
     'Classic': 'Klassisch', 'Cap': 'Kappe', 'Tennis': 'Tennis', 'Tourist': 'Tourist', 'Pyjamas': 'Schlafanzug', 'Vampire': 'Vampir', 'Dino': 'Dino', 'Sun King': 'Sonnenkönig'
   }
 };

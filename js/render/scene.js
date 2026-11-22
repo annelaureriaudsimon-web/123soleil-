@@ -27,6 +27,7 @@ function render() {
   else if (isLvl) {                                                // arrivée, rivaux devant, toi, rivaux tout près derrière
     S.drawLevelMud(camZ);                                            // flaques de boue du niveau (monde 2)
     S.drawFinish(camZ, S.Levels.m.level.length);
+    S.drawChairs(camZ);                                              // v2.5 : les transats à l'arrivée
     S.drawRivals(false);
     S.drawTemptStar(camZ);                                           // l'étoile tentatrice, devant toi
     const jy = S.Levels.jump, sp = S.Levels.spin;
@@ -34,6 +35,7 @@ function render() {
       const py = Lt.yFeet - Lt.s * 0.8 - jy;
       S.ctx.save(); S.ctx.translate(Lt.cx, py); S.ctx.rotate(sp); S.ctx.translate(-Lt.cx, -py - jy); drawRunner(); S.ctx.restore();
     } else if (jy) { S.ctx.save(); S.ctx.translate(0, -jy); drawRunner(); S.ctx.restore(); } else drawRunner();
+    S.drawCone();                                                    // v2.5 : la montagne de glace qu'il porte
     S.drawRivals(true);
     S.drawFly();                                                     // la mouche, par-dessus le coureur
   }

@@ -19,7 +19,8 @@ const MUD_ACC = 9, MUD_SPEED = 0.55;   // dans la boue : démarrage au ralenti, 
 const V_EPS = 0.12;          // au-dessus de cette vitesse, le soleil te voit bouger
 const CLOSE = 0.18;          // arrêté moins de 0,18 s avant son regard = « OUF ! » (et combo)
 const PHASE_LEN = 60;        // matin, midi, soir, nuit : une phase (et un boss) tous les 60 m (~20 s). Presque tout en découle
-const TURN0 = 0.45, TURN_MIN = 0.26;   // temps pour réagir après « SOLEIL ! » : au départ, puis au plus dur
+const TURN0 = 0.70, TURN_MIN = 0.50;   // temps pour lire, réagir et freiner après « SOLEIL ! » : au départ, puis au plus dur
+                                       // (v2.5, plus de « SO » : l'expert a besoin de 0,20 s de réaction + 0,30 s de freinage à 12 m/s)
 const RET_DUR = 0.28;        // durée de son demi-tour quand il se remet de dos
 const HOP_DUR = 0.16;        // le « HOP ! » du faux dos est très rapide
 const PEEK_P = 0.56;         // pendant le faux dos, il reste tourné juste assez pour qu'un œil dépasse
@@ -52,7 +53,7 @@ const BOSS_REST = 1.2;       // pause en plus après un boss battu, le temps qu'
 const DUO_FINISH = 120;      // ligne d'arrivée (m)
 const DUO_WIN = 2;           // manches gagnantes
 const DUO_D = 0.25;          // difficulté fixe du soleil (0 = facile, 1 = très dur)
-const DUO_TURN = 0.45;       // temps pour réagir après « SOLEIL ! » (s), comme au début du solo
+const DUO_TURN = 0.65;       // temps pour lire, réagir et freiner après « SOLEIL ! » (s) — v2.5 : plus de « SO »
 const DUO_TRAPS = 0.35;      // probabilité d'un mot piège dans un chant
 const DUO_FAUX = 0.25;       // probabilité d'un faux dos après un regard
 const DUO_RESPAWN = 1.1;     // durée de l'animation « grillé » avant le retour au départ (s)

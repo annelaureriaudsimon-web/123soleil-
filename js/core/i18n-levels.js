@@ -16,10 +16,11 @@ Object.assign(TXT.fr, {
     : g.type === 'oufs' ? `Fais ${g.n} OUF` : g.type === 'combo' ? `Fais un combo OUF ×${g.n}`
     : g.type === 'noTrap' ? 'Ne tombe dans aucun piège' : g.type === 'avoid' ? `Évite ${g.n} pièges sans t’arrêter`
     : g.type === 'time' ? `Finis en moins de ${g.s} s` : g.type === 'beat' ? `Bats ${who}`
-    : g.type === 'quick' ? `Fais ${g.n} départs éclair` : g.type === 'resist' ? `Résiste à ${g.n} tentations` : '',
+    : g.type === 'quick' ? `Fais ${g.n} départs éclair` : g.type === 'resist' ? `Résiste à ${g.n} tentations`
+    : g.type === 'scoops' ? `Arrive avec ${g.n} boules de glace` : '',
   tapStart: 'Touche pour commencer',
   posOf: (n, t) => `${ordFr(n)}/${t}`, toGo: m => `${m} m`,
-  failWhyRunning: 'Tu courais encore ! Lâche dès « SO »',
+  failWhyRunning: 'Tu courais encore ! Lâche dès que tu lis « SOLEIL ! »',
   failAlmost: m => `À ${m} m de l’arrivée !`, failPlace: p => `Tu étais ${ordFr(p)} !`, failTap: 'Touche pour réessayer',
   failTipTrap: 'Il t’a eu juste après un mot piège 😏',
   winTitle: 'BRAVO !', bossWinTitle: 'SOLEIL COOL BATTU ! 😎', you: 'Toi', notIn: 'pas arrivé',
@@ -60,10 +61,11 @@ Object.assign(TXT.en, {
     : g.type === 'oufs' ? `Get ${g.n} PHEWs` : g.type === 'combo' ? `Get a ×${g.n} PHEW combo`
     : g.type === 'noTrap' ? 'Don’t fall for any trap' : g.type === 'avoid' ? `Run through ${g.n} traps without stopping`
     : g.type === 'time' ? `Finish in under ${g.s} s` : g.type === 'beat' ? `Beat ${who}`
-    : g.type === 'quick' ? `Get ${g.n} lightning starts` : g.type === 'resist' ? `Resist ${g.n} temptations` : '',
+    : g.type === 'quick' ? `Get ${g.n} lightning starts` : g.type === 'resist' ? `Resist ${g.n} temptations`
+    : g.type === 'scoops' ? `Finish with ${g.n} scoops` : '',
   tapStart: 'Tap to start',
   posOf: (n, t) => `${ordEn(n)}/${t}`, toGo: m => `${m} m`,
-  failWhyRunning: 'You were still running! Let go on “RED”',
+  failWhyRunning: 'You were still running! Let go as soon as you read “RED LIGHT!”',
   failAlmost: m => `${m} m from the finish!`, failPlace: p => `You were ${ordEn(p)}!`, failTap: 'Tap to try again',
   failTipTrap: 'He got you right after a trap word 😏',
   winTitle: 'WELL DONE!', bossWinTitle: 'COOL SUN BEATEN! 😎', you: 'You', notIn: 'not in',
@@ -118,5 +120,34 @@ Object.assign(TXT.en, {
 // Qualité d'image (v2.4, js/render/quality.js)
 Object.assign(TXT.fr, { qualityLbl: m => `Qualité : ${{ auto: 'Auto', high: 'Haute', low: 'Basse' }[m] || m}` });
 Object.assign(TXT.en, { qualityLbl: m => `Quality: ${{ auto: 'Auto', high: 'High', low: 'Low' }[m] || m}` });
+// v2.5 — la pression : la nuit, les transats, la glace (game/match.js, render/pressure.js)
+Object.assign(TXT.fr, {
+  nightFall: 'LA NUIT TOMBE !',
+  nightWhy: 'Le soleil s’est couché avant ton arrivée !',
+  nightTip: 'Ne t’arrête pas pour rien : cours à travers les mots pièges !',
+  nightWarn: 'Vite, la nuit tombe !',
+  nightBonus: '+10 s DE JOUR !',
+  reviveNightBtn: '+10 s de jour',
+  reviveNightCap: 'Regarde une courte vidéo : le soleil remonte un peu',
+  chairsWhy: 'Plus de transat !',
+  chairsTip: 'Arrive avant que tous les transats soient pris !',
+  chairTaken: (n, f) => `🏖️ ${n} s’assoit${f ? ` · encore ${f}` : ' · plus aucun !'}`,
+  ploc: 'PLOC !',
+  mountain: n => `MONTAGNE DE GLACE ! ×${n}`
+});
+Object.assign(TXT.en, {
+  nightFall: 'NIGHT FALLS!',
+  nightWhy: 'The sun set before you got there!',
+  nightTip: 'Don’t stop for nothing: run through the trap words!',
+  nightWarn: 'Hurry, night is falling!',
+  nightBonus: '+10 s OF DAYLIGHT!',
+  reviveNightBtn: '+10 s of daylight',
+  reviveNightCap: 'Watch a short video: the sun rises a little',
+  chairsWhy: 'No deckchair left!',
+  chairsTip: 'Get there before all the deckchairs are taken!',
+  chairTaken: (n, f) => `🏖️ ${n} sits down${f ? ` · ${f} left` : ' · none left!'}`,
+  ploc: 'PLOP!',
+  mountain: n => `ICE CREAM MOUNTAIN! ×${n}`
+});
 S.typoAll(TXT.fr);                                 // typographie française : espaces insécables (core/i18n.js)
 })(window.Soleil);

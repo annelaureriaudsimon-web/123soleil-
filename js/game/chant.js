@@ -1,4 +1,5 @@
-/* js/game/chant.js — Le chant du soleil : « 1… 2… 3… SO… SOLEIL ! », pièges, hésitations, boss */
+/* js/game/chant.js — Le chant du soleil : « 1… 2… 3… SOLEIL ! », pièges, hésitations, boss.
+   v2.5 : plus de « SO » nulle part. Le mot (vrai ou piège) arrive juste après le « 3… » : c'est lui qui prévient. */
 (function (S) {
 'use strict';
 const { BOSS_LEAD, CLOUD_P, DIFF_SCALE, DUO_D, DUO_FAUX, DUO_TRAPS, DUO_TURN, FIRST_TRAP_CYCLE, OVER_LEN,
@@ -44,10 +45,9 @@ function makeChant(D, O, moon, z, R, boss, pTrapOver, forceTrap) {
   seq.forEach(n => { ev.push({ t, text: String(n + 1), kind: 'num', n }); t += w * J(); });
   for (let i = 0; ; i++) {
     const last = i >= traps;
-    if (!moon) {
-      ev.push({ t, text: S.chantW().pre, kind: 'so' });
-      t += hes && last ? lerp(0.55, 1.45, dHesLen) : w * 0.55 * J();
-    } else if (hes && last) t += lerp(0.55, 1.45, dHesLen);
+    // L'ancien « SO » avait son dé : il est toujours tiré, pour que le reste du chant (rires, « 3 ») ne bouge pas.
+    if (!moon && !(hes && last)) J();
+    if (hes && last) { ev[ev.length - 1].hes = true; t += lerp(0.55, 1.45, dHesLen); }   // l'hésitation : le « 3… » qui dure
     if (last) { ev.push({ t, text: moon ? S.chantW().moon : S.chantW().sun, kind: 'trigger' }); break; }
     ev.push({ t, text: words[i], kind: 'trap' });             // « SOLDES ! » : il ne se retourne pas…
     t += lerp(0.5, 0.75, r());                                // …il rigole…
@@ -90,16 +90,16 @@ function chantEvent(ev) {
   w.text = ev.text; w.textKind = ev.kind; w.textT = S.gtime; w.bump = 1; w.revealed = false;
   Sound.chant(ev, w.type === 'moon');
   if (ev.kind === 'trap') { w.trapsThisChant++; if (S.mode !== 'duo') S.trapWatch = { t: S.runT, moving: S.runner.v > 2, stopped: false }; }
-  if (S.tutorial && S.cycleN === 1 && ev.kind === 'so') S.popup(L.letGo, Lt.cx, Lt.yFeet - Lt.s * 1.9, '#FFD166', Math.min(Lt.U * 0.08, 42), 1.3);
+  if (S.tutorial && S.cycleN === 1 && ev.kind === 'trigger') S.popup(L.letGo, Lt.cx, Lt.yFeet - Lt.s * 1.9, '#FFD166', Math.min(Lt.U * 0.08, 42), 1.3);
   if (ev.kind === 'num' && w.trapsThisChant > 0 && S.star && !S.star.taken && !S.star.gone) S.poofStar();   // c'était un piège : trop tard
   if (ev.kind === 'num' && ev.n === 2 && !w.starTried) { w.starTried = true; S.tryStar(); }   // au « 3 » : une étoile ?
 }
 
 /* ---------- 13 bis. Le chant d'un niveau (mode Niveaux) ----------
-   Mêmes événements que makeChant (num, so, trap, trigger), mais réglés par les données du niveau.
+   Mêmes événements que makeChant (num, trap, trigger), mais réglés par les données du niveau.
    c = réglages du cycle déjà tirés par le moteur (game/match.js, cycleConfig) :
-     word (durée d'un mot, s), jitter (variation ±), soK (durée du « SO » en mots), traps (0, 1 ou 2 mots pièges),
-     hesAt (index du « SO » qui hésite, -1 = aucun), hesLen (durée du « SOOOO… », s),
+     word (durée d'un mot, s), jitter (variation ±), soK (durée de l'ancien « SO » : son dé est encore tiré), traps (0, 1 ou 2),
+     hesAt (devant quel mot le « 3… » hésite, -1 = aucun), hesLen (durée de ce « 3… » qui dure, s),
      stutter (bégaiement « 2… 2… 3… »), stutterAt (0 ou 1), stutterRush (après le bégaiement, il accélère : × durée),
      express (tout deux fois plus vite), expressK (× durée), words (mots pièges), laugh (s), rnd (générateur du cycle). */
 function buildChant(c) {
@@ -116,8 +116,8 @@ function buildChant(c) {
   });
   for (let i = 0; ; i++) {
     const last = i >= c.traps;
-    ev.push({ t, text: S.chantW().pre, kind: 'so', hes: i === c.hesAt });
-    t += i === c.hesAt ? c.hesLen : w * c.soK * J() * rush;
+    const hes = i === c.hesAt;                                       // le « 3… » qui dure (l'ancien « SOOOO… »)
+    if (hes) { ev[ev.length - 1].hes = true; t += c.hesLen; } else J();   // le dé de l'ancien « SO » est toujours tiré
     if (last) { ev.push({ t, text: S.chantW().sun, kind: 'trigger' }); break; }
     ev.push({ t, text: c.words[i], kind: 'trap' });                  // « SOUPE ! » : il ne se retourne pas…
     t += c.laugh;                                                    // …il rigole…

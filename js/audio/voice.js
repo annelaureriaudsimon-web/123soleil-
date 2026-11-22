@@ -78,7 +78,7 @@ function sayEvent(ev) {                            // ce que dit la voix pour un
   const w = S.watcher;
   if (!Voice.active() || ev.t < w.t - 0.15) return;   // trop tard : on saute ce mot (le jeu ne l'attend jamais)
   const moon = w.type === 'moon';
-  Voice.say(ev.kind === 'num' ? SAY.num[ev.n] : ev.kind === 'so' ? SAY.so : ev.kind === 'trigger' ? (moon ? SAY.moon : SAY.sun)
+  Voice.say(ev.kind === 'num' ? SAY.num[ev.n] : ev.kind === 'trigger' ? (moon ? SAY.moon : SAY.sun)
             : sayable(ev.text), moon);   // « SOLDES ! » → « Soldes ! », « ¡POLLO! » → « ¡Pollo! »
 }
 

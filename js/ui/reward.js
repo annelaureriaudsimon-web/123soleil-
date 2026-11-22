@@ -76,7 +76,8 @@ document.addEventListener('pointerdown', e => { if (e.target.closest && e.target
 const reviveToken = () => (S.state === 'level' && S.Levels.m ? `revive:${S.Levels.def.id}:${S.Levels.attempt}` : `revive:run:${S.runSeed}:${S.runNo || 0}`);
 function canRevive() {
   if (!available()) return false;
-  if (S.state === 'level') { const m = S.Levels.m; return !!m && S.Levels.phase === 'fail' && !m.revived && !m.level.soft && !used(reviveToken()); }
+  if (S.state === 'level') { const m = S.Levels.m; return !!m && S.Levels.phase === 'fail' && !m.revived && !m.level.soft && !used(reviveToken())
+    && !(m.result && m.result.why === 'chairs'); }   // v2.5 : pas de 2e chance après les transats (on est déjà à l'arrivée)
   if (S.state === 'over') return S.mode === 'free' && !S.revivedRun && !used(reviveToken());
   return false;
 }

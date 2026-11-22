@@ -59,7 +59,6 @@ const Sound = {
   },
   chant(ev, moon) {
     if (ev.kind === 'num') this.tone(moon ? [262, 294, 330][ev.n] : [523, 587, 659][ev.n], 0.2, moon ? 'sine' : 'triangle', 0.24);
-    else if (ev.kind === 'so') this.tone(784, 0.18, 'triangle', 0.26);
     else if (moon) { this.tone(440, 0.55, 'sine', 0.3, 220); this.tone(660, 0.5, 'triangle', 0.08, 330); }
     else { this.tone(1047, 0.32, 'square', 0.12); this.tone(523, 0.32, 'triangle', 0.16); }   // trigger et pièges : même son !
   },

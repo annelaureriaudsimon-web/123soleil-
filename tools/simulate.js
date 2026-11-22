@@ -15,18 +15,22 @@ const vm = require('vm');
 // ---------- Réglages ----------
 const DT = 1 / 60;                 // pas de temps (comme un écran à 60 images/s)
 const TIME_MAX = 150;              // un essai qui dure plus longtemps est arrêté (ne devrait jamais arriver)
-const PROFILES = ['expert', 'moyen', 'debutant'];
-const NAMES = { expert: 'Expert', moyen: 'Moyen', debutant: 'Débutant' };
-const WHY = { running: 'courait encore', late: 'lâché trop tard', early: 'reparti trop tôt', hop: 'faux dos (HOP !)', timeout: 'trop long' };
+const PROFILES = ['expert', 'moyen', 'debutant', 'patient'];
+// « patient » = le robot prudent (v2.5) : il s'arrête à CHAQUE « 3 » et ne repart qu'au vrai retour (game/rivals.js).
+// Il ne perd jamais tant que rien ne presse : la nuit, les transats et la glace doivent le faire échouer.
+const NAMES = { expert: 'Expert', moyen: 'Moyen', debutant: 'Débutant', patient: 'Prudent' };
+const WHY = { running: 'courait encore', late: 'lâché trop tard', early: 'reparti trop tôt', hop: 'faux dos (HOP !)', timeout: 'trop long',
+  night: 'la nuit est tombée', chairs: 'plus de transat' };
 const TEMPT_NAMES = { star: 'étoile', fakeRet: 'faux retour', sneeze: 'éternuement', taunt: 'moquerie', fly: 'mouche', crack: 'rival qui craque' };
 // Objectifs de chaque monde : durée du joueur moyen (s), boss, et taux du moyen au boss
 const TARGETS = {
   1: { dur: [25, 35], bossDur: 45, boss: [0.15, 0.35] },
-  2: { dur: [30, 40], bossDur: 50, boss: [0.10, 0.30] }
+  2: { dur: [30, 42], bossDur: 50, boss: [0.10, 0.30] }   // v2.5 : sans « SO », on attend un peu plus (lire, puis repartir)
 };
-// Résultats du monde 1 (300 essais) : ils ne doivent pas bouger (à 3 points près). Fixés à la fin de la phase 1,
-// sauf le niveau 1 depuis la v2.2 : départ en douceur (« OUPS ! » au lieu de « GRILLÉ ! »), le débutant le finit toujours (66 → 100).
-const REF_W1 = { expert: [100, 100, 100, 100, 100, 100, 100, 100], moyen: [100, 99, 92, 88, 76, 63, 50, 32], debutant: [100, 59, 35, 12, 6, 3, 3, 1] };
+// Résultats du monde 1 (300 essais) : ils ne doivent pas bouger (à 3 points près) tant qu'on ne règle pas le monde 1.
+// v2.5 (parties A et B) : plus de « SO » (demi-tours rallongés) et le coucher du soleil ; le robot « patient » échoue dès la nuit.
+const REF_W1 = { expert: [100, 100, 100, 100, 100, 100, 100, 100], moyen: [100, 100, 86, 82, 81, 67, 51, 33],
+                 debutant: [100, 91, 75, 41, 17, 7, 10, 4], patient: [100, 100, 0, 0, 1, 0, 0, 0] };
 // Fichiers du jeu chargés, dans l'ordre de index.html (seulement ceux qui ne touchent pas à l'écran)
 const FILES = ['js/core/config.js', 'js/core/rng.js', 'js/game/content.js', 'js/game/physics.js', 'js/game/chant.js',
   'js/game/rivals.js', 'js/game/match.js', 'levels/worlds.js', 'levels/world1.js', 'levels/world2.js'];
@@ -109,10 +113,10 @@ for (const w of worlds) {
     const row = { w, lv, p: {} };
     for (const p of PROFILES) row.p[p] = run(lv, p);
     rows.push(row);
-    const e = row.p.expert, mo = row.p.moyen, d = row.p.debutant;
-    console.log(`${lv.num}. ${lv.name.fr.padEnd(26)} réussite E ${pct(e.win).padStart(5)} · M ${pct(mo.win).padStart(5)} · D ${pct(d.win).padStart(5)}`
-      + ` | durée E ${sec(e.time)} M ${sec(mo.time)} D ${sec(d.time)} | place M ${mo.place.toFixed(2)}`
-      + ` | ★★ M ${pct(mo.s2)} ★★★ M ${pct(mo.s3)} E ${pct(e.s3)} | 1er SOLEIL ≤ ${e.turn.toFixed(1)} s`
+    const e = row.p.expert, mo = row.p.moyen, d = row.p.debutant, pa = row.p.patient;
+    console.log(`${lv.num}. ${lv.name.fr.padEnd(26)} réussite E ${pct(e.win).padStart(5)} · M ${pct(mo.win).padStart(5)} · D ${pct(d.win).padStart(5)} · P ${pct(pa.win).padStart(5)}`
+      + ` | durée E ${sec(e.time)} M ${sec(mo.time)} D ${sec(d.time)} P ${sec(pa.time)} | place M ${mo.place.toFixed(2)}`
+      + ` | ★★ M ${pct(mo.s2)} ★★★ M ${pct(mo.s3)} E ${pct(e.s3)} P ${pct(pa.s3)} | 1er SOLEIL ≤ ${e.turn.toFixed(1)} s`
       + (w.id > 1 ? ` | résistées M ${mo.resisted.toFixed(1)} · éclairs M ${mo.quick.toFixed(1)}` : '')
       + (lv.soft ? ` | OUPS par essai M ${mo.oops.toFixed(1)} · D ${d.oops.toFixed(1)}` : '') + ` | défaite M : ${mo.why}`);
   }
@@ -153,9 +157,13 @@ if (w1.length === 8 && N >= 300) {
   w1.forEach((r, i) => PROFILES.forEach(p => { worst = Math.max(worst, Math.abs(r.p[p].win * 100 - REF_W1[p][i])); }));
   checks.push(['monde 1 : mêmes résultats que la référence REF_W1 (phase 1 ; niveau 1 en douceur depuis la v2.2), à 3 points près', worst <= 3, `plus gros écart ${Math.round(worst)} points`]);
 }
-const r21 = find(2, 1), r14 = find(1, 4);
-if (r21 && r14) checks.push(['monde 2, niveau 1 : un peu plus dur que le niveau 4 du monde 1 (moyen : 2 à 15 points de moins)',
-  r14.p.moyen.win - r21.p.moyen.win >= 0.02 && r14.p.moyen.win - r21.p.moyen.win <= 0.15, `${pct(r21.p.moyen.win)} contre ${pct(r14.p.moyen.win)}`]);
+// Pas de mur entre deux mondes : le niveau 1 d'un monde est plus dur que le niveau 2 du monde d'avant, mais plus facile que son boss
+for (const w of worlds) {
+  const first = find(w.id, 1), prev2 = find(w.id - 1, 2), prevBoss = find(w.id - 1, 8);
+  if (first && prev2 && prevBoss) checks.push([`monde ${w.id}, niveau 1 : plus dur que le niveau 2 du monde ${w.id - 1}, plus facile que son boss (moyen)`,
+    first.p.moyen.win < prev2.p.moyen.win && first.p.moyen.win > prevBoss.p.moyen.win,
+    `${pct(first.p.moyen.win)} (niveau 2 : ${pct(prev2.p.moyen.win)}, boss : ${pct(prevBoss.p.moyen.win)})`]);
+}
 console.log('\nObjectifs :');
 checks.forEach(([t, ok, v]) => console.log(`  ${ok ? '✅' : '❌'} ${t}  [${v}]`));
 

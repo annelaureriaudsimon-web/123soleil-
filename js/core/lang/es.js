@@ -14,7 +14,7 @@ S.TXT.es = {
   early: s => `¡Arrancaste ${s} s antes de tiempo!`,
   hopCaught: '¡Te vigilaba con el rabillo del ojo!',
   realOne: '¡Esta vez era el de verdad!',
-  tipSo: 'Truco: suelta en cuanto veas «PO»',
+  tipSo: 'Truco: suelta en cuanto leas «¡POLLITO!»',
   tipMoon: 'La Luna se gira justo después de «¡LUNA!»',
   tipLook: 'Espera a que se dé la vuelta',
   tipHop: 'Mientras asome un ojo, ¡no te muevas!',
@@ -75,7 +75,7 @@ S.TXT.es = {
   chant: { pre: 'PO', sun: '¡POLLITO!', moon: '¡LUNA!', hop: '¡HOP!',
     traps: ['¡POLLO!', '¡POMELO!', '¡POSTRE!', '¡POLVO!', '¡POZO!', '¡POMADA!', '¡POLKA!', '¡PORTERO!', '¡POLILLA!', '¡POSTAL!', '¡PONCHO!', '¡POLICÍA!'],
     moonTraps: ['¡LUPA!', '¡LUCHA!', '¡LUGAR!', '¡LUJO!', '¡LUCES!'] },
-  say: { num: ['Uno…', 'Dos…', 'Tres…'], so: 'Po…', sun: '¡Pollito!', moon: '¡Luna!', hop: '¡Hop!',
+  say: { num: ['Uno…', 'Dos…', 'Tres…'], sun: '¡Pollito!', moon: '¡Luna!', hop: '¡Hop!',
     heh: ['¡Je, je!', '¡Te pillé!', '¡Ji, ji!'], hmm: ['Mmmm…', 'Mmm mmm…'], grilled: ['¡Pillado!', '¡Muy lento!', '¡Te vi!', '¡Bien tostado!'],
     bossSun: ['Te vas a derretir…', 'Esto se calienta…'], bossMoon: ['Chis… la noche es mía…', 'La noche es mía…'],
     bossBeaten: ['¡Bah… la próxima vez!', '¡Bah… pura suerte!'] },
@@ -88,10 +88,11 @@ S.TXT.es = {
     : g.type === 'oufs' ? `Haz ${g.n} UF` : g.type === 'combo' ? `Haz un combo UF ×${g.n}`
     : g.type === 'noTrap' ? 'No caigas en ninguna trampa' : g.type === 'avoid' ? `Pasa ${g.n} trampas sin pararte`
     : g.type === 'time' ? `Termina en menos de ${g.s} s` : g.type === 'beat' ? `Gana a ${who}`
-    : g.type === 'quick' ? `Haz ${g.n} salidas relámpago` : g.type === 'resist' ? `Resiste ${g.n} tentaciones` : '',
+    : g.type === 'quick' ? `Haz ${g.n} salidas relámpago` : g.type === 'resist' ? `Resiste ${g.n} tentaciones`
+    : g.type === 'scoops' ? `Llega con ${g.n} bolas de helado` : '',
   tapStart: 'Toca para empezar',
   posOf: (n, t) => `${n}/${t}`, toGo: m => `${m} m`,
-  failWhyRunning: '¡Seguías corriendo! Suelta en cuanto veas «PO»',
+  failWhyRunning: '¡Seguías corriendo! Suelta en cuanto leas «¡POLLITO!»',
   failAlmost: m => `¡A ${m} m de la meta!`, failPlace: p => `¡Ibas ${ord(p)}!`, failTap: 'Toca para reintentar',
   failTipTrap: 'Te pilló justo después de una palabra trampa 😏',
   winTitle: '¡BRAVO!', bossWinTitle: '¡SOL GUAY VENCIDO! 😎', you: 'Tú', notIn: 'no llegó',
@@ -130,11 +131,24 @@ S.TXT.es = {
   trialTag: n => `Prueba: ${n}`, trialBadge: 'Prueba',
   noVideo: 'Vídeo no disponible', rewardDone: 'Hecho', revived: '¡2.ª OPORTUNIDAD!', noChallengeRevive: 'imposible tras una 2.ª oportunidad',
   qualityLbl: m => `Calidad: ${{ auto: 'Auto', high: 'Alta', low: 'Baja' }[m] || m}`,
+  // v2.5 — la pression : la nuit, les transats, la glace
+  nightFall: '¡CAE LA NOCHE!',
+  nightWhy: '¡El sol se puso antes de que llegaras!',
+  nightTip: 'No te pares por nada: ¡corre a través de las palabras trampa!',
+  nightWarn: '¡Rápido, cae la noche!',
+  nightBonus: '¡+10 s DE DÍA!',
+  reviveNightBtn: '+10 s de día',
+  reviveNightCap: 'Mira un vídeo corto: el sol sube un poco',
+  chairsWhy: '¡No quedan tumbonas!',
+  chairsTip: '¡Llega antes de que cojan todas las tumbonas!',
+  chairTaken: (n, f) => `🏖️ ${n} se sienta${f ? ` · quedan ${f}` : ' · ¡ninguna más!'}`,
+  ploc: '¡PLOF!',
+  mountain: n => `¡MONTAÑA DE HELADO! ×${n}`,
   phrases: {
     'The playground': 'El patio del cole', 'The park': 'El parque', 'The beach': 'La playa', 'The mountain': 'La montaña', 'The night': 'La noche',
     'First steps': 'Primeros pasos', 'Hold to run. Let go before “RED LIGHT!”': 'Mantén para correr. Suelta antes de «¡POLLITO!»',
     'HOLD': 'MANTÉN', 'LET GO!': '¡SUELTA!', 'GO!': '¡YA!', 'Touch the sun! ☀️': '¡Toca el sol! ☀️',
-    'The hesitations': 'Las dudas', 'He stretches the “REEED…”: don’t restart!': 'Alarga el «POOOO…»: ¡no vuelvas a arrancar!',
+    'The hesitations': 'Las dudas', 'He stretches the “3…”: wait for the word!': 'Alarga el «3…»: ¡espera la palabra!',
     'Raining traps': 'Lluvia de trampas', 'RED HAT, RED BUS, RED FOX… Read the word before letting go!': 'POLLO, POMELO, POSTRE… ¡Lee la palabra antes de soltar!',
     'The Speedster': 'El Lanzado', 'Max runs really fast… but he gets toasted!': 'Max corre muy rápido… ¡pero lo pillan!', 'Beat Max! ⚡': '¡Gana a Max! ⚡',
     'The stutter': 'El tartamudeo', '“2… 2… 3…”: don’t count, listen!': '«2… 2… 3…»: ¡no cuentes, escucha!',
@@ -163,6 +177,8 @@ S.TXT.es = {
     'Reach the evening (120 m)': 'Llega a la tarde (120 m)', 'See the Moon (180 m)': 'Ve la Luna (180 m)', 'Survive a fake turn': 'Resiste una falsa vuelta',
     'Get a ×3 combo': 'Haz un combo ×3', 'Cross 2 ice patches': 'Cruza 2 placas de hielo', 'Beat 2 bosses in one run': 'Gana a 2 jefes en una partida',
     'Catch a big star': 'Atrapa una estrella grande', 'Cross 2 slopes': 'Cruza 2 bajadas',
+    'Before nightfall': 'Antes de la noche', 'The sun is setting: read fast and run through the traps!': 'El sol se pone: ¡lee rápido y corre a través de las trampas!',
+    'Get there before nightfall! 🌅': '¡Llega antes de la noche! 🌅',
     'Classic': 'Clásico', 'Cap': 'Gorra', 'Tennis': 'Tenis', 'Tourist': 'Turista', 'Pyjamas': 'Pijama', 'Vampire': 'Vampiro', 'Dino': 'Dino', 'Sun King': 'Rey Sol'
   }
 };

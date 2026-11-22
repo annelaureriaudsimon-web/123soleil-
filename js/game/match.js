@@ -10,7 +10,7 @@ const { V_EPS, CLOSE, RET_DUR, HOP_DUR, PEEK_P, MUD_SPEED, VMAX0, DEC, SUN_TRAPS
 // ---------- Réglages ----------
 const FIRST_PAUSE = 1.2;       // secondes avant le tout premier chant (le temps de démarrer)
 const LAUGH = [0.5, 0.75];     // il rigole après un mot piège, puis reprend à « 3 » (s)
-const TRAP_WIN = 0.6;          // s'être arrêté (depuis « SO ») jusqu'à 0,6 s après un mot piège = « tombé dans le piège »
+const TRAP_WIN = 0.6;          // s'être arrêté (depuis le « 3 ») jusqu'à 0,6 s après un mot piège = « tombé dans le piège »
 const RIVAL_RESPAWN = 1.5;     // rival grillé : durée de son animation avant le retour au départ (s)
 const LANES = [-1.0, 1.0, -1.7, 1.7, -2.4, 2.4];          // couloirs des rivaux à gauche / à droite du joueur (m)
 const QUICK = 0.35;            // « départ éclair » : repartir moins de 0,35 s après le vrai « ding »
@@ -30,18 +30,24 @@ const CRACK_RANGE = [-1, 30];  // rival qui craque : entre 1 m derrière toi et 
 // Niveau « en douceur » (champ « soft » d'un niveau, le niveau 1) : vu en train de bouger, tu n'es pas grillé,
 // tu recules de soft.back mètres (« OUPS ! ») en KNOCK s, puis il faut lâcher avant de repartir.
 const KNOCK = 0.5;
+// v2.5 — la pression (la prudence coûte cher) :
+//   night  : le coucher du soleil. Au bout de « night » s, le soleil touche l'horizon : « LA NUIT TOMBE ! », perdu.
+//   chairs : les transats. Il y en a un de moins que d'enfants : quand le dernier est pris par un rival, perdu.
+//   scoops : la glace. On part avec « scoops » boules, une fond toutes les « melt » s ; ce qui reste à l'arrivée = étoiles.
+const NIGHT_BONUS = 10;        // 2e chance après « LA NUIT TOMBE ! » : +10 s de jour, une seule fois
+const NIGHT_WARN = 5;          // les 5 dernières secondes : la barre clignote, « Vite, la nuit tombe ! »
 
 // Réglages du soleil par défaut (chaque niveau peut les changer dans levels/*.js, champ « sun »)
 const SUN_BASE = {
   word: [0.55, 0.65],          // durée d'un chiffre « 1… 2… 3… » (s), tirée à chaque cycle entre ces deux valeurs
   jitter: 0.08,                // petite variation de chaque mot (±8 %)
-  soK: 0.6,                    // durée du « SO » (× un chiffre)
-  turn: [0.62, 0.68],          // demi-tour après « SOLEIL ! » : le temps qu'il te laisse pour t'arrêter (s)
+  soK: 0.6,                    // l'ancien « SO » (v2.4) : son dé est encore tiré, rien ne s'affiche
+  turn: [0.70, 0.76],          // demi-tour après « SOLEIL ! » : TOUT le temps qu'on a pour lire, réagir et freiner (s) — v2.5 : +0,08 (plus de « SO »)
   look: [1.2, 1.9],            // durée de son regard (s)
   pause: [0.5, 1.0],           // pause avant de rechanter (s)
   traps: 0, double: 0,         // probabilité d'un mot piège dans un chant, puis d'un deuxième
-  hesitate: 0,                 // probabilité d'une hésitation « SOOOO… »
-  hesLen: [0.9, 1.5],          // durée de l'hésitation (s)
+  hesitate: 0,                 // probabilité d'une hésitation : le « 3… » qui dure avant le mot
+  hesLen: [0.9, 1.5],          // durée de l'hésitation : le « 3… » qui dure (s)
   hesOnTrap: 0.4,              // probabilité que l'hésitation tombe sur un mot piège (et pas sur SOLEIL)
   stutter: 0,                  // probabilité d'un bégaiement « 2… 2… 3… »
   stutterRush: 0.65,           // après le bégaiement, il accélère (× durée des mots)
@@ -58,7 +64,8 @@ const SUN_BASE = {
 
 // Un niveau des fichiers levels/*.js, complété avec les valeurs par défaut
 function normalize(def) {
-  const L = Object.assign({ speed: 1, rivals: [], script: {}, hints: [], mechanics: [], mud: [], firstPause: FIRST_PAUSE, boss: false }, def);
+  const L = Object.assign({ speed: 1, rivals: [], script: {}, hints: [], mechanics: [], mud: [], firstPause: FIRST_PAUSE, boss: false,
+    night: 0, chairs: 0, scoops: 0, melt: 0 }, def);
   L.sun = Object.assign({}, SUN_BASE, def.sun || {});
   return L;
 }
@@ -89,7 +96,8 @@ function create(def, attempt, opts = {}) {
     }),
     finishers: [],
     stats: { oufs: 0, combo: 0, comboMax: 0, trapsFell: 0, trapsAvoided: 0, looks: 0, cycles: 0, resisted: 0, quick: 0, oops: 0 },
-    look: null, quickT: -1          // tentations du regard en cours ; instant du dernier vrai « ding »
+    look: null, quickT: -1,         // tentations du regard en cours ; instant du dernier vrai « ding »
+    night: L.night || 0, warned: false, scoops: L.scoops || 0   // v2.5 : la nuit (s), la glace (boules qui restent)
   };
   if (opts.playerBrain) m.player.brain = newBrain(opts.playerBrain, mulberry32(mixSeed(seed, 999)), opts.brainOver, opts.brainSeen);
   m.cc = cycleConfig(m, 1);
@@ -153,7 +161,7 @@ function feed(m, type, data) {                    // tous les cerveaux voient le
   if (m.player.brain) brainSee(m.player.brain, type, m.t, data);
   for (const r of m.rivals) if (r.state === 'race') brainSee(r.brain, type, m.t, data);
 }
-const soLong = m => m.sun.state === 'chant' && m.sun.textKind === 'so';   // le « SO… » est encore affiché
+const soLong = m => m.sun.state === 'chant' && m.sun.textKind === 'num' && m.sun.text === '3';   // le « 3… » est encore affiché
 const safeToRun = m => m.sun.state === 'pause' || m.sun.state === 'return' || (m.sun.state === 'chant' && !m.soSeen);
 
 const mudAt = (L, z) => { for (const p of L.mud) if (z >= p[0] && z < p[1]) return true; return false; };
@@ -175,6 +183,14 @@ function step(m, dt, input) {
   if (pl.knock) knockStep(pl, dt);                 // niveau en douceur : il recule après un « OUPS ! »
   else move(m, pl, unlocked(pl, press), dt);
   if (pl.z >= m.level.length) { win(m); return; }   // ligne franchie : gagné, même s'il finit de se retourner
+  if (m.night) {                                   // le coucher du soleil
+    if (m.t >= m.night) { lose(m, 'night', 0); return; }
+    if (!m.warned && m.night - m.t <= NIGHT_WARN) { m.warned = true; emit(m, 'nightWarn'); }
+  }
+  if (m.level.scoops && m.level.melt) {            // la glace fond : une boule toutes les « melt » secondes
+    const left = Math.max(0, m.level.scoops - Math.floor(m.t / m.level.melt));
+    if (left < m.scoops) { m.scoops = left; emit(m, 'melt', { left }); }
+  }
   if (m.quickT >= 0 && pl.press) {                 // départ éclair : reparti juste après le vrai « ding »
     if (m.t - m.quickT <= QUICK) { m.stats.quick++; emit(m, 'quick', { n: m.stats.quick }); }
     m.quickT = -1;
@@ -223,6 +239,7 @@ function stepRival(m, r, dt) {
   if (r.z >= m.level.length) {
     r.state = 'done'; r.finishT = m.t; m.finishers.push(r);
     emit(m, 'rivalFinish', { r, place: m.finishers.length });
+    if (m.level.chairs && !m.result && m.finishers.length >= m.level.chairs) lose(m, 'chairs', 0);   // plus de transat libre
   }
 }
 
@@ -331,14 +348,14 @@ function startChant(m) {
 function chantWord(m, ev) {
   const w = m.sun;
   w.text = ev.text; w.textKind = ev.kind; w.textAt = m.t;
-  if (ev.kind === 'so') { m.soSeen = true; m.trapTrack = { moving: m.player.v > 2, stopped: false, trapT: -1 }; }
+  if (ev.kind === 'num' && ev.n === 2) { m.soSeen = true; m.trapTrack = { moving: m.player.v > 2, stopped: false, trapT: -1 }; }   // le « 3 » : le mot arrive
   if (ev.kind === 'trap') { w.trapsThisChant++; w.revealed = false; if (m.trapTrack) m.trapTrack.trapT = m.t; }
   if (ev.kind === 'trigger') m.trapTrack = null;
   emit(m, 'word', { ev });
   feed(m, ev.kind, ev);
 }
 
-// As-tu freiné pour un mot piège ? (depuis le « SO » jusqu'à TRAP_WIN s après le mot)
+// As-tu freiné pour un mot piège ? (depuis le « 3 » jusqu'à TRAP_WIN s après le mot)
 function trackTrap(m) {
   const k = m.trapTrack;
   if (!k) return;
@@ -392,7 +409,8 @@ function win(m) {
   const pl = m.player;
   pl.state = 'done'; pl.finishT = m.t;
   m.result = { win: true, time: m.t, place: m.finishers.length + 1, total: m.rivals.length + 1, stats: m.stats,
-               beaten: m.rivals.filter(r => r.state !== 'done').map(r => r.id), revived: !!m.revived };
+               beaten: m.rivals.filter(r => r.state !== 'done').map(r => r.id), revived: !!m.revived,
+               scoops: m.level.scoops ? m.scoops : null };   // v2.5 : les boules de glace qui restent
   emit(m, 'finish', { place: m.result.place });
 }
 function lose(m, why, val) {
@@ -410,8 +428,9 @@ function lose(m, why, val) {
 // La simulation ne l'utilise jamais : ses résultats ne bougent pas.
 const REVIVE_PAUSE = 1.2;                          // s : la pause du soleil avant le prochain chant
 function revive(m) {
-  if (!m.result || m.result.win || m.revived || m.level.soft) return false;
+  if (!m.result || m.result.win || m.revived || m.level.soft || m.result.why === 'chairs') return false;   // transats : on est à l'arrivée
   const pl = m.player, w = m.sun;
+  if (m.result.why === 'night') { m.night += NIGHT_BONUS; m.warned = false; }   // le soleil remonte un peu : +10 s de jour
   m.revived = true; m.result = null; m.look = null; m.trapTrack = null; m.quickT = -1;
   pl.v = 0; pl.press = false; pl.stopT = m.t; pl.lock = true; pl.knock = null;
   m.stats.combo = 0;
@@ -437,10 +456,12 @@ function goalMet(g, res) {
     case 'beat': return res.beaten.includes(g.who);
     case 'quick': return res.stats.quick >= g.n;
     case 'resist': return res.stats.resisted >= g.n;
+    case 'scoops': return (res.scoops || 0) >= g.n;      // v2.5 : arrive avec au moins n boules de glace
     default: return false;
   }
 }
 const starsOf = (L, res) => [!!res.win, goalMet(L.goal, res), !res.revived && goalMet(L.challenge, res)];
 
-S.Match = { create, step, revive, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET, KNOCK };
+S.Match = { create, step, revive, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET, KNOCK,
+  NIGHT_BONUS, NIGHT_WARN };
 })(window.Soleil);
