@@ -55,10 +55,11 @@ function update(dt) {
   }
   S.updatePlane(dt);                                           // v2.5 : l'avion menteur traverse le ciel
   // Descente : l'horizon descend un peu
-  const onSlope = S.mode !== 'duo' && S.mode !== 'level' && (patchAt(S.runner.z) === 'slope' || patchAt(S.runner.z + 4) === 'slope');
+  const onSlope = S.state === 'level' ? S.Levels.onSlope   // v2.6 : les descentes de la montagne (modes/levels.js)
+    : S.mode !== 'duo' && S.mode !== 'level' && (patchAt(S.runner.z) === 'slope' || patchAt(S.runner.z + 4) === 'slope');
   S.tilt += ((onSlope ? 1 : 0) - S.tilt) * Math.min(1, dt * 3);
   S.tiltPx = S.tilt * S.H * SLOPE_TILT;
-  if (S.state !== 'play') Sound.wind(0);
+  if (S.state !== 'play') Sound.wind(S.state === 'level' ? S.Levels.wind : 0);   // v2.6 : le vent dans la descente
   tickHome();
 }
 

@@ -80,10 +80,13 @@ function drawAirplane(nose, y, pl, d, fs) {     // un petit avion à hélice, de
 // Niveaux : à chaque nuage. Course infinie : à partir de UNLOCK.reflet (avant, le nuage ne laisse que la voix).
 const reflectOn = () => S.state === 'level' || (UNLOCK.reflet != null && S.mode !== 'duo' && S.runner.z >= UNLOCK.reflet);
 // À la plage (monde 3), le sable mouillé au bord de la mer reflète le soleil tout le temps (un peu) : on apprend
-// où regarder avant que le nuage n'arrive (pas en qualité basse : on ne le dessine qu'avec le nuage).
+// où regarder avant que le nuage n'arrive (pas en qualité basse : on ne le dessine qu'avec le nuage). v2.6 : à la
+// montagne (monde 4), c'est le lac gelé, au même endroit.
 const beach = () => S.state === 'level' && S.Levels.def && S.Levels.def.world === 3;
+// v2.6 — à la montagne (monde 4), c'est un lac gelé : on le voit toujours un peu, il brille, et la glace ne bouge pas
+const frozen = () => S.state === 'level' && S.Levels.def && S.Levels.def.world === 4;
 function drawReflection() {
-  const sea = beach(), a = Math.max(clamp(S.cloudK * 1.4, 0, 1), sea && S.Q.level < 2 ? 0.32 : 0);
+  const sea = beach(), ice = frozen(), a = Math.max(clamp(S.cloudK * 1.4, 0, 1), (sea || ice) && S.Q.level < 2 ? 0.32 : 0);
   if (a <= 0.01 || !reflectOn()) return;
   const g = S.ctx, R = Lt.R, cx = Lt.cx, cy = Lt.hy + R * REF.dy, rx = R * REF.rx, ry = R * REF.ry;
   const w = S.watcher, sx = Lt.cx, sy = Lt.sunY + w.offY + S.sunSink;
@@ -93,6 +96,14 @@ function drawReflection() {
     const wg = g.createRadialGradient(cx, cy, ry * 0.3, cx, cy, rx);
     wg.addColorStop(0, 'rgba(120,185,230,0.85)'); wg.addColorStop(1, 'rgba(120,185,230,0.15)');
     g.fillStyle = wg; g.fill();
+  } else if (ice) {                               // le lac gelé : glace bleu pâle, bord de neige
+    const wg = g.createLinearGradient(0, cy - ry, 0, cy + ry);
+    wg.addColorStop(0, '#E3F4FF'); wg.addColorStop(1, '#9CCBEA');
+    g.fillStyle = wg; g.fill();
+    g.lineWidth = Math.max(2.5, R * 0.05); g.strokeStyle = INK; g.stroke();
+    g.lineWidth = Math.max(2, R * 0.05); g.strokeStyle = '#FFFFFF';
+    g.beginPath(); g.ellipse(cx, cy + R * 0.015, rx * 0.985, ry * 0.95, 0, Math.PI * 0.05, Math.PI * 0.95); g.stroke();
+    g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, TAU);
   } else {                                        // ailleurs : une flaque
     const wg = g.createLinearGradient(0, cy - ry, 0, cy + ry);
     wg.addColorStop(0, '#5BA8E0'); wg.addColorStop(1, '#2E6CB0');
@@ -101,13 +112,24 @@ function drawReflection() {
   }
   g.clip();
   g.save();                                       // le soleil, à l'envers et un peu écrasé, comme dans l'eau
-  const wob = 1 + (S.Q.level < 2 ? 0.025 * Math.sin(S.gtime * 3.1) : 0);   // l'eau bouge un peu (qualité haute et moyenne)
+  const wob = 1 + (S.Q.level < 2 && !ice ? 0.025 * Math.sin(S.gtime * 3.1) : 0);   // l'eau bouge un peu (pas la glace)
   g.translate(cx, cy - ry * 0.08); g.scale(REF.k * wob, -REF.k * REF.sq); g.translate(-sx, -sy);
   drawWatcher();
   if (S.state === 'level') S.drawSunMarks();      // l'œil du faux dos, l'anneau du « ding »…
   g.restore();
+  g.lineCap = 'round';
+  if (ice) {                                      // la glace : un voile pâle, des traces de patins, un reflet qui glisse
+    g.fillStyle = 'rgba(210,235,255,0.2)'; g.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+    g.strokeStyle = 'rgba(255,255,255,0.6)'; g.lineWidth = Math.max(1, R * 0.02);
+    for (let i = 0; i < 3; i++) { g.beginPath(); g.ellipse(cx + (i - 1) * rx * 0.35, cy + ry * 0.35, rx * (0.32 + i * 0.06), ry * 0.3, 0.1 * (i - 1), Math.PI * 1.05, Math.PI * 1.7); g.stroke(); }
+    const u = (S.gtime * 0.25) % 1.6 - 0.3, gx = cx - rx + u * rx * 2;
+    g.strokeStyle = 'rgba(255,255,255,0.75)'; g.lineWidth = Math.max(2, R * 0.06);
+    g.beginPath(); g.moveTo(gx - ry * 0.4, cy + ry * 0.7); g.lineTo(gx + ry * 0.4, cy - ry * 0.7); g.stroke();
+    g.restore();
+    return;
+  }
   g.fillStyle = 'rgba(46,108,176,0.18)'; g.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);   // un voile d'eau
-  g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineCap = 'round'; g.lineWidth = Math.max(1.5, R * 0.035);
+  g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = Math.max(1.5, R * 0.035);
   const n = S.Q.level === 0 ? 6 : 3;              // vaguelettes qui glissent
   for (let i = 0; i < n; i++) {
     const yy = cy - ry * 0.7 + (i + 0.5) * ry * 1.4 / n, xx = cx + Math.sin(S.gtime * 1.7 + i * 2.1) * rx * 0.45, l = rx * (0.18 + 0.1 * ((i * 7) % 3));

@@ -1,4 +1,5 @@
-# Tests automatiques du mode Niveaux (monde 1 en phase 1, tests 1 à 10 ; monde 2 en phase 2, tests 11 à 18),
+# Tests automatiques du mode Niveaux (monde 1 en phase 1, tests 1 à 10 ; monde 2 en phase 2, tests 11 à 18 ; v2.5 : 19 à 27 ;
+# v2.6 : la montagne, 28 à 32),
 # dans un vrai navigateur (Playwright).
 # Installation : pip install playwright && playwright install chromium
 # Lance : python3 tools/tests/test_levels.py            (tous les tests)
@@ -107,7 +108,8 @@ async def t_determinism(b):
     check('même niveau, même essai : exactement les mêmes événements (rivaux compris)', r['same'], f"{r['n']} événements")
     check('essai suivant : le rythme change', r['diff'] and r['w1'] != r['w2'], f"mot {r['w1']} s / {r['w2']} s")
     check('niveau 1 : mot piège forcé au cycle 2, à chaque essai', r['traps'] == 40, f"{r['traps']}/40")
-    src = ''.join(open(f).read() for f in [ROOT + 'js/game/match.js', ROOT + 'js/game/rivals.js', ROOT + 'js/game/physics.js', ROOT + 'levels/world1.js', ROOT + 'levels/world2.js', ROOT + 'levels/worlds.js'])
+    src = ''.join(open(f).read() for f in [ROOT + 'js/game/match.js', ROOT + 'js/game/rivals.js', ROOT + 'js/game/physics.js', ROOT + 'levels/world1.js', ROOT + 'levels/world2.js',
+                                           ROOT + 'levels/world3.js', ROOT + 'levels/world4.js', ROOT + 'levels/worlds.js'])
     chant = open(ROOT + 'js/game/chant.js').read()
     check('aucun Math.random() dans le moteur, les cerveaux, la physique et les niveaux', 'Math.random(' not in src and 'Math.random(' not in chant)
     ERRS.extend(page.errs); await ctx.close()
@@ -146,7 +148,7 @@ async def t_rivals(b):
     ERRS.extend(page.errs); await ctx.close()
 
 async def t_map(b):
-    print('\n6) Carte : cadenas, monde 3 verrouillé (étoiles du monde 2), mondes 4 et 5 « Bientôt », clavier, étoiles')
+    print('\n6) Carte : cadenas, mondes 3 et 4 verrouillés (étoiles du monde d’avant), monde 5 « Bientôt », clavier, étoiles')
     ctx, page = await new_page(b)
     await page.click('#lvBtn'); await page.wait_for_timeout(150)
     n = await page.evaluate("Soleil.WorldMap.nodes.map(n => [n.x, n.y])")
@@ -160,7 +162,11 @@ async def t_map(b):
     check('monde 3 (la plage) : verrouillé, il faut des étoiles du monde 2', 'monde 2' in t3 and 'débloquer' in t3, t3)
     await page.wait_for_timeout(800)                # un message à la fois : le suivant attend que le 1er ait été lu (0,9 s)
     await page.mouse.click(14 + 62 * 3.5, 48 + 18); await page.wait_for_timeout(250)
-    check('monde 4 : « Bientôt »', 'bientôt' in (await page.evaluate("document.getElementById('toast').innerText")).lower())
+    t4 = await page.evaluate("document.getElementById('toast').innerText")
+    check('monde 4 (la montagne, v2.6) : verrouillé, il faut des étoiles du monde 3', 'monde 3' in t4 and 'débloquer' in t4, t4)
+    await page.wait_for_timeout(800)
+    await page.mouse.click(14 + 62 * 4.5, 48 + 18); await page.wait_for_timeout(250)
+    check('monde 5 : « Bientôt »', 'bientôt' in (await page.evaluate("document.getElementById('toast').innerText")).lower())
     for k in ['ArrowRight', 'ArrowLeft', 'ArrowLeft', 'Enter']: await page.keyboard.press(k)
     await page.wait_for_timeout(150)
     check('clavier : flèches + Entrée lancent le niveau débloqué', await page.evaluate("Soleil.state + ':' + (Soleil.Levels.def && Soleil.Levels.def.id)") == 'level:w1-1')
@@ -688,10 +694,159 @@ async def t_endless_lies(b):
           ok, ' | '.join(f"{x['lie']} : {x['sub']}" for x in seen)[:200])
     ERRS.extend(page.errs); await ctx.close()
 
+# ---------- v2.6 : le monde 4 « La montagne » ----------
+async def t_w4_fair(b):
+    print('\n28) Monde 4 juste : lâcher dès le « 3 » sur le sol glissant suffit toujours ; l’expert réussit chaque niveau ; le robot prudent presque jamais')
+    ctx, page = await new_page(b)
+    r = await page.evaluate(f"""(() => {{
+      const S = Soleil, res = {{}}, pat = {{}}, calm = {{}}, slick = {{}};
+      for (const lv of S.WORLDS[3].levels) {{ let w = 0, p = 0, c = 0, sl = 0;
+        for (let a = 1; a <= 100; a++) {{ const m = S.Match.create(lv, a, {{ playerBrain: 'expert', brainSeen: {SEEN_ALL} }}); m.out = null;
+          while (!m.result && m.t < 150) S.Match.step(m, 1/60); if (m.result && m.result.win) w++; }}
+        // le joueur parfait : il lâche dès le « 3 » près du verglas ou dans une descente, au mot sinon, repart au « ding », ne craque jamais
+        for (let a = 1; a <= 40; a++) {{ const m = S.Match.create(Object.assign({{}}, lv, {{ night: 0 }}), a, {{ playerBrain: 'expert', brainOver: {{ crack: 0 }}, brainSeen: {SEEN_ALL} }}); m.out = null;
+          while (!m.result && m.t < 150) S.Match.step(m, 1/60); if (m.result && m.result.win) c++; else if (m.result && m.result.slick) sl++; }}
+        for (let a = 1; a <= 30; a++) {{ const m = S.Match.create(lv, a, {{ playerBrain: 'patient', brainSeen: {SEEN_ALL} }}); m.out = null;
+          while (!m.result && m.t < 150) S.Match.step(m, 1/60); if (m.result && m.result.win) p++; }}
+        res[lv.num] = w; pat[lv.num] = p; calm[lv.num] = c; slick[lv.num] = sl; }}
+      return {{ res, pat, calm, slick }}; }})()""")
+    check('juste : lâcher dès le « 3 » sur le sol glissant (et attendre le « ding ») gagne TOUJOURS (40/40 sur chaque niveau, jamais grillé en glissant)',
+          all(v == 40 for v in r['calm'].values()) and not any(r['slick'].values()), json.dumps(r['calm']))
+    check('expert : au moins 95/100 sur chacun des 8 niveaux de la montagne', all(v >= 95 for v in r['res'].values()), json.dumps(r['res']))
+    check('robot prudent (il s’arrête à chaque « 3 », attend le « ding ») : au plus 6/30 par niveau', all(v <= 6 for v in r['pat'].values()), json.dumps(r['pat']))
+    ERRS.extend(page.errs); await ctx.close()
+
+async def t_w4_ground(b):
+    print('\n29) La descente et le verglas dans les niveaux : la physique, les cerveaux, ce qu’on voit, ce qu’on lit')
+    ctx, page = await new_page(b)
+    r = await page.evaluate("""(() => {
+      const S = Soleil, M = S.Match, out = {};
+      const d1 = S.levelById('w4-1'), d2 = S.levelById('w4-2'), L1 = M.normalize(d1), L2 = M.normalize(d2);
+      out.ground = [M.groundAt(L1, d1.slope[0][0] + 1), M.groundAt(L2, d2.ice[0][0] + 1), M.groundAt(L1, 2), M.groundAt(M.normalize(S.levelById('w3-1')), 30)];
+      // vitesse dans la descente : celui qui maintient file à 1,3 × la vitesse max
+      const m = M.create(Object.assign({}, d1, { night: 0 }), 1, {}); m.out = null; let vmax = 0, vflat = 0;
+      while (m.player.z < d1.slope[0][1] - 0.5 && m.t < 20) { M.step(m, 1/60, true); if (m.result) break;
+        if (M.groundAt(L1, m.player.z) === 'slope') vmax = Math.max(vmax, m.player.v); else vflat = Math.max(vflat, m.player.v); }
+      out.speed = [+vflat.toFixed(2), +vmax.toFixed(2)];
+      // freinage : depuis 8 m/s, sur le sol, dans la descente, sur le verglas (temps pour s'arrêter)
+      const stop = g => { let v = 8, t = 0; while (v > S.V_EPS && t < 3) { v = S.kinStep(v, false, 1/120, g, 8).v; t += 1/120; } return +t.toFixed(2); };
+      out.stop = [stop(''), stop('slope'), stop('ice')];
+      // les cerveaux : près du verglas, ils lâchent dès le « 3 »
+      let slick = 0; const e = M.create(d2, 2, { playerBrain: 'expert' }); e.out = null; let lp = false;
+      while (!e.result && e.t < 150) { M.step(e, 1/60); if (lp && !e.player.press && e.player.brain.why === 'slick') slick++; lp = e.player.press; }
+      out.slick = slick; out.win = !!(e.result && e.result.win);
+      return out; })()""")
+    check('le sol des niveaux : descente, verglas, sol normal ; la plage n’a rien de glissant', r['ground'] == ['slope', 'ice', '', ''], str(r['ground']))
+    check('dans la descente on court 1,3 × plus vite (8 → 10,4 m/s)', abs(r['speed'][0] - 8) < 0.01 and abs(r['speed'][1] - 10.4) < 0.01, str(r['speed']))
+    check('on freine moins bien : 0,2 s sur le sol, 0,3 s dans la descente, 0,6 s sur le verglas (depuis 8 m/s)', r['stop'][0] < 0.22 and 0.26 < r['stop'][1] < 0.33 and 0.55 < r['stop'][2] < 0.65, str(r['stop']))
+    check('les cerveaux lâchent dès le « 3 » près du verglas (et gagnent)', r['slick'] >= 3 and r['win'], f"{r['slick']} fois")
+    # à l'écran : la descente (bannière, l'horizon penche, le vent), le verglas (bannière, il brille)
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w4-1', false)")
+    s1 = await page.evaluate("""(() => { const S = Soleil, L = S.Levels; LVBOT('good', 60 * 2); L.m.player.z = L.m.level.slope[0][0] + 0.5; L.m.player.v = 8;
+      let ban = '', tilt = 0, on = false, wind = 0;
+      for (let i = 0; i < 90; i++) { S.pressing = true; S.update(1 / 60); if (L.banner) ban = L.banner.title; tilt = Math.max(tilt, S.tilt); on = on || L.onSlope; wind = Math.max(wind, L.wind); if (L.m.result) break; }
+      return { ban, want: S.L.slopeTitle, tilt: +tilt.toFixed(2), on, wind: +wind.toFixed(2) }; })()""")
+    check('descente : « DESCENTE ! » la 1re fois, l’horizon penche, le vent souffle', s1['ban'] == s1['want'] and s1['on'] and s1['tilt'] > 0.3 and s1['wind'] > 0.5, json.dumps(s1, ensure_ascii=False))
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w4-2', false)")
+    s2 = await page.evaluate("""(() => { const S = Soleil, L = S.Levels; LVBOT('good', 60 * 2); L.m.player.z = L.m.level.ice[0][0] + 0.3; L.m.player.v = 8;
+      let ban = ''; for (let i = 0; i < 30; i++) { S.pressing = true; S.update(1 / 60); if (L.banner) ban = L.banner.title; }
+      return { ban, want: S.L.iceTitle, ground: L.m.player.ground }; })()""")
+    check('verglas : « VERGLAS ! » la 1re fois', s2['ban'] == s2['want'] and s2['ground'] == 'ice', json.dumps(s2, ensure_ascii=False))
+    # grillé en glissant : la carte de fin le dit (« … sur le verglas ! ») et donne le bon conseil
+    # (il court jusqu'au « SOLEIL ! », en plein verglas, et lâche 0,15 s plus tard : il glisse trop longtemps)
+    f = await page.evaluate("""(() => { const S = Soleil, L = S.Levels, T = S.L; S.WorldMap.open(); L.open('w4-2', false); LVBOT('good', 30);
+      const m = L.m;
+      for (let i = 0; i < 60 * 20 && m.sun.state !== 'turn' && !m.result; i++) { S.pressing = true; S.update(1 / 60); m.player.z = Math.min(m.player.z, m.level.ice[1][0] - 12); }
+      m.player.z = m.level.ice[1][0] + 0.5; m.player.v = 8;
+      for (let i = 0; i < 60 * 3 && !m.result; i++) { S.pressing = i < 9; S.update(1 / 60); }
+      for (let i = 0; i < 30; i++) S.update(1 / 60);
+      return { why: m.result && m.result.why, slick: m.result && m.result.slick, tip: L.info && L.info.tip, text: L.info && L.info.why, want: T.tipIce,
+               late: m.result && m.result.why === 'late' && L.info.why === T.lateIce((Math.round(m.result.val * 100) / 100).toFixed(2).replace('.', T.decimal)) }; })()""")
+    check('grillé sur le verglas : « Lâché … trop tard sur le verglas ! » et « Sur le verglas, lâche beaucoup plus tôt »', f['why'] == 'late' and f['slick'] == 'ice' and f['tip'] == f['want'] and 'verglas' in (f['text'] or ''), json.dumps(f, ensure_ascii=False)[:200])
+    ERRS.extend(page.errs); await ctx.close()
+
+async def t_w4_map(b):
+    print('\n30) Carte : la montagne se débloque avec 12 étoiles du monde 3 ; son décor, les luges, le lac gelé')
+    ctx, page = await new_page(b)
+    await page.click('#lvBtn'); await page.wait_for_timeout(200)
+    await page.evaluate("Soleil.WorldMap.tap(14 + 62 * 3.5, 48 + 18)"); await page.wait_for_timeout(200)
+    t = await page.evaluate("document.getElementById('toast').innerText")
+    check('monde 4 verrouillé : « Gagne 12 ★ dans le monde 3… »', '12' in t and 'monde 3' in t, t)
+    await ctx.add_init_script("""if (location.search.includes('w3stars')) { const s = {};
+      for (let w = 1; w <= 2; w++) for (let i = 1; i <= 8; i++) s['w' + w + '-' + i] = { s: [true, true, true], best: 30, tries: 1, done: true };
+      for (let i = 1; i <= 6; i++) s['w3-' + i] = { s: [true, true, false], best: 30, tries: 1, done: true };
+      localStorage.setItem('soleil.levels', JSON.stringify(s)); localStorage.setItem('soleil.worldsShown', JSON.stringify([2, 3])); }""")
+    await page.goto(URL + '?w3stars'); await page.wait_for_function("Soleil.Poki && Soleil.Poki.loaded"); await page.wait_for_timeout(300); await page.evaluate(FAST)
+    await page.click('#lvBtn'); await page.wait_for_timeout(1600)
+    r = await page.evaluate("[Soleil.WorldMap.nodes[0].lv.id, Soleil.Levels.unlocked(Soleil.levelById('w4-1')), Soleil.Levels.unlocked(Soleil.levelById('w4-2')), JSON.stringify(Soleil.store.get('worldsShown', []))]")
+    check('12 étoiles : animation, la carte passe sur la montagne, niveau 1 ouvert, niveau 2 fermé', r[0] == 'w4-1' and r[1] and not r[2] and '4' in r[3], str(r))
+    px = await page.evaluate("""(() => { const S = Soleil; S.WorldMap.draw(); const d = S.ctx.getImageData(Math.round(S.W * 0.5 * S.DPR), Math.round(S.H * 0.9 * S.DPR), 1, 1).data; return [d[0], d[1], d[2]]; })()""")
+    check('la page de la montagne : de la neige (blanc bleuté) en bas de la carte', px[0] > 225 and px[1] > 230 and px[2] > 240, str(px))
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w4-1', false)")
+    sn = await page.evaluate("""(() => { const S = Soleil; LVBOT('good', 20); S.render(); const d = S.ctx.getImageData(Math.round(S.W * 0.04 * S.DPR), Math.round(S.H * 0.97 * S.DPR), 1, 1).data; return [d[0], d[1], d[2]]; })()""")
+    check('dans le niveau : de la neige de chaque côté du sentier', sn[0] > 200 and sn[1] > 205 and sn[2] > 215, str(sn))
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w4-3', false)")
+    lv = await page.evaluate("""(() => { const S = Soleil, L = S.Levels; LVBOT('good', 20); const m = L.m, rv = m.rivals[2];
+      rv.z = m.level.length - 0.05; rv.v = 8; S.particles.length = 0;
+      for (let i = 0; i < 30; i++) { S.pressing = false; S.update(1 / 60); }
+      const pops = S.particles.filter(p => p.type === 'text').map(p => p.text).join(' | ');
+      return [L.def.world, m.level.chairs, m.rivals.length, L.sleds, pops]; })()""")
+    check('niveau 3 : 3 luges pour 4 enfants ; quand un rival arrive, « 🛷 … s’assoit · encore 2 »', lv[:4] == [4, 3, 3, True] and '🛷' in lv[4] and 'encore 2' in lv[4], str(lv))
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w4-4', false)")
+    lk = await page.evaluate("""(() => { const S = Soleil, L = S.Levels; let cloud = false, ban = '';
+      for (let i = 0; i < 60 * 8; i++) { LVBOT('good', 1); if (L.m.sun.cloud && S.cloudK > 0.9) cloud = true; if (L.banner) ban = L.banner.sub; if (cloud && ban) break; }
+      return { cloud, ban, want: S.L.refletSubIce }; })()""")
+    check('lac gelé : derrière le nuage, « Sur le lac gelé, tu vois s’il te regarde »', lk['cloud'] and lk['ban'] == lk['want'], json.dumps(lk, ensure_ascii=False))
+    ERRS.extend(page.errs); await ctx.close()
+
+async def t_w4_boss(b):
+    print('\n31) Boss de la montagne : le Soleil des Neiges (bonnet à pompon, masque de ski, air de montagne, coups spéciaux, victoire)')
+    ctx, page = await new_page(b)
+    await page.evaluate("Soleil.WorldMap.open(); Soleil.Levels.open('w4-8', false)")
+    await page.evaluate("Soleil.Sound.unlock()")
+    r = await page.evaluate("""(() => { const S = Soleil, L = S.Levels; LVBOT('none', 15); L.press(); LVBOT('none', 2); const a = { ph: L.phase, face: L.m.sun.turnP };
+      LVBOT('none', 60 * 2); a.face2 = L.m.sun.bossFace; a.music = S.Music.on; a.bpm = S.Music.T && S.Music.T.bpm; LVBOT('none', 90); a.ph2 = L.phase; return a; })()""")
+    check('intro : il se tourne vers toi', r['ph'] == 'boss' and r['face'] == 1)
+    check('bonnet à pompon et masque de ski + air de montagne (132 bpm)', r['face2'] == 'neiges' and r['music'] and r['bpm'] == 132, json.dumps(r))
+    check('puis le niveau commence', r['ph2'] == 'play')
+    mv = await page.evaluate("""(() => { const L = Soleil.Levels, t = new Set(); for (let i = 0; i < 60 * 25; i++) { LVBOT('good', 1); if (L.banner) t.add(L.banner.title); if (L.phase !== 'play') break; } return [...t].join(' / '); })()""")
+    check('coups spéciaux annoncés (bannières)', 'LE NUAGE DE NEIGE' in mv and 'L’AVALANCHE DE PIÈGES' in mv, mv)
+    await page.evaluate("Soleil.Levels.m.player.z = Soleil.Levels.m.level.length - 0.01; Soleil.Levels.m.player.v = 8")
+    await page.evaluate("LVBOT('greedy', 60 * 12, () => Soleil.Levels.phase === 'results')")
+    w = await page.evaluate("[Soleil.Levels.phase, Soleil.Music.on, (document.getElementById('lvEnd') || {}).innerText || '']")
+    check('victoire : musique coupée, « SOLEIL DES NEIGES BATTU ! », monde 4 terminé', w[0] == 'results' and not w[1] and 'NEIGES BATTU' in w[2] and 'Monde 4' in w[2], w[2].split('\n')[0])
+    ERRS.extend(page.errs); await ctx.close()
+
+async def t_w4_langs(b):
+    print('\n32) La montagne dans les 6 langues : bannières, luges, lac gelé, boss, niveaux')
+    out = []
+    for lg in ('fr', 'en', 'es', 'pt', 'de', 'it'):
+        ctx = await b.new_context(viewport={'width': 844, 'height': 390}, device_scale_factor=1, locale='fr-FR')
+        await ctx.route('**/poki-sdk.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body='window.PokiSDKfailed = true;'))
+        await ctx.add_init_script("localStorage.setItem('soleil.onboard', '3')")
+        page = await ctx.new_page(); page.errs = []
+        page.on('pageerror', lambda e: page.errs.append(str(e)))
+        await page.goto(URL + '?lang=' + lg); await page.wait_for_function("Soleil.Poki && Soleil.Poki.loaded"); await page.evaluate(FAST)
+        r = await page.evaluate("""(() => { const S = Soleil, L = S.L, bad = [];
+          for (const k of ['slopeTitle', 'slopeSub', 'iceTitle', 'iceSub', 'sledsWhy', 'sledsTip', 'refletSubIce', 'refletTipIce', 'bossTaunt4', 'bossDown4', 'bossWin4', 'bossBar4', 'worldDone4', 'worldUnlockedSub4'])
+            if (typeof L[k] !== 'string' || !L[k].trim()) bad.push(k);
+          if (!/🛷/.test(L.sledTaken('Inès', 2))) bad.push('sledTaken');
+          const w4 = S.WORLDS[3];
+          for (const lv of w4.levels) { const n = S.tr(lv.name), t = S.tr(lv.tip);
+            if (!n || !t) bad.push(lv.id);
+            if (S.LANG !== 'en' && S.LANG !== 'fr' && (n === lv.name.en || t === lv.tip.en)) bad.push(lv.id + ' en anglais'); }
+          if (!/«\\s?3\\s?»|“3”|„3“/.test(L.slopeSub) || !/«\\s?3\\s?»|“3”|„3“/.test(L.iceSub)) bad.push('le « 3 » dans la consigne');
+          return { bad, name: S.tr(w4.levels[7].name), sub: L.iceSub }; })()""")
+        out.append(f"{lg} : {r['name']} — {r['sub']}" + (f" [MANQUE {', '.join(r['bad'])}]" if r['bad'] else ''))
+        ok = not r['bad']
+        check(f'{lg} : tous les textes de la montagne', ok, out[-1][:120])
+        ERRS.extend(page.errs); await ctx.close()
+
 TESTS = [t_flow, t_fail, t_determinism, t_fair, t_rivals, t_map, t_save, t_boss, t_english, t_perf,
          t_w2_rule, t_w2_signal, t_w2_fair, t_w2_mud, t_w2_map, t_w2_reward, t_w2_boss, t_w2_english,
          t_v25_lies, t_v25_lies_screen, t_v25_rivals, t_v25_rivals_screen,
-         t_w3_fair, t_w3_map, t_w3_pressure, t_w3_boss, t_endless_lies]
+         t_w3_fair, t_w3_map, t_w3_pressure, t_w3_boss, t_endless_lies,
+         t_w4_fair, t_w4_ground, t_w4_map, t_w4_boss, t_w4_langs]
 async def main():
     only = sys.argv[1:]
     async with async_playwright() as p:

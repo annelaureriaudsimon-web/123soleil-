@@ -21,14 +21,15 @@ const PROFILES = ['expert', 'moyen', 'debutant', 'patient'];
 // Il ne perd jamais tant que rien ne presse : la nuit, les transats et la glace doivent le faire échouer.
 const NAMES = { expert: 'Expert', moyen: 'Moyen', debutant: 'Débutant', patient: 'Prudent' };
 const WHY = { running: 'courait encore', late: 'lâché trop tard', early: 'reparti trop tôt', hop: 'faux dos (HOP !)', timeout: 'trop long',
-  night: 'la nuit est tombée', chairs: 'plus de transat' };
+  night: 'la nuit est tombée', chairs: 'plus de transat (ou de luge)' };
 const TEMPT_NAMES = { star: 'étoile', fakeRet: 'faux retour', sneeze: 'éternuement', taunt: 'moquerie', fly: 'mouche', crack: 'rival qui craque',
   recount: 'recomptage', planeGo: 'avion « ALLEZ-Y ! »', alarm: 'fausse alerte', herd: 'troupeau' };   // v2.5
 // Objectifs de chaque monde : durée du joueur moyen (s), boss, et taux du moyen au boss
 const TARGETS = {
   1: { dur: [25, 35], bossDur: 45, boss: [0.15, 0.35] },
   2: { dur: [30, 42], bossDur: 50, boss: [0.10, 0.30] },  // v2.5 : sans « SO », on attend un peu plus (lire, puis repartir)
-  3: { dur: [30, 42], bossDur: 50, boss: [0.10, 0.20] }    // v2.5 : la plage, le dernier boss (10 à 20 % pour le moyen)
+  3: { dur: [30, 42], bossDur: 50, boss: [0.10, 0.20] },   // v2.5 : la plage
+  4: { dur: [30, 42], bossDur: 50, boss: [0.10, 0.20] }    // v2.6 : la montagne, le dernier boss (10 à 20 % pour le moyen)
 };
 // Résultats du monde 1 (300 essais) : ils ne doivent pas bouger (à 3 points près) tant qu'on ne règle pas le monde 1.
 // v2.5.1 : le moyen lit le mot en 0,36 s (vrai joueur au téléphone), le débutant en 0,45 s ; demi-tours et nuits
@@ -37,7 +38,8 @@ const REF_W1 = { expert: [100, 100, 100, 98, 100, 100, 98, 100], moyen: [100, 10
                  debutant: [100, 87, 17, 18, 4, 3, 4, 2], patient: [100, 100, 0, 1, 22, 14, 0, 0] };
 // Fichiers du jeu chargés, dans l'ordre de index.html (seulement ceux qui ne touchent pas à l'écran)
 const FILES = ['js/core/config.js', 'js/core/rng.js', 'js/game/content.js', 'js/game/physics.js', 'js/game/chant.js',
-  'js/game/rivals.js', 'js/game/match.js', 'levels/worlds.js', 'levels/world1.js', 'levels/world2.js', 'levels/world3.js'];
+  'js/game/rivals.js', 'js/game/match.js', 'levels/worlds.js', 'levels/world1.js', 'levels/world2.js', 'levels/world3.js',
+  'levels/world4.js'];
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };

@@ -171,20 +171,27 @@ function drawGrouchoDrop(k) {                        // l'intro du boss : la far
 function drawSunMarks() { drawSneezeEyes(); drawFarceurFace(); drawPeekEye(); drawTrueEnd(); }
 
 // 🟤 Les flaques de boue d'un niveau (placées à la main dans les données : champ « mud »)
+// Le sol des niveaux : descentes (monde 4) d'abord, puis verglas (monde 4) et boue (monde 2) par-dessus.
 function drawLevelMud(camZ) {
-  const lv = S.Levels.m && S.Levels.m.level; if (!lv || !lv.mud.length) return;
+  const lv = S.Levels.m && S.Levels.m.level;
+  if (!lv || !(lv.mud.length || (lv.slope && lv.slope.length) || (lv.ice && lv.ice.length))) return;
   const nearDz = CAM_H * Lt.F / (S.H + 40 - Lt.hy);
-  for (let i = lv.mud.length - 1; i >= 0; i--) {
-    const [z0, z1] = lv.mud[i], dzN = Math.max(z0 - camZ, nearDz), dzF = z1 - camZ;
-    if (dzF <= nearDz + 0.2 || dzN > 120) continue;
-    drawPuddle({ type: 'mud' }, 900 + i, dzN, dzF, yAt(dzN), yAt(dzF));
-  }
+  const each = (ps, f) => {
+    for (let i = (ps ? ps.length : 0) - 1; i >= 0; i--) {
+      const [z0, z1] = ps[i], dzN = Math.max(z0 - camZ, nearDz), dzF = z1 - camZ;
+      if (dzF <= nearDz + 0.2 || dzN > 120) continue;
+      f(i, z0, z1, dzN, dzF, yAt(dzN), yAt(dzF));
+    }
+  };
+  each(lv.slope, (i, z0, z1, dzN, dzF, yN, yF) => S.drawSlope({ z0, z1 }, camZ, dzN, dzF, yN, yF));
+  each(lv.ice, (i, z0, z1, dzN, dzF, yN, yF) => drawPuddle({ type: 'ice' }, 950 + i, dzN, dzF, yN, yF));
+  each(lv.mud, (i, z0, z1, dzN, dzF, yN, yF) => drawPuddle({ type: 'mud' }, 900 + i, dzN, dzF, yN, yF));
 }
 
 // Décor et couleurs selon le monde du niveau
 const worldOf = () => (S.Levels.def && S.Levels.def.world) || 1;
-function drawLevelDecor(camZ) { const w = worldOf(); if (w === 3) S.drawBeach(camZ); else if (w === 2) S.drawPark(camZ); else S.drawPlayground(camZ); }
-function tintLevel() { const w = worldOf(); if (w === 3) S.tintBeach(); else if (w === 2) S.tintPark(); else S.tintPlayground(); }
+function drawLevelDecor(camZ) { const w = worldOf(); if (w === 4) S.drawMountainDecor(camZ); else if (w === 3) S.drawBeach(camZ); else if (w === 2) S.drawPark(camZ); else S.drawPlayground(camZ); }
+function tintLevel() { const w = worldOf(); if (w === 4) S.tintMountain(); else if (w === 3) S.tintBeach(); else if (w === 2) S.tintPark(); else S.tintPlayground(); }
 
 Object.assign(S, { drawTemptStar, drawFly, drawTaunt, drawPeekEye, drawTrueEnd, drawSneezeEyes, drawGroucho, drawFarceurFace, drawGrouchoDrop,
   drawSunMarks, drawLevelMud, drawLevelDecor, tintLevel, flyPos });

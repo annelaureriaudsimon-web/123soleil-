@@ -57,7 +57,7 @@ function showLevelResults(info) {
     + `<div class="goals">${lines.map(([t, ok], i) => `<div data-g="${i}"><b>${'★'.repeat(i + 1)}</b> ${esc(t)} <i></i></div>`).join('')}</div>`
     + (info.ranking.length > 1 ? `<div class="rank">${rows}</div>` : '')
     + (extra ? `<div class="extra">${esc(extra)}</div>` : '')
-    + (lv.boss && info.firstWin ? `<div class="extra">${esc(L[lv.world === 3 ? 'worldDone3' : lv.world === 2 ? 'worldDone2' : 'worldDone'])}</div>` : '')
+    + (lv.boss && info.firstWin ? `<div class="extra">${esc(L[lv.world === 4 ? 'worldDone4' : lv.world === 3 ? 'worldDone3' : lv.world === 2 ? 'worldDone2' : 'worldDone'])}</div>` : '')
     + (S.Reward.canDouble()                       // 🎬 ×2 ⭐ : à côté du bouton normal vert (Suivant, ou Carte au dernier niveau)
         ? S.Reward.pairHTML(info.next ? { act: 'next', label: L.nextBtn, icon: 'play' } : { act: 'map', label: L.mapBtn, icon: 'grid' },
                             { kind: 'double', token: S.Reward.doubleToken(), label: L.doubleBtn, cap: L.doubleCap(info.coins) })

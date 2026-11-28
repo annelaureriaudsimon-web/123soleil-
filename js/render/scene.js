@@ -23,11 +23,11 @@ function render() {
   drawMarkers(camZ);
   if (!isDuo && !isLvl) drawRecord(camZ);
   drawDecor(camZ);
-  S.drawReflection();                                              // v2.5 : le reflet du soleil dans l'eau, quand un nuage le cache
+  if (isLvl) S.drawLevelMud(camZ);                                 // le sol du niveau : boue (monde 2), descentes et verglas (monde 4)
+  S.drawReflection();                                              // v2.5 : le reflet du soleil dans l'eau (v2.6 : le lac gelé), par-dessus le sol
   if (!isDuo && !isLvl) drawStarItem(camZ);
   if (isDuo) { S.drawFinish(camZ); S.drawRacers(camZ); }
   else if (isLvl) {                                                // arrivée, rivaux devant, toi, rivaux tout près derrière
-    S.drawLevelMud(camZ);                                            // flaques de boue du niveau (monde 2)
     S.drawFinish(camZ, S.Levels.m.level.length);
     S.drawChairs(camZ);                                              // v2.5 : les transats à l'arrivée
     S.drawRivals(false);

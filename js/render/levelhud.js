@@ -85,7 +85,7 @@ function drawLevelHUD() {
   const b = LV.banner;
   if (b) drawBanner(b.title, b.sub, '', b.t, b.life, b.col);
   // le boss met ses lunettes
-  if (LV.glass >= 0) { if (def.bossKind === 'farceur') S.drawGrouchoDrop(LV.glass); else if (def.bossKind === 'vacancier') S.drawVacancierDrop(LV.glass); else drawGlassesDrop(LV.glass); }
+  if (LV.glass >= 0) { if (def.bossKind === 'farceur') S.drawGrouchoDrop(LV.glass); else if (def.bossKind === 'vacancier') S.drawVacancierDrop(LV.glass); else if (def.bossKind === 'neiges') S.drawNeigesDrop(LV.glass); else drawGlassesDrop(LV.glass); }
 }
 
 // « OUPS ! » : trois petites étoiles qui tournent au-dessus de la tête, puis s'en vont

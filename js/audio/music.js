@@ -32,7 +32,12 @@ const TRACKS = {
   vacancier: { bpm: 144,
     chords: [{ bass: [F2, 0, C3, F2], arp: [174.6, A4 / 2, C4, A4 / 2] }, { bass: [116.5, 0, F2 * 2, 116.5], arp: [233.1, 293.7, 349.2, 293.7] },
              { bass: [C3, 0, G2, C3], arp: [C4, E4, G4, E4] }, { bass: [F2, 0, C3, 0], arp: [174.6, A4 / 2, C4, A4 / 2] }],
-    lead: [A5, 0, A5, G5, F5, 0, C5, 0, D5, F5, 0, D5, C5, 0, 0, 0, 466.2, D5, F5, D5, E5, 0, G5, 0, A5, G5, F5, E5, F5, 0, 0, 0] }
+    lead: [A5, 0, A5, G5, F5, 0, C5, 0, D5, F5, 0, D5, C5, 0, 0, 0, 466.2, D5, F5, D5, E5, 0, G5, 0, A5, G5, F5, E5, F5, 0, 0, 0] },
+  // Monde 4 (v2.6) : le Soleil des Neiges joue un air de montagne (sol majeur, « oum-pa » et clochettes), un peu plus lent
+  neiges: { bpm: 132,
+    chords: [{ bass: [G2, 0, 146.8, 0], arp: [G4 / 2, B4 / 2, D5 / 2, B4 / 2] }, { bass: [C3, 0, G2, 0], arp: [C4, E4, G4, E4] },
+             { bass: [146.8, 0, A4 / 4, 0], arp: [D5 / 2, 370, A4, 370] }, { bass: [G2, 0, 146.8, G2], arp: [G4 / 2, B4 / 2, D5 / 2, G4] }],
+    lead: [D5, B4, G4, B4, D5, 0, G5, 0, E5, C5, G4, C5, E5, 0, 0, 0, 740, D5, A4, D5, 740, 0, A5, 0, G5, D5, B4, G4, G4, 0, 0, 0] }
 };
 
 const Music = {

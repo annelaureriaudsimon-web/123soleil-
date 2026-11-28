@@ -31,7 +31,9 @@ function drawSky() {
 }
 
 function drawHills() {
-  if (S.state === 'level' && S.Levels.def && S.Levels.def.world === 3) return;   // v2.5 : à la plage, l'horizon est la mer (render/beach.js)
+  const lw = S.state === 'level' && S.Levels.def ? S.Levels.def.world : 0;
+  if (lw === 3) return;                            // v2.5 : à la plage, l'horizon est la mer (render/beach.js)
+  if (lw === 4) { S.drawPeaks(); return; }         // v2.6 : à la montagne, des sommets enneigés (render/mountain.js)
   for (let layer = 0; layer < 2; layer++) {
     S.ctx.fillStyle = css(layer ? pal.hillNear : pal.hillFar);
     const amp = Lt.U * (layer ? 0.035 : 0.06);
