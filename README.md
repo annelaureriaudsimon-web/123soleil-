@@ -1,4 +1,4 @@
-# 1, 2, 3… SOLEIL ! — v2.5
+# 1, 2, 3… SOLEIL ! — v2.5.1
 
 Maintiens pour courir vers le soleil. Il compte « 1… 2… 3… » puis dit un mot : si c'est « SOLEIL ! », lâche avant qu'il se retourne. S'il te voit bouger, tu es **GRILLÉ**.
 

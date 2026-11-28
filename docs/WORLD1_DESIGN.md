@@ -71,7 +71,7 @@ Les « taux visés » sont les objectifs fixés avant le réglage. Les taux obte
 
 ### 3. Avant la nuit 🌅 (v2.5 ; avant : « La pluie de pièges »)
 - **Idée :** SOLDES, SOUPE, SOFA, SODA, SOURIS… Il y a un mot piège dans 80 % des chants, et souvent deux. Et le soleil
-  se couche : la nuit tombe à 33,5 s.
+  se couche : la nuit tombe à 37,5 s (v2.5.1 ; 33,5 s en v2.5).
 - **Apprend :** lire le mot entier et courir à travers les pièges. S'arrêter pour rien fait tomber la nuit.
 - **Menace :** dès le cycle 1, un double piège ; « Arrive avant la nuit ! 🌅 » au départ.
 - **★★ :** Évite 3 pièges sans t'arrêter.
@@ -86,7 +86,7 @@ Les « taux visés » sont les objectifs fixés avant le réglage. Les taux obte
 - **Menace :**
   - 1er « SOLEIL ! » vers 6 s ;
   - le recomptage forcé au 2e regard (avec son indication la 1re fois) ;
-  - Max part devant dès le départ ; la nuit tombe à 38 s.
+  - Max part devant dès le départ ; la nuit tombe à 41 s.
 - **Indication :** « Bats Max ! ⚡ ».
 - **★★ :** Bats Max.
 - **★★★ :** Finis en moins de 34 s.
@@ -96,7 +96,7 @@ Les « taux visés » sont les objectifs fixés avant le réglage. Les taux obte
 ### 5. Le bégaiement 🥴
 - **Idée :** « 1… 2… 2… 3… ». Après avoir bégayé, le soleil accélère : le reste du chant va ×1,6 plus vite.
 - **Apprend :** ne pas compter le rythme, mais réagir à ce qui est dit.
-- **Menace :** bégaiement forcé au cycle 1. Le mot arrive alors plus tôt que prévu (vers 4,5 s). La nuit tombe à 33,5 s.
+- **Menace :** bégaiement forcé au cycle 1. Le mot arrive alors plus tôt que prévu (vers 4,5 s). La nuit tombe à 37,5 s.
 - **Indication :** bannière « BÉGAIEMENT ! ».
 - **★★ :** Arrive dans le top 2.
 - **★★★ :** Fais un combo OUF ×2.
@@ -106,7 +106,7 @@ Les « taux visés » sont les objectifs fixés avant le réglage. Les taux obte
 ### 6. Le chant express 🚀
 - **Idée :** tout va deux fois plus vite, et le demi-tour est un peu plus rapide.
 - **Apprend :** être prêt et lire le mot tout de suite.
-- **Menace :** chant express forcé au cycle 1 : le 1er « SOLEIL ! » tombe vers 3,2 s. La nuit tombe à 34 s.
+- **Menace :** chant express forcé au cycle 1 : le 1er « SOLEIL ! » tombe vers 3,2 s. La nuit tombe à 38 s.
 - **Indication :** bannière « CHANT EXPRESS ! 🚀 ».
 - **★★ :** Fais 2 OUF.
 - **★★★ :** Arrive 1er.
@@ -117,8 +117,9 @@ Les « taux visés » sont les objectifs fixés avant le réglage. Les taux obte
 - **Idée :** 5 rivaux à la fois, et le soleil mélange tout : pièges, hésitations, bégaiements et express. v2.5 : un
   rival crie « IL REGARDE PAS ! VAS-Y ! » pendant le regard : c'est une blague (la fausse alerte).
 - **Apprend :** garder la tête froide dans la foule ; seul le soleil compte. Les places changent sans arrêt.
-- **Menace :** 1er « SOLEIL ! » vers 7 s, avec un demi-tour plus court (0,55 à 0,60 s) et souvent un piège ou un express
-  dès le départ ; la fausse alerte forcée au 2e regard ; la nuit tombe à 35,8 s.
+- **Menace :** 1er « SOLEIL ! » vers 7 s, avec un demi-tour plus court (0,625 à 0,675 s) et souvent un piège ou un
+  express dès le départ ; la fausse alerte forcée au 2e regard ; la nuit tombe à 40,5 s (v2.5.1 ; 35,8 s en v2.5 : elle
+  tombait beaucoup trop vite).
 - **★★ :** Arrive dans le top 3.
 - **★★★ :** Arrive 1er.
 - **Rivaux :** Inès 🎯, Max ⚡, Jade 🎯, Léo 🐢 et Zoé 🐢.
@@ -140,8 +141,8 @@ Les « taux visés » sont les objectifs fixés avant le réglage. Les taux obte
   5. express hésitant ;
   6. tout en même temps ;
   7. v2.5 : le recomptage (+ un mot piège).
-  - Ensuite, tout au hasard (recomptages et fausses alertes compris), avec des demi-tours de 0,56 à 0,61 s. La nuit
-    tombe à 39,6 s.
+  - Ensuite, tout au hasard (recomptages et fausses alertes compris), avec des demi-tours de 0,62 à 0,67 s. La nuit
+    tombe à 49 s (v2.5.1 ; 39,6 s en v2.5).
 - **Menace :** la grande hésitation, dès le cycle 1 (vers 5 s).
 - **★★ :** Fais 3 OUF.
 - **★★★ :** Arrive 1er.
@@ -152,6 +153,7 @@ Les « taux visés » sont les objectifs fixés avant le réglage. Les taux obte
 ## Règles communes
 
 - **Juste :** on peut toujours survivre en lâchant au bon moment. Le joueur « expert » de la simulation (qui lit le mot et attend le « ding ») réussit chaque niveau à au moins 98 %.
+- **v2.5.1 : réglé sur un vrai joueur.** Le joueur « moyen » lit le mot en 0,36 s (un vrai joueur au téléphone) : les demi-tours laissent le temps de lire, et la nuit tombe juste après lui (elle lui fait perdre au plus 1 % de ses essais). Moyen : 100, 100, 90, 79, 72, 63, 52 et 32 % (boss). Voir `docs/DIFFICULTY.md`.
 - **v2.5 : s'arrêter tout le temps ne suffit pas.** Le robot prudent de la simulation (il s'arrête à chaque « 3 », attend toujours le « ding ») finit les niveaux 1 et 2, puis échoue dès le niveau 3 : la nuit tombe.
 - **Fixe d'un essai à l'autre :**
   - la longueur ;

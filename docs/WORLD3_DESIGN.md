@@ -40,24 +40,25 @@ s'envolent quand on passe. Le reflet du nuage se lit dans le sable mouillé. Tou
 
 ## Les 8 niveaux
 
-Durées visées : 30 à 42 s, et 50 s au plus pour le boss. Les taux sont ceux du joueur « moyen » (300 essais). Le
+Durées visées : 30 à 42 s, et 50 s au plus pour le boss. Les taux sont ceux du joueur « moyen » (300 essais ; v2.5.1 :
+il lit le mot en 0,36 s, comme un vrai joueur au téléphone, et la nuit lui fait perdre au plus 1 % de ses essais). Le
 niveau 1 doit être plus dur que le début du parc et plus facile que le Soleil Farceur.
 
 ### 1. Les transats 🏖️
 - **Idée :** 3 transats pour 4 enfants à l'arrivée. Le dernier arrivé a perdu, sans 2e chance.
 - **Apprend :** la course compte ; s'arrêter pour rien fait perdre.
 - **Menace (moins de 10 s) :** 1er « SOLEIL ! » vers 6 s ; Jade et Sam partent devant (10 et 18 m).
-- **Avec :** mots pièges, le « 3… » qui dure, faux dos, étoile, recomptage, faux retour ; nuit à 42 s (large : ce
+- **Avec :** mots pièges, le « 3… » qui dure, faux dos, étoile, recomptage, faux retour ; nuit à 44 s (large : ce
   sont les transats qui pressent).
 - **★★ :** Arrive dans le top 2. **★★★ :** Finis en moins de 34 s.
 - **Rivaux :** Inès 🎯, Jade 🎯, Sam 🎯.
-- **Simulation :** moyen 59 % (parc : 66 %, Soleil Farceur : 27 %), expert 100 %, robot prudent 0 %.
+- **Simulation :** moyen 65 % (parc : 73 %, Soleil Farceur : 28 %), expert 100 %, robot prudent 0 %.
 
 ### 2. La glace qui fond 🍦
 - **Idée :** on part avec 12 boules ; une fond toutes les 4 s. Chaque boule qui reste à l'arrivée compte.
 - **Apprend :** aller vite… sans se faire griller. À l'arrivée : la montagne de boules.
 - **Menace :** 1er « SOLEIL ! » vers 7 s ; une boule tombe dès 4 s (« PLOC ! »).
-- **Avec :** double piège, fausse alerte, étoile, faux retour ; nuit à 35,5 s.
+- **Avec :** double piège, fausse alerte, étoile, faux retour ; nuit à 41 s.
 - **★★ :** Arrive avec 4 boules de glace. **★★★ :** Arrive avec 5 boules.
 - **Rivaux :** Jade 🎯, Tom 🐢, Nino ⚡.
 - **Simulation :** moyen 57 %, expert 99 %.
@@ -67,48 +68,48 @@ niveau 1 doit être plus dur que le début du parc et plus facile que le Soleil 
   regard (faux départ). Ce n'est jamais le soleil qui parle.
 - **Apprend :** seul le soleil compte.
 - **Menace :** l'avion « SOLEIL ! » au 1er chant, l'avion « ALLEZ-Y ! » au 2e regard (forcés, à chaque essai).
-- **Avec :** recomptage ; nuit à 35,5 s.
+- **Avec :** recomptage ; nuit à 43,5 s.
 - **★★ :** Arrive dans le top 2. **★★★ :** Finis en moins de 36 s.
 - **Rivaux :** Max ⚡ (il se fait avoir), Lila 🐢, Sam 🎯.
-- **Simulation :** moyen 49 %, expert 99 %.
+- **Simulation :** moyen 51 %, expert 100 %.
 
 ### 4. Le volley de plage 🏐
 - **Idée :** 4 rivaux, 4 transats… et des avions menteurs.
 - **Apprend :** combiner la course (transats) et les faux signaux.
 - **Menace :** 1er « SOLEIL ! » vers 4,5 s ; Sam part devant (8 m).
-- **Avec :** bégaiement, avions, fausse alerte, étoile ; nuit à 37,5 s.
+- **Avec :** bégaiement, avions, fausse alerte, étoile ; nuit à 43,5 s.
 - **★★ :** Arrive dans le top 3. **★★★ :** Arrive 1er.
 - **Rivaux :** Inès 🎯, Nino ⚡, Sam 🎯, Jade 🎯.
-- **Simulation :** moyen 44 %, expert 99 %.
+- **Simulation :** moyen 51 %, expert 99 %.
 
 ### 5. Le reflet dans l'eau 💧
 - **Idée :** un nuage cache le soleil ; son reflet dans le sable mouillé montre s'il regarde.
 - **Apprend :** regarder le reflet (le visage, l'œil du faux dos, l'anneau vert du « ding »).
 - **Menace :** nuage forcé aux deux premiers chants ; au 2e, un faux dos (l'œil se voit dans le reflet). Bannière
   « REGARDE SON REFLET ! » au premier nuage.
-- **Avec :** faux dos, étoile, faux retour ; nuit à 42,5 s.
-- **★★ :** Fais 3 départs éclair. **★★★ :** Finis en moins de 37 s.
+- **Avec :** faux dos, étoile, faux retour ; nuit à 48,5 s.
+- **★★ :** Fais 2 départs éclair (v2.5.1 ; avant 3 : sous le nuage, on repart un peu plus tard). **★★★ :** Finis en
+  moins de 37 s.
 - **Rivaux :** Nino ⚡, Léo 🐢, Lila 🐢.
-- **Simulation :** moyen 41 %, expert 97 %.
+- **Simulation :** moyen 43 %, expert 100 %.
 
 ### 6. Le château de sable 🏰
 - **Idée :** la glace revient (14 boules), avec les nuages, les avions et les recomptages.
 - **Apprend :** tout ce qu'on a appris sur la plage, en même temps.
 - **Menace :** 1er « SOLEIL ! » vers 7 s.
-- **Avec :** double piège, le « 3… » qui dure, nuage, avions, faux dos, recomptage, éternuement ; nuit à 42,8 s.
+- **Avec :** double piège, le « 3… » qui dure, nuage, avions, faux dos, recomptage, éternuement ; nuit à 51 s.
 - **★★ :** Arrive avec 5 boules de glace. **★★★ :** Arrive avec 6 boules.
 - **Rivaux :** Sam 🎯, Max ⚡, Tom 🐢.
-- **Simulation :** moyen 45 %, expert 99 % (la nuit est passée de 42 à 42,8 s : à 42 s, l'expert tombait à 93 % dans
-  le test du navigateur).
+- **Simulation :** moyen 35 %, expert 100 %.
 
 ### 7. La grande course de la plage 🏃
 - **Idée :** 5 rivaux, 5 transats, des faux signaux partout, et le troupeau.
 - **Apprend :** ne suivre personne.
 - **Menace :** le troupeau au 2e regard (forcé) : Inès, Max et Jade partent devant (8, 14 et 20 m) pour qu'il ait lieu.
-- **Avec :** bégaiement, express, nuage, avions, faux dos, fausse alerte, recomptage, étoile ; nuit à 44,5 s.
+- **Avec :** bégaiement, express, nuage, avions, faux dos, fausse alerte, recomptage, étoile ; nuit à 50 s.
 - **★★ :** Arrive dans le top 3. **★★★ :** Arrive 1er.
 - **Rivaux :** Inès 🎯, Max ⚡, Jade 🎯, Léo 🐢, Zoé 🐢.
-- **Simulation :** moyen 34 %, expert 98 %.
+- **Simulation :** moyen 32 %, expert 100 % (v2.5.1 : 155 m au lieu de 160).
 
 ### 8. BOSS — Le Soleil Vacancier 🏖️
 - **Idée :** il veut garder la plage pour lui ; la glace fond (16 boules) pendant qu'il sort ses coups spéciaux.
@@ -130,8 +131,8 @@ niveau 1 doit être plus dur que le début du parc et plus facile que le Soleil 
 - **Menace :** l'avion publicitaire dès le cycle 1.
 - **★★ :** Arrive avec 5 boules de glace. **★★★ :** Arrive 1er.
 - **Rivaux :** Inès 🎯, Hugo ⚡, Nino ⚡.
-- **Durée :** nuit à 48 s.
-- **Simulation :** moyen 17 % (visé : 10 à 20 %), expert 97 %, durée moyenne 44 s.
+- **Durée :** nuit à 58 s (v2.5.1 ; 48 s en v2.5).
+- **Simulation :** moyen 18 % (visé : 10 à 20 %), expert 100 %, durée moyenne 46 s.
 
 ## Les textes, les sons
 

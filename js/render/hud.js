@@ -74,10 +74,13 @@ function drawStrike(tw, size, k, a) {               // piège démasqué : le mo
 function drawGrille() {                              // gros « GRILLÉ ! »
   if (!(S.state === 'caught' || S.state === 'over' || S.lvCaught)) return;
   const t = S.caughtT - 0.3; if (t < 0) return;
-  const size = fit(L.caught, Lt.chantSize * 1.2, S.W * 0.76);
+  // v2.5.1 : la nuit ou les transats, ce n'est pas « GRILLÉ ! » : on n'a pas bougé devant lui
+  const lost = S.lvCaught && S.Levels && S.Levels.noBurn && S.Levels.m && S.Levels.m.result;
+  const word = !lost ? L.caught : lost.why === 'night' ? L.nightFall : L.chairsWhy.toLocaleUpperCase(S.LANG);
+  const size = fit(word, Lt.chantSize * 1.2, S.W * 0.76);
   const sc = 1 + 1.5 * Math.exp(-t * 12);
   S.ctx.save(); S.ctx.translate(Lt.cx, Lt.chantY); S.ctx.rotate(-0.08); S.ctx.scale(sc, sc);
-  otextC(L.caught, size, '#FF7A3D', clamp(t * 8, 0, 1));
+  otextC(word, size, !lost ? '#FF7A3D' : lost.why === 'night' ? '#B79CFF' : '#FF8FA3', clamp(t * 8, 0, 1));
   S.ctx.restore();
 }
 

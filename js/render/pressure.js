@@ -187,7 +187,7 @@ function drawPressureHUD(x0, x1, y, fs) {
   const g = S.ctx, def = m.level;
   let x = x0;
   const h = Math.max(8, fs * 0.36);
-  if (m.night) {                                   // ☀️ ▬▬▬▬▬▭▭ 🌙  12 s
+  if (m.night && !m.sunUp) {                       // ☀️ ▬▬▬▬▬▭▭ 🌙  12 s (plus de barre après une 2e chance : il reste levé)
     const left = Math.max(0, m.night - m.t), k = clamp(left / m.night, 0, 1);
     const w = Math.max(70, Math.min(x1 - x0 - fs * 3.2, S.W * 0.42));
     const warn = m.warned && left > 0, blink = warn && Math.floor(S.gtime * 4) % 2 === 0;

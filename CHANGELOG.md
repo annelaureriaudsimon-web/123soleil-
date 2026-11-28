@@ -1,5 +1,48 @@
 # Journal des versions
 
+## v2.5.1 — la nuit et la 2e chance, la difficulté réglée sur un vrai joueur
+
+Le retour du joueur après la v2.5 : « Quand on met la pub seconde chance, la nuit continue de descendre ; la nuit tombe
+aussi beaucoup trop vite à partir du niveau 7. »
+
+### Corrigé : la 2e chance quand la nuit tombe
+- Avant : « +10 s de jour ». Le soleil remontait à peine, continuait de descendre, et la nuit retombait 10 s plus tard.
+- Maintenant : après la vidéo, **le soleil remonte** (en 1,6 s, bien au-dessus de l'horizon) **et ne se couche plus**
+  pendant cet essai. La barre de la nuit disparaît. Le bouton dit « 🎬 Le soleil remonte », et « LE SOLEIL RESTE
+  LEVÉ ! » s'affiche (6 langues).
+- Pareil après une 2e chance quand on a été grillé dans un niveau avec la nuit : sinon la nuit pouvait tomber juste
+  après la pub.
+- Quand la nuit tombe, le gros titre dit « LA NUIT TOMBE ! » (et plus de transat : « PLUS DE TRANSAT ! »), plus
+  « GRILLÉ ! » : on n'a pas bougé devant le soleil.
+
+### Changé : la difficulté, réglée sur un vrai joueur
+- **Pourquoi la nuit tombait trop vite.** Le joueur « moyen » de la simulation lisait le mot en 0,28 s. Sur un vrai
+  téléphone, lire « SOLEIL ! » (et pas « SOLDES ! », qui commence pareil) prend plutôt 0,36 s. Les demi-tours étaient
+  donc trop courts pour lire à temps : on s'arrêtait à chaque « 3 » par prudence… et la nuit, réglée sur ce moyen trop
+  rapide, tombait avant l'arrivée. Avec un joueur à 0,36 s, la nuit faisait perdre jusqu'à 3 essais réussis sur 4.
+- **Le moyen est recalibré** : il lit le mot en 0,36 s et repart au « ding » en 0,29 s (le débutant lit en 0,45 s).
+- **Les demi-tours sont plus longs** presque partout (+0,04 à +0,14 s ; le 1-1 et le 1-3 gardent à peu près les leurs) :
+  le temps de lire le mot, puis de freiner.
+- **Les nuits sont plus longues** : de +2 à +10 s (1-7 : 35,8 → 40,5 s ; boss du monde 1 : 39,6 → 49 s ; boss de la
+  plage : 48 → 58 s). La nuit fait perdre au plus 5 % des essais du moyen (vérifié par la simulation) ; elle punit
+  toujours celui qui s'arrête à chaque « 3 » et attend le « ding » même après un mot piège.
+- Niveau 1-2 plus doux pour les débutants (demi-tour 0,77 s). Quelques niveaux un peu plus courts pour rester sous
+  42 s, et 50 s pour le boss (2-5, 2-7, 2-8, 3-7). Défi du 2-6 : « Finis en moins de 42 s » (au lieu de « Arrive 1er », trop facile ici :
+  les rivaux craquent). Objectif du 3-5 : 2 départs éclair (au lieu de 3).
+- La courbe du moyen reste celle voulue : cour 100 → 32 % (boss), parc 73 → 28 %, plage 65 → 18 %. Expert ≥ 98 %.
+
+### Tests
+- `tools/simulate.js` : nouvelle vérification « la nuit ne fait presque jamais perdre le moyen (au plus 5 %) » ; le
+  robot prudent n'a « presque jamais ★★★ (au plus 2 %) » (il gagne parfois une course quand tous les rivaux se sont
+  fait griller) ; `REF_W1` réglée à nouveau ; **148 vérifications**.
+- `test_poki.py`, test 31 : la nuit tombe, 🎬, le soleil remonte et ne se couche plus (25 s plus tard, toujours pas de
+  nuit), et pareil après avoir été grillé. Vérifié avec l'ancien « +10 s » : le test le voit. **173 vérifications**.
+
+### Pas encore vérifié
+- Le ressenti sur un vrai téléphone : 0,36 s est une estimation (lire un mot et lâcher, sur téléphone). Si la nuit tombe
+  encore trop vite, ou si c'est devenu trop facile, il suffit de le dire : tout se règle dans `levels/world*.js`
+  (`night`, `turn`).
+
 ## v2.5 — les nouveaux pièges, le monde 3 « La plage » et la courbe de difficulté
 
 Le retour du joueur : « Le faux dos, c'est le seul bon piège. Les autres ne sont pas dangereux : on a juste à

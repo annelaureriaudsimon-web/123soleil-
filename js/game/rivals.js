@@ -49,13 +49,15 @@ const PROFILES = {
   // Les 3 joueurs simulés (tools/simulate.js), décrits dans docs/LEVELS.md
   expert:   { react: [0.20, 0.03], on3: 0, fooled: 0, greed: [0, 0], impatience: [0, 0], impatientP: 0,
               restart: [0, 0], trapRestart: 0, hesitate: 0, speed: 1, crack: 0.015, learn: 0.1 },
-  moyen:    { react: [0.28, 0.06], on3: 0.3, fooled: 0.35, greed: [0, 0], impatience: [1.0, 0.35], impatientP: 0.35, waryK: 0.4,
-              restart: [0.05, 0.05], trapRestart: 0.1, hesitate: 0, speed: 1, crack: 0.15, learn: 0.4 },
+  // v2.5.1 : le moyen est recalibré sur un vrai joueur au téléphone : lire « SOLEIL ! » (et pas « SOLDES ! ») prend
+  // environ 0,36 s, pas 0,28. Avec l'ancien moyen, trop rapide, la nuit et les demi-tours étaient réglés trop serré.
+  moyen:    { react: [0.36, 0.07], on3: 0.3, fooled: 0.3, greed: [0, 0], impatience: [1.0, 0.35], impatientP: 0.3, waryK: 0.4,
+              restart: [0, 0.04], trapRestart: 0.12, hesitate: 0, speed: 1, crack: 0.15, learn: 0.4 },   // le « ding » s'attend : 0,29 s
   // Le robot « patient » (v2.5) : il s'arrête à CHAQUE « 3 » et ne repart qu'au vrai retour. Sans pression (nuit,
   // transats, glace), il ne perd jamais… mais il est très lent : la simulation vérifie qu'il échoue de plus en plus.
   patient:  { react: [0.22, 0.03], on3: 1, waitDing: true, fooled: 0, greed: [0, 0], impatience: [0, 0], impatientP: 0,
               restart: [0, 0], trapRestart: 0, hesitate: 0, speed: 1, crack: 0.015, learn: 0.1 },
-  debutant: { react: [0.35, 0.10], on3: 0, fooled: 0.2, greed: [0, 0], impatience: [0, 0], impatientP: 0,
+  debutant: { react: [0.45, 0.10], on3: 0, fooled: 0.2, greed: [0, 0], impatience: [0, 0], impatientP: 0,   // v2.5.1 : 0,45 s (avant 0,35)
               restart: [0.15, 0.1], trapRestart: 0.15, hesitate: 0, speed: 1, crack: 0.35, learn: 0.7 }
 };
 
