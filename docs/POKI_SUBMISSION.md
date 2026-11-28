@@ -1,4 +1,4 @@
-# Envoyer le jeu à Poki : tout ce qu'il faut (v2.5)
+# Envoyer le jeu à Poki : tout ce qu'il faut (v2.6)
 
 Ce dossier contient ce que Poki demande au moment de proposer le jeu : le titre, les descriptions, les commandes,
 les catégories, les images, la vidéo et la liste des règles à respecter. Les textes en anglais sont prêts à copier
@@ -41,11 +41,11 @@ Le titre français reste **« 1, 2, 3… SOLEIL ! »** (c'est ce qui s'affiche d
 >
 > Hold to run. The sun counts “1, 2, 3…” then shouts a word: if it's “RED LIGHT!”, stop before it turns around. If it sees you move, you're TOASTED!
 >
-> But the sun loves to trick you: “RED HAT!” — that's a trap word, keep running! It hesitates, stutters, speeds up, pretends to turn away, sneezes, recounts while staring at you, hides behind a cloud (watch its reflection!) and even hires a plane with a fake banner. Other kids shout “HE'S NOT LOOKING!” — don't believe them. Wait for the “ding” before you run again… but hurry: the sun is setting, there aren't enough deckchairs and your ice cream is melting!
+> But the sun loves to trick you: “RED HAT!” — that's a trap word, keep running! It hesitates, stutters, speeds up, pretends to turn away, sneezes, recounts while staring at you, hides behind a cloud (watch its reflection!) and even hires a plane with a fake banner. Other kids shout “HE'S NOT LOOKING!” — don't believe them. Wait for the “ding” before you run again… but hurry: the sun is setting, there aren't enough deckchairs and your ice cream is melting! And up in the mountains, watch out for black ice: you'll slide a long way, so let go at “3”!
 >
-> - 24 short levels in 3 worlds (the playground, the park and the beach), each with 3 stars to earn
+> - 32 short levels in 4 worlds (the playground, the park, the beach and the mountain), each with 3 stars to earn
 > - Race against kids with their own personalities: the Careful, the Speedster, the Steady
-> - 3 bosses: the Cool Sun 😎, the Prankster Sun 🤡 and the Holiday Sun 🏖️
+> - 4 bosses: the Cool Sun 😎, the Prankster Sun 🤡, the Holiday Sun 🏖️ and the Snow Sun ❄️
 > - Endless run, daily challenge (one try per day, the same for everyone), 2-player mode on the same screen
 > - Outfits to unlock, daily missions, ranks and medals
 > - Plays in English, French, Spanish, Portuguese, German and Italian — with each country's own chant!
@@ -55,11 +55,11 @@ Le titre français reste **« 1, 2, 3… SOLEIL ! »** (c'est ce qui s'affiche d
 >
 > Maintiens pour courir. Le soleil compte « 1, 2, 3… » puis crie un mot : si c'est « SOLEIL ! », arrête-toi avant qu'il se retourne. S'il te voit bouger, tu es GRILLÉ !
 >
-> Mais le soleil adore piéger : « SOLDES ! », c'est un mot piège, continue ! Il hésite, bégaie, accélère, fait semblant de se retourner, éternue, recompte en te regardant, se cache derrière un nuage (regarde son reflet !) et fait même passer un avion avec une fausse banderole. Les autres enfants crient « IL REGARDE PAS ! » : ne les crois pas. Attends le « ding » avant de repartir… mais dépêche-toi : le soleil se couche, il n'y a pas assez de transats et ta glace fond !
+> Mais le soleil adore piéger : « SOLDES ! », c'est un mot piège, continue ! Il hésite, bégaie, accélère, fait semblant de se retourner, éternue, recompte en te regardant, se cache derrière un nuage (regarde son reflet !) et fait même passer un avion avec une fausse banderole. Les autres enfants crient « IL REGARDE PAS ! » : ne les crois pas. Attends le « ding » avant de repartir… mais dépêche-toi : le soleil se couche, il n'y a pas assez de transats et ta glace fond ! Et à la montagne, attention au verglas : on glisse longtemps, alors lâche dès le « 3 » !
 >
-> - 24 niveaux courts dans 3 mondes (la cour de récré, le parc et la plage), 3 étoiles à gagner dans chacun
+> - 32 niveaux courts dans 4 mondes (la cour de récré, le parc, la plage et la montagne), 3 étoiles à gagner dans chacun
 > - Des enfants qui courent contre toi, chacun avec son caractère : le Prudent, le Fonceur, le Régulier
-> - 3 boss : le Soleil Cool 😎, le Soleil Farceur 🤡 et le Soleil Vacancier 🏖️
+> - 4 boss : le Soleil Cool 😎, le Soleil Farceur 🤡, le Soleil Vacancier 🏖️ et le Soleil des Neiges ❄️
 > - Course infinie, défi du jour (un seul essai par jour, le même pour tout le monde), mode 2 joueurs sur le même écran
 > - Des tenues à débloquer, des missions du jour, des rangs et des médailles
 > - En français, anglais, espagnol, portugais, allemand et italien, avec le chant de chaque pays !
@@ -152,6 +152,11 @@ de mot dans toutes les langues). La voix du soleil parle la langue choisie, si l
   cri de la fausse alerte (« ¡NO MIRA! ¡CORRE! », « ELE NÃO TÁ OLHANDO! CORRE! », « SIE SCHAUT NICHT! LAUF! »,
   « NON GUARDA! CORRI! ») et les phrases des niveaux de la plage. En allemand, le soleil est « sie » : le cri dit
   « SIE SCHAUT NICHT! ».
+- **v2.6, à faire relire aussi** : le Soleil des Neiges (« Sol de las Nieves », « Sol das Neves », « Schneesonne »,
+  « Sole delle Nevi »), les bannières (« ¡BAJADA! / ¡HIELO! », « DESCIDA! / GELO! », « ABFAHRT! / GLATTEIS! »,
+  « DISCESA! / GHIACCIO! »), « lâche dès le 3 » dans chaque langue, les luges (« trineos », « trenós », « Schlitten »,
+  « slitte ») et les noms des niveaux de la montagne (« El refugio » pour le chalet en espagnol ; « Die Berghütte » en
+  allemand). En allemand, la Schneesonne est « sie ».
 
 Ajouter une langue : copier `js/core/lang/it.js`, traduire, ajouter la langue dans `LANGS` (`js/core/i18n.js`) et
 le `<script>` dans `index.html` ; le test 29 de `tools/tests/test_poki.py` dit s'il manque un texte.

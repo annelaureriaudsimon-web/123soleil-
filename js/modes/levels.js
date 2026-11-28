@@ -30,13 +30,16 @@ const HAND_LIFE = 2.4;           // une consigne dessinée (main / touche Espace
 const OOPS_SPIN = 0.6;           // niveau en douceur : la toupie du « OUPS ! » (s)
 const OOPS_WORD = 0.7;           // « OUPS ! » reste 0,7 s, puis le mot « LÂCHE ! » prend sa place
 // Les boss (champ « bossKind » d'un niveau) : ce qu'ils mettent (face), le son, la couleur, l'emoji qui s'envole, leurs textes.
-// cool = Soleil Cool (monde 1), farceur = Soleil Farceur (monde 2), vacancier = Soleil Vacancier (monde 3, v2.5).
+// cool = Soleil Cool (monde 1), farceur = Soleil Farceur (monde 2), vacancier = Soleil Vacancier (monde 3, v2.5),
+// neiges = Soleil des Neiges (monde 4, v2.6 : bonnet à pompon et masque de ski).
 const BOSS = {
   cool:      { face: null, snd: 'glasses', col: '#FF4D6D', fly: '😎', icon: '😎', taunt: 'bossTaunt', down: 'bossDown', win: 'bossWinTitle', bar: 'bossBar' },
   farceur:   { face: 'farceur', snd: 'boing', col: '#9B5DE5', fly: '🥸', icon: '🤡', taunt: 'bossTaunt2', down: 'bossDown2', win: 'bossWin2', bar: 'bossBar2' },
-  vacancier: { face: 'vacancier', snd: 'hat', col: '#00A6C8', fly: '👒', icon: '🏖️', taunt: 'bossTaunt3', down: 'bossDown3', win: 'bossWin3', bar: 'bossBar3' }
+  vacancier: { face: 'vacancier', snd: 'hat', col: '#00A6C8', fly: '👒', icon: '🏖️', taunt: 'bossTaunt3', down: 'bossDown3', win: 'bossWin3', bar: 'bossBar3' },
+  neiges:    { face: 'neiges', snd: 'pompom', col: '#4895EF', fly: '🧶', icon: '⛄', taunt: 'bossTaunt4', down: 'bossDown4', win: 'bossWin4', bar: 'bossBar4' }   // v2.6
 };
 const bossOf = def => BOSS[def && def.bossKind] || BOSS.cool;
+const sleds = () => !!(LV.def && LV.def.world === 4);   // v2.6 : la montagne — des luges (et pas des transats), le lac gelé
 
 // ---------- Sauvegarde : soleil.levels = { 'w1-3': { s: [true, true, false], best: 27.4, tries: 6, done: true } } ----------
 let save = (() => { const v = store.get('levels', {}); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; })();
@@ -290,7 +293,7 @@ function events() {
         say(e.r, e.place === 1 ? L.sayFirst : L.sayDone);
         const chair = m.level.chairs && e.place <= m.level.chairs;   // v2.5 : il prend un transat
         const free = chair ? m.level.chairs - e.place : 0;
-        const t = chair ? L.chairTaken(e.r.name || '', free) : L.rivalDone(e.r.name, e.place);
+        const t = chair ? (sleds() ? L.sledTaken : L.chairTaken)(e.r.name || '', free) : L.rivalDone(e.r.name, e.place);   // v2.6 : des luges à la montagne
         popup(t, Lt.cx, Lt.hy + (Lt.yFeet - Lt.hy) * 0.18, chair && free <= 1 ? '#FF8FA3' : '#FFD166', S.fit(t, Math.min(Lt.U * 0.05, 24), S.W * 0.8), 1.4);
         if (chair) Sound.tone(520, 0.08, 'triangle', 0.16, 390);
         break;
@@ -310,6 +313,9 @@ function events() {
       case 'cloud':                               // un nuage va cacher le soleil : regarde son reflet dans l'eau
         w.cloudDir = m.cycle % 2 ? 1 : -1; Sound.cloud();
         hintsFor('cloud'); firstTime('cloud');
+        break;
+      case 'ground':                              // v2.6 : on arrive dans une descente ou sur du verglas
+        hintsFor(e.g);
         break;
       case 'fakeSnap':                            // faux retour : il revient d'un coup
         popup(L.ha, Lt.cx, Lt.sunY - Lt.R * 1.35, '#FF4D6D', S.fit(L.ha, Math.min(Lt.U * 0.1, 52), S.W * 0.5), 0.8);
@@ -370,7 +376,8 @@ function watchHand() {
 function showBanner(kind) {
   const B = { trap: [L.trapTitle, L.trapSub(false), '#06D6A0'], hes: [L.hesTitle, L.hesSub, '#FFD166'], mud: [L.mudTitle, L.mudSub, '#C68B59'],
               stutter: [L.stutterTitle, L.stutterSub, '#4CC9F0'], express: [L.expressTitle, L.expressSub, '#FF8FA3'],
-              cloud: [L.refletTitle, L.refletSub, '#4CC9F0'] }[kind];
+              cloud: [L.refletTitle, sleds() ? L.refletSubIce : L.refletSub, '#4CC9F0'],   // v2.6 : à la montagne, c'est le lac gelé
+              slope: [L.slopeTitle, L.slopeSub, '#F4A261'], ice: [L.iceTitle, L.iceSub, '#9AD8FF'] }[kind];   // v2.6 : la montagne
   if (B) LV.banner = { title: B[0], sub: B[1], t: 0, life: 2.2, col: B[2] };
 }
 
@@ -471,6 +478,13 @@ function presentRunner(dt) {
   if (st !== r.step) { r.step = st; if (r.v > 1.5) { if (r.mud) { Sound.mud(); S.splash(5); } else { Sound.step(); dust(2, 0.8); } } }
   if (r.mud && !LV.fx.mud && r.v > 2) { Sound.splotch(); S.splash(14); hintsFor('mud'); }   // SPLOTCH : on entre dans la boue
   LV.fx.mud = !!r.mud;
+  const gr = r.ground || '';                       // v2.6 : la montagne — le verglas brille, la descente souffle
+  if (gr !== LV.fx.ground) {
+    if (gr === 'ice' && r.v > 2) { Sound.ice(); sparks(8, Lt.cx, Lt.yFeet - Lt.U * 0.02, '#D6F0FF'); }
+    else if (gr === 'slope' && r.v > 2) Sound.whoosh(0.5);
+    LV.fx.ground = gr;
+  }
+  if (gr === 'ice' && !r.press && r.v > 2 && Math.random() < dt * 14) sparks(1, Lt.cx + (Math.random() - 0.5) * Lt.U * 0.1, Lt.yFeet, '#FFFFFF');   // ça glisse
   if (!r.press && r.pressed && r.v > 3) { dust(9, 1.8); Sound.skid(); }
   r.pressed = r.press;
   const eyes = w.state === 'look' || (w.state === 'turn' && w.turnP > 0.55);
@@ -585,16 +599,19 @@ function onCaught() {
   if (res.why === 'night' || res.why === 'chairs') {   // v2.5 : pas grillé… mais perdu (la nuit, les transats)
     LV.noBurn = true; S.timeScale = 0.35; w.angry = false; w.laugh = 1;   // le gros titre : render/hud.js (drawGrille)
     const rem = Math.ceil(res.remaining);
-    LV.info = { def: LV.def, res, why: res.why === 'night' ? L.nightWhy : L.chairsWhy, almost: L.failAlmost(rem),
-                tip: res.why === 'night' ? L.nightTip : L.chairsTip };
+    LV.info = { def: LV.def, res, why: res.why === 'night' ? L.nightWhy : sleds() ? L.sledsWhy : L.chairsWhy, almost: L.failAlmost(rem),
+                tip: res.why === 'night' ? L.nightTip : sleds() ? L.sledsTip : L.chairsTip };
     return;
   }
-  const exact = res.why === 'late' ? L.late(fmt(res.val)) : res.why === 'early' || res.why === 'hop' ? L.early(fmt(res.val)) : L.failWhyRunning;
+  const slick = res.why === 'late' || res.why === 'running' ? res.slick : '';   // v2.6 : grillé en glissant (verglas, descente)
+  const late = slick === 'ice' ? L.lateIce : slick === 'slope' ? L.lateSlope : L.late;
+  const exact = res.why === 'late' ? late(fmt(res.val)) : res.why === 'early' || res.why === 'hop' ? L.early(fmt(res.val)) : L.failWhyRunning;
   const why = res.why === 'hop' ? L.temptFail.hop : res.tempt ? L.temptFail[res.tempt] : exact;   // une tentation ? on dit laquelle
   const rem = Math.ceil(res.remaining);
   const almost = rem <= 40 ? L.failAlmost(rem) : res.place <= 2 && m.rivals.length ? L.failPlace(res.place) : L.failAlmost(rem);
   LV.info = { def: LV.def, res, why, almost,
-              tip: why !== exact ? exact : res.cloud ? L.refletTip : res.afterTrap && res.why !== 'early' ? L.failTipTrap : '' };   // v2.5 : le nuage
+              tip: why !== exact ? exact : slick === 'ice' ? L.tipIce : slick === 'slope' ? L.tipSlope
+                : res.cloud ? (sleds() ? L.refletTipIce : L.refletTip) : res.afterTrap && res.why !== 'early' ? L.failTipTrap : '' };   // v2.5 : le nuage
 }
 function onWin() {
   const m = LV.m, res = m.result, def = LV.def, r = rec(def.id);
@@ -687,6 +704,11 @@ S.Levels = {
   get hand() { return LV.hand; }, get oops() { return LV.oops; }, get spin() { return spin(); }, get info() { return LV.info; }, get attempt() { return LV.attempt; },
   get plocs() { return LV.plocs; }, get cone() { return LV.cone; }, get mountain() { return LV.mountain; },   // v2.5 : la glace (render/pressure.js)
   get noBurn() { return LV.noBurn; },             // v2.5.1 : perdu sans être grillé (la nuit, les transats) : render/hud.js
+  get sleds() { return sleds(); },                // v2.6 : la montagne (render/pressure.js, render/hud.js, render/lies.js)
+  // v2.6 — la montagne : l'horizon penche dans la descente (main.js), le vent y souffle (audio)
+  get onSlope() { const m = LV.m; return !!(m && LV.phase === 'play' && m.level.slick
+    && (Match.groundAt(m.level, m.player.z) === 'slope' || Match.groundAt(m.level, m.player.z + 4) === 'slope')); },
+  get wind() { const m = LV.m; return m && LV.phase === 'play' && m.player.ground === 'slope' ? clamp(m.player.v / 11, 0, 1) : 0; },
   isBossLevel: () => !!(LV.def && LV.def.boss)
 };
 })(window.Soleil);

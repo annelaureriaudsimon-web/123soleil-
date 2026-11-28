@@ -62,12 +62,39 @@ Sans ces champs, un niveau se joue exactement comme en phase 1.
   mechanics: ['hold', 'traps', 'stutter', 'rivals', 'chairs', 'night', 'plane', 'tempt:planeGo', 'tempt:alarm', 'tempt:star'] }
 ```
 
+## Exemple du monde 4 (v2.6) : descentes, verglas, luges
+
+```js
+{ id: 'w4-3', emoji: '🛷', name: T('Les luges', 'The sleds'), tip: T(…, …),
+  length: 150, chairs: 3, night: 46, seed: 4303, sky: 0.9,   // au monde 4, les « chairs » sont des luges
+  slope: [[30, 41], [100, 111]],                    // les descentes : [début, fin] en mètres (on va 1,3 × plus vite, on freine mal)
+  ice: [[66, 73]],                                  // le verglas : [début, fin] en mètres (on glisse : 0,6 s pour s'arrêter)
+  rivals: [kid('jade'), kid('sam', { z0: 10 }), kid('ines', { z0: 16 })],
+  sun: { word: [0.52, 0.62], turn: [0.605, 0.655], traps: 0.45, double: 0.2, hesitate: 0.3, fakeBack: 0.2,
+         tempt: { star: 0.3, recount: 0.3, fakeRet: 0.2, max: 1 } },   // pas de chant express ni de bégaiement avec du verglas
+  hints: [{ on: 'start', text: T('Attrape une luge ! 🛷', 'Grab a sled! 🛷'), pop: true }],
+  goal: { type: 'top', n: 2 }, challenge: { type: 'time', s: 36 },
+  mechanics: ['hold', 'traps', 'hesitate', 'rivals', 'chairs', 'night', 'slope', 'ice', 'fakeBack', 'tempt:star', 'tempt:recount', 'tempt:fakeRet'] }
+```
+
+- **Sur un sol glissant, il faut lâcher dès le « 3 »** : depuis 8 m/s, 0,2 s pour s'arrêter sur le sol, 0,4 s dans une
+  descente (où l'on court à 10,4 m/s), 0,6 s sur le verglas. **Ne mettez jamais `express` ni `stutter`** dans un niveau
+  avec du `ice` : même en lâchant dès le « 3 », on n'aurait pas le temps. (Un coup de boss express peut passer avec un
+  demi-tour long : `{ express: true, turn: 0.8 }`, voir le 4-8.)
+- **Plaques courtes** : descentes de 11 à 16 m, verglas de 6 à 9 m ; pas de sol glissant dans les 14 premiers mètres. Les
+  cerveaux lâchent dès le « 3 » à moins de 9 m d'une plaque : trop de sol glissant, et tout le monde joue comme le robot
+  prudent (`docs/DIFFICULTY.md`).
+- **Bannière de la 1re fois** : `hints: [{ on: 'slope', banner: 'slope' }]` ou `{ on: 'ice', banner: 'ice' }`.
+- **Les luges** : c'est `chairs` (un de moins que d'enfants) ; au monde 4, elles sont dessinées en luges, avec 🛷.
+  Pour qu'elles comptent, prenez des rivaux qui arrivent : des « réguliers » (`ines`, `jade`, `sam`), avec `z0`.
+- Le nuage (`cloud`) au monde 4 : le reflet est sur un lac gelé (même réglage qu'à la plage).
+
 ## La pression (v2.5) : `night`, `chairs`, `scoops`, `melt`
 
 | Champ | Rôle |
 |---|---|
 | `night` | le coucher du soleil : au bout de `night` s, « LA NUIT TOMBE ! », perdu. Barre « jusqu'à la nuit » ; les 5 dernières secondes, elle clignote. 2e chance (🎬) : le soleil remonte et ne se couche plus de l'essai (v2.5.1). `0` = pas de nuit. Réglage : juste au-dessus du joueur moyen de la simulation (`docs/DIFFICULTY.md`). |
-| `chairs` | les transats à l'arrivée. Mettez-en **un de moins que d'enfants** (rivaux + toi). Quand le dernier est pris par un rival : perdu, sans 2e chance. |
+| `chairs` | les transats à l'arrivée (au monde 4 : des luges, v2.6). Mettez-en **un de moins que d'enfants** (rivaux + toi). Quand le dernier est pris par un rival : perdu, sans 2e chance. |
 | `scoops`, `melt` | la glace : on part avec `scoops` boules, une fond toutes les `melt` s. Ce qui reste compte pour l'objectif `scoops`. À l'arrivée : la montagne de boules. |
 
 Le moteur (`js/game/match.js`) gère tout : la simulation en tient compte toute seule. Le robot « prudent » de la
@@ -134,9 +161,16 @@ La clé est le numéro du cycle (1 = le premier chant). Valeurs possibles :
 
 `mud: [[12, 21], [40, 48]]` : chaque paire est une flaque, du mètre 12 au mètre 21. Dans une flaque, la vitesse max est ×0,55 et on repart au ralenti (9 m/s² au lieu de 30). Le freinage ne change pas : la boue fait perdre du temps, elle ne grille personne. Elle ralentit aussi les rivaux. Pour annoncer la première flaque : `hints: [{ on: 'mud', banner: 'mud' }]`.
 
+## Descentes et verglas (`slope`, `ice`, v2.6)
+
+`slope: [[22, 34]]`, `ice: [[26, 33]]` : comme la boue, chaque paire va d'un mètre à un autre. Descente : vitesse max
+×1,3, freinage 26 m/s² (au lieu de 40) ; verglas : freinage 13 m/s². Pour les rivaux aussi. Les deux peuvent être dans
+le même niveau (pas l'un sur l'autre). Bannières : `{ on: 'slope', banner: 'slope' }`, `{ on: 'ice', banner: 'ice' }`.
+Grillé en glissant, la carte de fin dit « … trop tard sur le verglas ! » (ou « dans la descente ») avec le bon conseil.
+
 ## Boss (`boss`, `bossKind`)
 
-`boss: true` lance la cinématique du boss. `bossKind: 'farceur'` choisit le Soleil Farceur (lunettes-nez-moustache, musique de cirque) ; `bossKind: 'vacancier'` (v2.5) le Soleil Vacancier (chapeau de paille, lunettes en cœur, calypso) ; sans ce champ, c'est le Soleil Cool du monde 1. Un nouveau boss s'ajoute dans la table `BOSS` de `js/modes/levels.js` (son déguisement, son son, sa musique, ses textes).
+`boss: true` lance la cinématique du boss. `bossKind: 'farceur'` choisit le Soleil Farceur (lunettes-nez-moustache, musique de cirque) ; `bossKind: 'vacancier'` (v2.5) le Soleil Vacancier (chapeau de paille, lunettes en cœur, calypso) ; `bossKind: 'neiges'` (v2.6) le Soleil des Neiges (bonnet à pompon, masque de ski, air de montagne) ; sans ce champ, c'est le Soleil Cool du monde 1. Un nouveau boss s'ajoute dans la table `BOSS` de `js/modes/levels.js` (son déguisement, son son, sa musique, ses textes).
 
 ## Objectifs et défis (`goal`, `challenge`)
 

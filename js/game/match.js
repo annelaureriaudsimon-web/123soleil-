@@ -4,7 +4,7 @@
    Le moteur ne dessine rien et ne joue aucun son : il range des événements dans m.out (mots, OUF, rival grillé…). */
 (function (S) {
 'use strict';
-const { V_EPS, CLOSE, RET_DUR, HOP_DUR, PEEK_P, MUD_SPEED, VMAX0, DEC, SUN_TRAPS, PROFILES,
+const { V_EPS, CLOSE, RET_DUR, HOP_DUR, PEEK_P, MUD_SPEED, SLOPE_SPEED, VMAX0, DEC, SUN_TRAPS, PROFILES,
   mulberry32, mixSeed, kinStep, stopTime, buildChant, newBrain, brainSee, brainTick, brainReset } = S;
 
 // ---------- Réglages ----------
@@ -83,8 +83,9 @@ const SUN_BASE = {
 // Un niveau des fichiers levels/*.js, complété avec les valeurs par défaut
 function normalize(def) {
   const L = Object.assign({ speed: 1, rivals: [], script: {}, hints: [], mechanics: [], mud: [], firstPause: FIRST_PAUSE, boss: false,
-    night: 0, chairs: 0, scoops: 0, melt: 0 }, def);
+    night: 0, chairs: 0, scoops: 0, melt: 0, slope: [], ice: [] }, def);
   L.sun = Object.assign({}, SUN_BASE, def.sun || {});
+  L.slick = L.slope.length + L.ice.length > 0;    // v2.6 : la montagne (descente, verglas)
   return L;
 }
 
@@ -195,17 +196,43 @@ function liesConfig(m, c, sc, f) {
 
 function emit(m, type, data) { if (m.out) m.out.push(Object.assign({ type, t: m.t }, data)); }
 function feed(m, type, data) {                    // tous les cerveaux voient le même mot au même instant
-  if (m.player.brain) brainSee(m.player.brain, type, m.t, data);
-  for (const r of m.rivals) if (r.state === 'race') brainSee(r.brain, type, m.t, data);
+  const slk = type === 'num' && m.level.slick;    // v2.6 : chacun voit aussi s'il est sur (ou juste avant) un sol glissant
+  const d = r => { if (!slk) return data; r.slk = slickNear(m.level, r.z); return Object.assign({ slick: r.slk }, data); };
+  if (m.player.brain) brainSee(m.player.brain, type, m.t, d(m.player));
+  for (const r of m.rivals) if (r.state === 'race') brainSee(r.brain, type, m.t, d(r));
 }
 const soLong = m => m.sun.state === 'chant' && m.sun.textKind === 'num' && m.sun.text === '3';   // le « 3… » est encore affiché
+// v2.6 — pendant le « 3… » (surtout quand il dure), on voit le sol glissant arriver : on s'arrête avant d'y être
+function slickWatch(m) {
+  if (!m.level.slick || !soLong(m)) return;
+  const see = r => { if (r.brain && !r.slk && slickNear(m.level, r.z)) { r.slk = true; brainSee(r.brain, 'slick', m.t); } };
+  see(m.player);
+  for (const r of m.rivals) if (r.state === 'race') see(r);
+}
 const safeToRun = m => m.sun.state === 'pause' || m.sun.state === 'return' || (m.sun.state === 'chant' && !m.soSeen);
 
 const mudAt = (L, z) => { for (const p of L.mud) if (z >= p[0] && z < p[1]) return true; return false; };
+const inAny = (ps, z) => { for (const p of ps) if (z >= p[0] && z < p[1]) return true; return false; };
+// v2.6 — le sol sous les pieds : la boue (monde 2), la descente et le verglas (monde 4, comme en course infinie)
+function groundAt(L, z) {
+  if (L.mud.length && inAny(L.mud, z)) return 'mud';
+  if (!L.slick) return '';
+  return inAny(L.ice, z) ? 'ice' : inAny(L.slope, z) ? 'slope' : '';
+}
+// Sol glissant juste devant (ou sous les pieds) : avant que le soleil ait fini de se retourner, on y sera
+const SLICK_AHEAD = 9;
+function slickNear(L, z) {
+  for (const p of L.ice) if (z >= p[0] - SLICK_AHEAD && z < p[1]) return true;
+  for (const p of L.slope) if (z >= p[0] - SLICK_AHEAD && z < p[1]) return true;
+  return false;
+}
 function move(m, r, press, dt) {
-  const mud = m.level.mud.length > 0 && mudAt(m.level, r.z);     // flaques posées à la main (monde 2)
-  const pv = r.v, k = kinStep(r.v, press, dt, mud ? 'mud' : '', mud ? r.vmax * MUD_SPEED : r.vmax);
-  r.mud = mud;
+  const g = groundAt(m.level, r.z);               // flaques posées à la main (monde 2), descentes et verglas (monde 4)
+  const vmax = g === 'mud' ? r.vmax * MUD_SPEED : g === 'slope' ? r.vmax * SLOPE_SPEED : r.vmax;
+  const pv = r.v, k = kinStep(r.v, press, dt, g, vmax);
+  r.mud = g === 'mud';
+  if (g !== (r.ground || '') && r === m.player && (g === 'ice' || g === 'slope')) emit(m, 'ground', { g });
+  r.ground = g;
   r.v = k.v; r.dec = k.dec; r.z += k.dz; r.phase += r.v * dt * 1.6; r.press = press;
   if (pv > 0 && r.v === 0) r.stopT = m.t;
 }
@@ -233,6 +260,7 @@ function step(m, dt, input) {
     m.quickT = -1;
   }
   trackTrap(m);
+  slickWatch(m);
   for (const r of m.rivals) stepRival(m, r, dt);
   stepSun(m, dt);
 }
@@ -491,7 +519,8 @@ function lose(m, why, val) {
   m.result = { win: false, why, val, time: m.t, z: pl.z, remaining: Math.max(0, m.level.length - pl.z),
                place: place(m), total: m.rivals.length + 1, stats: m.stats, cycle: m.cycle, afterTrap: m.sun.trapsThisChant > 0,
                tempt: m.look && m.sun.state === 'look' && !m.sun.second ? m.look.last : '', mud: !!m.player.mud,
-               cloud: !!m.sun.cloud && /^(turn|look|peek|hop)$/.test(m.sun.state) };   // v2.5 : grillé pendant que le nuage le cachait
+               cloud: !!m.sun.cloud && /^(turn|look|peek|hop)$/.test(m.sun.state),   // v2.5 : grillé pendant que le nuage le cachait
+               slick: pl.ground === 'ice' || pl.ground === 'slope' ? pl.ground : '' };   // v2.6 : grillé en glissant
   emit(m, 'grilled', { why, val });
 }
 
@@ -536,6 +565,6 @@ function goalMet(g, res) {
 }
 const starsOf = (L, res) => [!!res.win, goalMet(L.goal, res), !res.revived && goalMet(L.challenge, res)];
 
-S.Match = { create, step, revive, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET, KNOCK,
+S.Match = { create, step, revive, normalize, cycleConfig, place, ranking, starsOf, goalMet, mudAt, groundAt, slickNear, SLICK_AHEAD, SUN_BASE, FIRST_PAUSE, RIVAL_RESPAWN, LANES, TEMPT, QUICK, FAKE_RET, KNOCK,
   NIGHT_WARN, TEMPT_V25, RECOUNT, PLANE_STOP, ALARM_RANGE, HERD_N, HERD_RANGE };
 })(window.Soleil);

@@ -1,9 +1,10 @@
-# Les pièges du soleil (v2.5)
+# Les pièges du soleil (v2.5, et la montagne en v2.6)
 
-Ce fichier décrit **tous** les pièges du jeu : ceux d'avant (mondes 1 et 2) et les 8 nouveautés de la v2.5.
+Ce fichier décrit **tous** les pièges du jeu : ceux d'avant (mondes 1 et 2), les 8 nouveautés de la v2.5, et ce
+que la montagne (v2.6) amène dans les niveaux : la descente, le verglas, les luges et le lac gelé (section D).
 Pour chaque piège : ce qui se passe, **l'indice qu'on voit**, ce qu'il faut faire, où il apparaît, et comment il
 est réglé. La répartition et la courbe de difficulté sont dans `docs/DIFFICULTY.md`, le monde 3 dans
-`docs/WORLD3_DESIGN.md`.
+`docs/WORLD3_DESIGN.md`, le monde 4 dans `docs/WORLD4_DESIGN.md`.
 
 ## Pourquoi la v2.5
 
@@ -54,6 +55,10 @@ Jamais par la couleur seule, jamais par le son seul. Avec le son coupé, en dalt
 | Coucher du soleil | le soleil **descend** vers l'horizon, le ciel passe au soir, une barre « jusqu'à la nuit » ; les 5 dernières secondes, elle clignote : « Vite, la nuit tombe ! » | — |
 | Transats | les transats sont **dessinés à l'arrivée** ; quand un rival s'assoit : « 🏖️ Inès s'assoit · encore 1 » | — |
 | Glace qui fond | le cornet et ses boules en haut de l'écran ; une boule qui fond **tombe** (« PLOC ! ») ; au-delà de 6 boules : « ×n » | ploc |
+| Descente (v2.6) | le sentier plus sombre avec des **chevrons ▼** ; dedans, l'horizon **penche** ; la 1re fois : « DESCENTE ! » | le vent |
+| Verglas (v2.6) | des **plaques bleu pâle qui brillent**, visibles de loin ; quand on glisse, des étincelles ; la 1re fois : « VERGLAS ! » | la glace qui crisse |
+| Luges (v2.6) | les luges **dessinées à l'arrivée** (patins recourbés, siège rayé) ; « 🛷 Inès s'assoit · encore 2 » | — |
+| Lac gelé (v2.6) | le lac au bout du sentier, toujours un peu visible ; sous le nuage, **le reflet à l'envers** du soleil, net (la glace ne bouge pas) | — |
 
 ## Ce qui a changé dans le chant : plus de « SO »
 
@@ -88,14 +93,15 @@ Maintenant, **partout** (niveaux, course infinie, défi du jour, 2 joueurs, tuto
   plus 1 % de ses essais. Elle punit celui qui s'arrête à chaque « 3 » et attend le « ding » même après un mot piège.
 - **Le titre** : « LA NUIT TOMBE ! » (jamais « GRILLÉ ! » : on n'a pas bougé devant lui) ; pour les transats,
   « PLUS DE TRANSAT ! ».
-- **Où.** Du niveau 1-3 (« Avant la nuit ») jusqu'au boss de la plage. Pas au 1-1 (en douceur) ni au 1-2.
+- **Où.** Du niveau 1-3 (« Avant la nuit ») jusqu'au boss de la montagne. Pas au 1-1 (en douceur) ni au 1-2.
 
 ### 🏖️ Les transats (champ `chairs`)
 - **Ce qui se passe.** À l'arrivée, il y a **un transat de moins que d'enfants**. Quand le dernier est pris par un
   rival : « Plus de transat ! », perdu.
 - **Pas de 2e chance** : les transats sont déjà pris, revenir en arrière n'y changerait rien.
 - **Ce qu'il faut faire.** Ne pas être le dernier : la course compte vraiment.
-- **Où.** Monde 3 : 1 (3 transats pour 4 enfants), 4 (4 pour 5), 7 (5 pour 6).
+- **Où.** Monde 3 : 1 (3 transats pour 4 enfants), 4 (4 pour 5), 7 (5 pour 6). À la montagne, ce sont des luges
+  (section D).
 
 ### 🍦 La glace qui fond (champs `scoops` et `melt`)
 - **Ce qui se passe.** On part avec `scoops` boules ; une fond toutes les `melt` secondes (4 s). Les boules qui
@@ -158,25 +164,71 @@ Un avion traverse le ciel avec une banderole. **Ce n'est jamais le soleil qui pa
 - **C'est un obstacle, pas un objectif d'étoile** (le choix du joueur : « que pour réussir un niveau »).
 - **Où.** 2-7 (« La grande course du parc », forcé au 2e regard) et 3-7. Jamais en course infinie.
 
+## D. La montagne (v2.6) : le sol qui glisse, les luges, le lac gelé
+
+Les pièges choisis par le joueur pour le monde 4 : la descente et le verglas (déjà dans la course infinie) arrivent
+dans les niveaux, les luges à l'arrivée (comme les transats), le reflet sur le lac gelé, et les pièges actuels. Rien
+d'autre.
+
+### ⛷️ La descente (champ `slope` : `[[début, fin], …]` en mètres)
+- **Ce qui se passe.** Dans une descente, on court 1,3 × plus vite (10,4 m/s) et on freine moins bien : il faut 0,4 s
+  pour s'arrêter (0,2 s sur le sol).
+- **On le voit.** Le sentier est plus sombre, avec des chevrons ▼ ; quand on y est, l'horizon penche et le vent souffle.
+  La 1re fois : « DESCENTE ! Tu vas plus vite… et tu freines mal : lâche dès le « 3 » ! ».
+- **Ce qu'il faut faire.** Lâcher dès le « 3 » (au mot, c'est trop tard).
+- **Si on est grillé en glissant.** « Lâché 0,13 s trop tard dans la descente ! » et le conseil de la course infinie
+  (« Dans la descente, lâche beaucoup plus tôt »).
+- **Où.** Monde 4 : 1 (« La descente », 3 descentes), 3, 5, 6, 7, le boss. Course infinie : dès 120 m (inchangé).
+
+### 🧊 Le verglas (champ `ice`)
+- **Ce qui se passe.** Sur la glace, on glisse : il faut 0,6 s pour s'arrêter.
+- **On le voit.** Des plaques bleu pâle qui brillent, sur le sentier, visibles de loin ; quand on glisse, des
+  étincelles de glace. La 1re fois : « VERGLAS ! Ça glisse longtemps : lâche dès le « 3 » ! ».
+- **Ce qu'il faut faire.** Voir la plaque arriver et lâcher dès le « 3 » avant d'y être.
+- **Si on est grillé en glissant.** « Lâché … trop tard sur le verglas ! » et « Sur le verglas, lâche beaucoup plus
+  tôt ».
+- **Juste, et vérifié** : celui qui lâche dès le « 3 » sur un sol glissant (et au mot ailleurs), et qui attend le
+  « ding », gagne tous les niveaux de la montagne, à chaque essai (`test_levels.py`, test 28). Pour ça, **pas de chant
+  express ni de bégaiement** dans les niveaux avec du verglas ; le seul chant express (un coup du boss) a un demi-tour
+  long de 0,8 s.
+- **Où.** Monde 4 : 2 (« Le verglas », 4 plaques), 3, 4, 5, 6, 7, le boss. Course infinie : dès 180 m (inchangé).
+
+### 🛷 Les luges (champ `chairs`, au monde 4)
+- **C'est la règle des transats**, à la montagne : une luge de moins que d'enfants, le dernier arrivé a perdu, sans 2e
+  chance. Le HUD compte les luges libres (🛷 ×3) ; « 🛷 Inès s'assoit · encore 2 » ; « PLUS DE LUGE ! ».
+- **Pour qu'elles comptent**, les rivaux de ces niveaux arrivent vraiment : des « réguliers » (ils lâchent toujours dès
+  le « 3 » sur la glace) et des départs devant (`z0`).
+- **Où.** Monde 4 : 3 (« Les luges », 3 pour 4 enfants), 5 (4 pour 5), 7 (5 pour 6).
+
+### ❄️ Le reflet sur le lac gelé (champ `cloud`, au monde 4)
+- **C'est le reflet de la plage**, sur un lac gelé : toujours un peu visible au bout du sentier, net sous le nuage. Sur
+  la glace, il ne bouge pas (pas de vaguelettes) ; un reflet glisse sur la glace, des traces de patins. Le lac est
+  dessiné par-dessus le verglas du sentier : une plaque lointaine ne cache jamais le visage reflété.
+- **La bannière** : « REGARDE SON REFLET ! Sur le lac gelé, tu vois s'il te regarde » ; grillé sous le nuage :
+  « Derrière le nuage, regarde son reflet sur le lac gelé ❄️ ».
+- **Où.** Monde 4 : 4 (« Le lac gelé », forcé aux 2 premiers chants, le 2e avec un faux dos), 6, 7, le boss.
+
 ## Tous les pièges, d'un coup d'œil
 
-| Piège | Depuis | Monde 1 | Monde 2 | Monde 3 | Course infinie |
-|---|---|---|---|---|---|
-| Mot piège, double piège | phase 1 | ✔ | ✔ | ✔ | ✔ |
-| Le « 3… » qui dure (hésitation) | phase 1 (v2.5 : sans « SO ») | ✔ | ✔ | ✔ | ✔ |
-| Bégaiement, chant express | phase 1 | ✔ | ✔ | ✔ | ✔ |
-| Étoile, faux retour, éternuement, moquerie, mouche, rival qui craque | phase 2 | — | ✔ | ✔ (étoile, faux retour, éternuement) | — |
-| Faux dos (« HMM… HOP ! ») | phase 2 | — | ✔ | ✔ | dès 100 m |
-| Boue | phase 2 | — | ✔ | — | dès 60 m |
-| Nuage | phase 1 (course infinie) | — | — | ✔ (avec son reflet) | dès 80 m |
-| **Coucher du soleil** | v2.5 | dès 1-3 | ✔ | ✔ | — |
-| **Recomptage** | v2.5 | 1-4, 1-8 | ✔ | ✔ | dès 50 m |
-| **Fausse alerte** | v2.5 | 1-7, 1-8 | ✔ | ✔ | — |
-| **Troupeau** | v2.5 | — | 2-7 | 3-7 | — |
-| **Transats** | v2.5 | — | — | 1, 4, 7 | — |
-| **Glace qui fond** | v2.5 | — | — | 2, 6, 8 | — |
-| **Avion menteur** | v2.5 | — | — | 3, 4, 6, 7, 8 | dès 90 m |
-| **Reflet dans l'eau** | v2.5 | — | — | 5, 6, 7, 8 | dès 150 m |
+| Piège | Depuis | Monde 1 | Monde 2 | Monde 3 | Monde 4 | Course infinie |
+|---|---|---|---|---|---|---|
+| Mot piège, double piège | phase 1 | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Le « 3… » qui dure (hésitation) | phase 1 (v2.5 : sans « SO ») | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Bégaiement, chant express | phase 1 | ✔ | ✔ | ✔ | express : 1 coup du boss (demi-tour long) | ✔ |
+| Étoile, faux retour, éternuement, moquerie, mouche, rival qui craque | phase 2 | — | ✔ | ✔ (étoile, faux retour, éternuement) | ✔ (étoile, faux retour, éternuement) | — |
+| Faux dos (« HMM… HOP ! ») | phase 2 | — | ✔ | ✔ | ✔ | dès 100 m |
+| Boue | phase 2 | — | ✔ | — | — | dès 60 m |
+| Nuage | phase 1 (course infinie) | — | — | ✔ (avec son reflet) | ✔ (le lac gelé) | dès 80 m |
+| **Coucher du soleil** | v2.5 | dès 1-3 | ✔ | ✔ | ✔ | — |
+| **Recomptage** | v2.5 | 1-4, 1-8 | ✔ | ✔ | ✔ | dès 50 m |
+| **Fausse alerte** | v2.5 | 1-7, 1-8 | ✔ | ✔ | ✔ | — |
+| **Troupeau** | v2.5 | — | 2-7 | 3-7 | 4-7, 4-8 | — |
+| **Transats / luges** | v2.5 / v2.6 | — | — | 1, 4, 7 | 3, 5, 7 (luges) | — |
+| **Glace qui fond** | v2.5 | — | — | 2, 6, 8 | — | — |
+| **Avion menteur** | v2.5 | — | — | 3, 4, 6, 7, 8 | 5, 7, 8 | dès 90 m |
+| **Reflet dans l'eau** | v2.5 | — | — | 5, 6, 7, 8 | 4, 6, 7, 8 (lac gelé) | dès 150 m |
+| **Descente** | v2.6 dans les niveaux | — | — | — | 1, 3, 5, 6, 7, 8 | dès 120 m |
+| **Verglas** | v2.6 dans les niveaux | — | — | — | 2, 3, 4, 5, 6, 7, 8 | dès 180 m |
 
 ## Comment c'est fait
 
@@ -208,6 +260,14 @@ Un avion traverse le ciel avec une banderole. **Ce n'est jamais le soleil qui pa
 - La 1re fois : une bannière (« IL RECOMPTE ! », « L'AVION MENT ! », le reflet), mémorisée dans `soleil.lieSeen`.
 - Grillé par un faux signal : le conseil de fin le dit (« Il comptait en te regardant… », « L'avion mentait… »).
 
+### Le sol des niveaux (v2.6, `js/game/match.js`)
+- `slope` et `ice` sont des listes `[début, fin]` en mètres, comme `mud`. `groundAt(L, z)` dit le sol sous les pieds ;
+  `move()` applique la physique de la course infinie (`kinStep`, `SLOPE_SPEED`, `SLOPE_DEC`, `ICE_DEC`), pour le joueur
+  et pour les rivaux. L'événement `ground` (le joueur entre sur la glace ou dans une descente) donne la bannière de la
+  1re fois.
+- Grillé en glissant : le résultat dit `slick: 'ice'` ou `'slope'` (pour la carte de fin).
+- Aucun dé de plus : un niveau sans sol glissant fait exactement la même partie qu'avant.
+
 ### Les cerveaux (`js/game/rivals.js`) : rivaux et joueurs simulés
 - `TEMPT_K` (combien chaque tentation fait craquer) : recomptage 1,0 · avion « ALLEZ-Y ! » 1,0 · fausse alerte 1,0
   · troupeau 1,2 (on a envie de suivre).
@@ -217,12 +277,19 @@ Un avion traverse le ciel avec une banderole. **Ce n'est jamais le soleil qui pa
 - Nuage : pendant ce cycle, chaque tentation fait plus craquer (× 1,4) et on repart 0,12 s plus tard (le temps de
   voir le « ding » dans l'eau).
 - Le robot `patient` : il s'arrête à **chaque** « 3 » et ne repart **qu'au** « ding », même après un mot piège.
+- v2.6, le sol glissant (`slick`) : au « 3 », sur un sol glissant ou à moins de 9 m (`SLICK_AHEAD`), on lâche tout de
+  suite avec la probabilité `slick` (expert, prudent, réguliers et prudents 1 ; moyen 0,75 ; débutant 0,5 ; Fonceur
+  0,35). Pendant un « 3… » qui dure, la glace qui arrive est vue aussi (`slickWatch`). Après s'être arrêté exprès, pas
+  d'impatience pendant ce « 3 ».
 
 ### Le dessin
 - `js/render/lies.js` : l'avion et sa banderole, le reflet (flaque cerclée d'encre ; sable mouillé au monde 3), la
   bulle de la fausse alerte.
 - `js/render/pressure.js` : la barre de la nuit, les transats, le cornet et la montagne de boules.
 - `js/render/beach.js` : la plage et le Soleil Vacancier.
+- v2.6 : `js/render/mountain.js` (la montagne, ses sommets, le Soleil des Neiges, la page de la carte) ;
+  `js/render/tempt.js` (les descentes et le verglas sur le sentier des niveaux) ; `js/render/pressure.js` (les luges) ;
+  `js/render/lies.js` (le lac gelé).
 - Les effets coûteux respectent `S.Q` (qualité automatique) ; rien n'est dans la zone de la pilule Poki ; tout suit
   `S.uiZoom`.
 

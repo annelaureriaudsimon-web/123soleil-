@@ -6,12 +6,12 @@ Astuce : si les tests de sauvegarde échouent avec le Chromium de Playwright, la
 
 | Quoi | Commande | Ce qui est vérifié |
 |---|---|---|
-| Simulation des 24 niveaux | `node tools/simulate.js` | Expert au moins 95 % partout, menace dans les 10 premières secondes, durées (25–35 s dans la cour, 30–42 s au parc et à la plage, boss ≤ 45 s / ≤ 50 s), boss du moyen (15–35 % / 10–30 % / 10–20 %), progression régulière, **niveau 1 en douceur : le débutant le finit au moins 90 % du temps, en moins de 45 s** (v2.2), le 1-3 à environ 85 % pour le moyen, chaque monde qui commence plus dur que le début du précédent mais plus facile que son boss, **le robot prudent** (v2.5 : presque jamais ★★★, au plus 2 % ; au plus 50 % à la fin de la cour, au plus 20 % ensuite), et **monde 1 identique à sa référence** `REF_W1` (réglée en v2.5.1), et (v2.5.1) **la nuit ne fait presque jamais perdre le moyen** (au plus 5 % de ses essais, dans chaque niveau ; le moyen lit le mot en 0,36 s, comme un vrai joueur). **148 vérifications, toutes vertes** (v2.5.1). |
+| Simulation des 32 niveaux | `node tools/simulate.js` | Expert au moins 95 % partout, menace dans les 10 premières secondes, durées (25–35 s dans la cour, 30–42 s au parc, à la plage et à la montagne, boss ≤ 45 s / ≤ 50 s), boss du moyen (15–35 % / 10–30 % / 10–20 % / 10–20 %), progression régulière, **niveau 1 en douceur : le débutant le finit au moins 90 % du temps, en moins de 45 s** (v2.2), le 1-3 à environ 85 % pour le moyen, chaque monde qui commence plus dur que le début du précédent mais plus facile que son boss, **le robot prudent** (v2.5 : presque jamais ★★★, au plus 2 % ; au plus 50 % à la fin de la cour, au plus 20 % ensuite), et **monde 1 identique à sa référence** `REF_W1` (réglée en v2.5.1), et (v2.5.1) **la nuit ne fait presque jamais perdre le moyen** (au plus 5 % de ses essais, dans chaque niveau ; le moyen lit le mot en 0,36 s, comme un vrai joueur). v2.6 : les mêmes vérifications pour la montagne, et le monde 4 qui commence plus dur que le 2e niveau de la plage. **199 vérifications, toutes vertes** (v2.6 ; les mondes 1 à 3 donnent exactement les mêmes chiffres qu'en v2.5.1). |
 | Intégration Poki dans un vrai navigateur | `python3 tools/tests/test_poki.py` (Playwright, faux SDK `tools/tests/fake_poki_sdk.js`) | 173 vérifications (v2.5 : + le test 30, plus de « SO » ; v2.5.1 : + le test 31, la 2e chance quand la nuit tombe), détaillées plus bas. **173/173**, aucune erreur JavaScript. |
 | Build Poki | `node tools/build-poki.js` | Fabrique `dist/poki/` et `dist/soleil-poki.zip`, puis vérifie : aucune adresse externe sauf le SDK, aucun lien sortant, `localStorage` toujours dans un try/catch, aucun `console.log` ni code de debug, moins de 8 Mo, `node --check` sur chaque JS, et chaque fichier entier après le retrait du debug. **TOUT EST OK.** |
-| Mode Niveaux dans un vrai navigateur | `python3 tools/tests/test_levels.py` (Playwright) | 112 vérifications (v2.5 : les 3 mondes, les faux signaux, les rivaux, la plage, la course infinie), détaillées plus bas. **112/112**, aucune erreur JavaScript. |
-| Comparaison avec la version d'avant, image par image | `python3 tools/tests/compare_frames.py <dossier de la version d'avant>` | La course infinie et le monde 1 se dessinent exactement pareil (même graine, même hasard visuel, même robot ; SDK coupé, joueur qui revient). **94/94 images identiques** contre la v2.1 ; contre la v2.2 : 88/94, les 6 autres étant les images avec le vrai signal ou un mot piège à l'écran (étoile « POW » / mot rayé, v2.4). **v2.5 contre la v2.4 : 18/94 identiques, 76 différences voulues** (les images des niveaux : plus de « SO », coucher du soleil), **0 non voulue** ; les 14 images de la course infinie sont identiques. Pour la suite, comparer avec la v2.5. |
-| Syntaxe | `for f in js/*.js js/*/*.js levels/*.js tools/*.js; do node --check $f; done` | Aucune erreur de syntaxe (74 fichiers du jeu + les outils ; le build Poki le refait). |
+| Mode Niveaux dans un vrai navigateur | `python3 tools/tests/test_levels.py` (Playwright) | 140 vérifications (v2.5 : les 3 mondes, les faux signaux, les rivaux, la plage, la course infinie ; v2.6 : la montagne, tests 28 à 32), détaillées plus bas. **139/140 sur la machine de test, aucune erreur JavaScript** : le seul rouge est le temps par image (8,3 ms pour 8 ms visées au 1-7). Il est rouge aussi avec la v2.5.1 sur cette machine (8,0 à 9,7 ms) : c'est la machine, pas la montagne (mesuré : la montagne coûte autant que la cour et la plage, 7 à 11 ms selon les essais). |
+| Comparaison avec la version d'avant, image par image | `python3 tools/tests/compare_frames.py <dossier de la version d'avant>` | La course infinie et le monde 1 se dessinent exactement pareil (même graine, même hasard visuel, même robot ; SDK coupé, joueur qui revient). **94/94 images identiques** contre la v2.1 ; contre la v2.2 : 88/94, les 6 autres étant les images avec le vrai signal ou un mot piège à l'écran (étoile « POW » / mot rayé, v2.4). **v2.5 contre la v2.4 : 18/94 identiques, 76 différences voulues** (les images des niveaux : plus de « SO », coucher du soleil), **0 non voulue** ; les 14 images de la course infinie sont identiques. **v2.6 contre la v2.4 : pareil (18 + 76, 0 non voulue)** : la montagne ne change rien aux autres mondes. Pour la suite, comparer avec la v2.5. |
+| Syntaxe | `for f in js/*.js js/*/*.js levels/*.js tools/*.js; do node --check $f; done` | Aucune erreur de syntaxe (76 fichiers du jeu + les outils ; le build Poki le refait). |
 
 ### Ce que vérifie `test_poki.py` (v2.2, v2.3 : tests 15 à 24 pour les corrections et les pubs récompensées, v2.4 : tests 25 à 29, v2.5 : test 30, v2.5.1 : test 31)
 
@@ -42,18 +42,25 @@ Monde 1 (phase 1) :
 - le mot piège forcé, et l'absence de `Math.random()` dans le moteur, les cerveaux, la physique et les niveaux (monde 2 compris) ;
 - l'équité : l'expert réussit 120 essais sur 120 sur chaque niveau ;
 - les rivaux grillés, puis renvoyés au départ ;
-- les cadenas, la plage verrouillée par les étoiles du parc, « Bientôt » (mondes 4 et 5) et le clavier sur la carte ;
+- les cadenas, la plage verrouillée par les étoiles du parc, la montagne par celles de la plage (v2.6), « Bientôt » (monde 5) et le clavier sur la carte ;
 - les anciennes sauvegardes intactes ;
 - la mise en scène du boss ;
 - l'anglais, le paysage et le petit écran ;
 - le temps par image.
+
+v2.6, la montagne (tests 28 à 32) :
+- **la montagne juste** : le joueur qui lâche dès le « 3 » sur un sol glissant (au mot ailleurs) et attend le « ding » gagne **40 essais sur 40** sur chacun des 8 niveaux, sans jamais être grillé en glissant ; l'expert au moins 95 sur 100 ; le robot prudent au plus 6 sur 30 ;
+- **la descente et le verglas** : le bon sol au bon endroit (et rien de glissant à la plage), 10,4 m/s dans la descente, 0,2 / 0,3 / 0,6 s pour s'arrêter (depuis 8 m/s), les cerveaux qui lâchent dès le « 3 » près de la glace ; à l'écran : « DESCENTE ! » (l'horizon penche, le vent), « VERGLAS ! » ; grillé en glissant : « Lâché … trop tard sur le verglas ! » et « Sur le verglas, lâche beaucoup plus tôt » ;
+- **la carte et le décor** : la montagne verrouillée (« Gagne 12 ★ dans le monde 3… »), l'animation à 12 étoiles, la neige de sa page et des bords du sentier, les 3 luges du 4-3 (« 🛷 Inès s'assoit · encore 2 »), le lac gelé sous le nuage (« Sur le lac gelé, tu vois s'il te regarde ») ; le monde 5 « Bientôt » (test 6) ;
+- **le Soleil des Neiges** : intro, bonnet et masque, air de montagne (132 bpm), coups spéciaux annoncés, victoire, monde 4 terminé ;
+- **les 6 langues** : tous les textes de la montagne, les noms et consignes des 8 niveaux traduits, le « 3 » écrit dans chaque consigne (le test 29 de `test_poki.py` vérifie aussi toutes les phrases des niveaux).
 
 v2.5 (tests 19 à 27) :
 - **les faux signaux** (moteur) : le recomptage « 1… 2… » pendant le regard, l'avion « ALLEZ-Y ! » (jamais le mot de départ) et l'avion « SOLEIL ! » pendant le chant, le nuage et son reflet ; bouger pendant l'un d'eux = grillé, avec la bonne explication ; les niveaux d'avant tirent les mêmes dés ;
 - **à l'écran, dans les 6 langues** : ce qu'on voit (le « 1 » du recomptage, la banderole, les yeux du soleil cachés par le nuage et visibles dans la flaque), ce qui grille, le conseil de fin ;
 - **les rivaux** : la fausse alerte (un rival qu'on voit crie, lui ne bouge pas ; sa bulle porte son prénom) et le troupeau (3 rivaux, tous grillés, une seule annonce « TOUS GRILLÉS ! », jamais avec moins de 3 rivaux) ; l'expert les ignore, le moyen s'y fait griller ;
 - **la plage juste** : l'expert réussit au moins 95 essais sur 100 de chaque niveau ; le robot prudent au plus 3 sur 30 ;
-- **la carte** : la plage verrouillée (« Gagne 12 ★ dans le monde 2… »), l'animation à 12 étoiles, son sable, le monde 4 « Bientôt » ;
+- **la carte** : la plage verrouillée (« Gagne 12 ★ dans le monde 2… »), l'animation à 12 étoiles, son sable ;
 - **les transats et la glace** : sans transat, perdu sans 2e chance ; une boule fond toutes les 4 s, les étoiles viennent des boules qui restent, la montagne à l'arrivée ;
 - **le Soleil Vacancier** : intro, chapeau et lunettes en cœur, calypso (144 bpm), coups spéciaux annoncés, victoire, monde 3 terminé ;
 - **la course infinie** : le recomptage jamais avant 50 m, l'avion jamais avant 90 m, le même défi du jour (mêmes faux signaux, au même cycle) pour deux joueurs, le conseil de fin qui nomme le faux signal.
@@ -76,6 +83,20 @@ Monde 2 (phase 2) :
 | Course infinie, comparée image par image à la version d'avant (`compare_frames.py`) | 14 images sur 14 identiques au pixel près (portrait et paysage, de 0 à 900 m : boue, verglas, descente, décor). |
 | Niveaux 1, 3, 5, 7 et 8 du monde 1, comparés image par image à la version d'avant (`compare_frames.py`) | 80 images sur 80 identiques au pixel près (portrait et paysage, boss compris). |
 | Simulation | v2.2 : seul le niveau 1 change (débutant 66 % → 100 %, niveau en douceur). Les 7 autres niveaux du monde 1 et tout le monde 2 : mêmes chiffres qu'en v2.1, à 0 point près. |
+
+## La v2.6 : 6 vérifications rapides (la montagne)
+
+1. **Ouvrir la montagne** : il faut 12 ★ dans la plage. Pour tester sans les gagner : dans la console du navigateur,
+   `Soleil.WorldMap.open(); Soleil.Levels.open('w4-1', false)`.
+2. **4-1 « La descente »** : à la 1re descente, « DESCENTE ! » s'affiche, l'horizon penche, on va plus vite. Lâche dès
+   le « 3 » : tu t'arrêtes à temps. Lâche au mot : tu glisses et tu es grillé (« … trop tard dans la descente ! »).
+3. **4-2 « Le verglas »** : on voit les plaques bleues de loin ; « VERGLAS ! » la 1re fois ; sur la glace, on glisse
+   longtemps. Est-ce que tu as le temps de voir la plaque et de lâcher au « 3 » ? (sur téléphone, en plein soleil aussi)
+4. **4-3 « Les luges »** : 🛷 ×3 en haut ; quand un rival arrive, « 🛷 … s'assoit · encore 2 » ; le dernier a perdu.
+5. **4-4 « Le lac gelé »** : derrière le nuage, le reflet sur le lac gelé se lit bien (son visage, l'œil du faux dos,
+   l'anneau vert du « ding »).
+6. **4-8 le Soleil des Neiges** : bonnet à pompon et masque de ski, l'air de montagne ; quand il se fâche ou pendant
+   l'œil du faux dos, il remonte son masque (on voit ses yeux). Les flocons ne gênent pas pour lire son visage.
 
 ## La v2.5.1 : 3 vérifications rapides (la nuit)
 

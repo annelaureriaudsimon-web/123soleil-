@@ -1,6 +1,6 @@
 /* js/render/pressure.js — v2.5 : ce qui rend la prudence chère, à l'écran.
    - le coucher du soleil : la barre « jusqu'à la nuit » (☀️ → 🌙, avec les secondes), le soleil qui descend ;
-   - les transats à l'arrivée (un de moins que d'enfants), avec le prénom de qui s'y est assis ;
+   - les transats à l'arrivée (un de moins que d'enfants), avec le prénom de qui s'y est assis (v2.6 : des luges à la montagne) ;
    - la glace : une montagne de boules qui tangue au-dessus du coureur, qui fond (« PLOC ! »), et qui finit,
      à l'arrivée, en une montagne de glace qui grandit boule par boule.
    Rien ici ne change le jeu : tout vient du moteur (game/match.js : night, chairs, scoops). */
@@ -159,11 +159,17 @@ function drawChairs(camZ) {
   if (dz < 1.5 || dz > FAR) return;
   const sc = Lt.F / dz, y = yAt(dz), fog = Math.pow(clamp(dz / FAR, 0, 1), 0.7), g = S.ctx;
   const span = PATH_W * 2.6;
+  const sled = LV.sleds;                             // v2.6 : à la montagne, des luges
   for (let i = 0; i < n; i++) {
     const x = Lt.cx + (-span / 2 + (span * (i + 0.5)) / n) * sc, w = 0.55 * sc, h = 0.5 * sc;
     const who = m.finishers[i];
     g.save(); g.lineJoin = 'round';
     g.strokeStyle = css(INK, 1 - fog); g.lineWidth = Math.max(1.2, 0.05 * sc);
+    if (sled) {
+      drawSled(g, x, y, sc, fog, i);
+      if (who && sc > 2) { g.textAlign = 'center'; otext(who.name || '', x, y - 0.95 * sc, Math.max(10, 0.28 * sc), '#FFFFFF'); }
+      g.restore(); continue;
+    }
     // le cadre en bois
     g.strokeStyle = mix('#8B5A2B', pal.haze, fog);
     g.beginPath(); g.moveTo(x - w / 2, y); g.lineTo(x + w / 2, y - h); g.moveTo(x + w / 2, y); g.lineTo(x - w / 2, y - h * 0.6); g.stroke();
@@ -180,7 +186,27 @@ function drawChairs(camZ) {
   }
 }
 
-// ---------- La ligne du HUD : jusqu'à la nuit, transats libres, boules de glace ----------
+// 🛷 Une luge en bois (v2.6, monde 4) : deux patins recourbés devant, un siège à rayures (on la reconnaît sans la couleur)
+function drawSled(g, x, y, sc, fog, i) {
+  const f = c => mix(c, pal.haze, fog), w = 0.62 * sc, lw = Math.max(1.2, 0.05 * sc), dir = i % 2 ? 1 : -1;
+  g.lineCap = 'round';
+  g.strokeStyle = f('#5B3A22'); g.lineWidth = Math.max(1.5, 0.07 * sc);   // les patins, recourbés à l'avant
+  for (const dy of [0, -0.05]) {
+    g.beginPath(); g.moveTo(x - dir * w, y + dy * sc); g.lineTo(x + dir * w * 0.75, y + dy * sc);
+    g.quadraticCurveTo(x + dir * w * 1.05, y + dy * sc, x + dir * w * 1.0, y - 0.32 * sc + dy * sc); g.stroke();
+  }
+  g.lineWidth = Math.max(1, 0.05 * sc);           // les montants
+  for (const u of [-0.6, 0, 0.55]) { g.beginPath(); g.moveTo(x + dir * w * u, y); g.lineTo(x + dir * w * u, y - 0.28 * sc); g.stroke(); }
+  g.fillStyle = f(i % 2 ? '#E63946' : '#4895EF');  // le siège, et ses rayures blanches
+  rrp(g, x - w * 0.85, y - 0.4 * sc, w * 1.6, 0.14 * sc, 0.04 * sc); g.fill();
+  g.strokeStyle = css(INK, 1 - fog); g.lineWidth = lw; g.stroke();
+  g.strokeStyle = f('#FFFFFF'); g.lineWidth = Math.max(1, 0.05 * sc);
+  for (let k = 1; k < 4; k++) { const sx = x - w * 0.85 + w * 1.6 * k / 4; g.beginPath(); g.moveTo(sx, y - 0.39 * sc); g.lineTo(sx, y - 0.27 * sc); g.stroke(); }
+  g.strokeStyle = f('#C9A227'); g.lineWidth = Math.max(1, 0.03 * sc);   // la corde
+  g.beginPath(); g.moveTo(x + dir * w * 1.0, y - 0.3 * sc); g.quadraticCurveTo(x + dir * w * 1.35, y - 0.05 * sc, x + dir * w * 1.15, y + 0.05 * sc); g.stroke();
+}
+
+// ---------- La ligne du HUD : jusqu'à la nuit, transats (ou luges) libres, boules de glace ----------
 function drawPressureHUD(x0, x1, y, fs) {
   const LV = S.Levels, m = LV.m;
   if (!m) return;
@@ -201,10 +227,10 @@ function drawPressureHUD(x0, x1, y, fs) {
     otext(`${Math.ceil(left)} s`, bx + w + fs * 0.9, y + h / 2 + 1, fs * 0.55, warn ? '#FFB3B3' : '#FFFFFF');
     x = bx + w + fs * 2.5;
   }
-  if (def.chairs) {                                // 🏖️ ×2 : les transats encore libres
+  if (def.chairs) {                                // 🏖️ ×2 : les transats encore libres (🛷 : les luges, à la montagne)
     const free = Math.max(0, def.chairs - m.finishers.length);
     g.textAlign = 'left'; g.font = `${fs * 0.62}px ${FONT}`; g.textBaseline = 'middle';
-    g.fillText('🏖️', x, y + h / 2);
+    g.fillText(LV.sleds ? '🛷' : '🏖️', x, y + h / 2);
     otext(`×${free}`, x + fs * 0.78, y + h / 2 + 1, fs * 0.6, free <= 1 ? '#FF8FA3' : '#FFFFFF');
     x += fs * 2.2;
   }

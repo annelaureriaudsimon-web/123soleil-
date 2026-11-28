@@ -41,24 +41,24 @@ const CLOUD_K = 1.4, CLOUD_RESTART = 0.12;
 const PROFILES = {
   // Les 3 personnalités des rivaux (le tricheur arrivera en phase 3)
   prudent:  { emoji: '🐢', react: [0.26, 0.05], on3: 0.75, fooled: 0.35, greed: [0, 0], impatience: [0, 0], impatientP: 0,
-              restart: [0.35, 0.12], trapRestart: 0.3, hesitate: 0.15, speed: 0.93, crack: 0.02, learn: 0.5 },
+              restart: [0.35, 0.12], trapRestart: 0.3, hesitate: 0.15, speed: 0.93, crack: 0.02, learn: 0.5, slick: 1 },
   fonceur:  { emoji: '⚡', react: [0.2, 0.05], on3: 0, fooled: 0.08, greed: [0.1, 0.09], impatience: [0.6, 0.25], impatientP: 0.6,
-              restart: [0, 0.04], trapRestart: 0, hesitate: 0, speed: 1.14, crack: 0.35, learn: 0.9 },
+              restart: [0, 0.04], trapRestart: 0, hesitate: 0, speed: 1.14, crack: 0.35, learn: 0.9, slick: 0.35 },   // il glisse souvent
   regulier: { emoji: '🎯', react: [0.21, 0.03], on3: 0.35, fooled: 0.05, greed: [0, 0], impatience: [0, 0], impatientP: 0,
-              restart: [0.06, 0.03], trapRestart: 0.05, hesitate: 0.03, speed: 1.0, crack: 0.05, learn: 0.5 },
+              restart: [0.06, 0.03], trapRestart: 0.05, hesitate: 0.03, speed: 1.0, crack: 0.05, learn: 0.5, slick: 1 },
   // Les 3 joueurs simulés (tools/simulate.js), décrits dans docs/LEVELS.md
   expert:   { react: [0.20, 0.03], on3: 0, fooled: 0, greed: [0, 0], impatience: [0, 0], impatientP: 0,
-              restart: [0, 0], trapRestart: 0, hesitate: 0, speed: 1, crack: 0.015, learn: 0.1 },
+              restart: [0, 0], trapRestart: 0, hesitate: 0, speed: 1, crack: 0.015, learn: 0.1, slick: 1 },
   // v2.5.1 : le moyen est recalibré sur un vrai joueur au téléphone : lire « SOLEIL ! » (et pas « SOLDES ! ») prend
   // environ 0,36 s, pas 0,28. Avec l'ancien moyen, trop rapide, la nuit et les demi-tours étaient réglés trop serré.
   moyen:    { react: [0.36, 0.07], on3: 0.3, fooled: 0.3, greed: [0, 0], impatience: [1.0, 0.35], impatientP: 0.3, waryK: 0.4,
-              restart: [0, 0.04], trapRestart: 0.12, hesitate: 0, speed: 1, crack: 0.15, learn: 0.4 },   // le « ding » s'attend : 0,29 s
+              restart: [0, 0.04], trapRestart: 0.12, hesitate: 0, speed: 1, crack: 0.15, learn: 0.4, slick: 0.75 },   // le « ding » s'attend : 0,29 s
   // Le robot « patient » (v2.5) : il s'arrête à CHAQUE « 3 » et ne repart qu'au vrai retour. Sans pression (nuit,
   // transats, glace), il ne perd jamais… mais il est très lent : la simulation vérifie qu'il échoue de plus en plus.
   patient:  { react: [0.22, 0.03], on3: 1, waitDing: true, fooled: 0, greed: [0, 0], impatience: [0, 0], impatientP: 0,
               restart: [0, 0], trapRestart: 0, hesitate: 0, speed: 1, crack: 0.015, learn: 0.1 },
   debutant: { react: [0.45, 0.10], on3: 0, fooled: 0.2, greed: [0, 0], impatience: [0, 0], impatientP: 0,   // v2.5.1 : 0,45 s (avant 0,35)
-              restart: [0.15, 0.1], trapRestart: 0.15, hesitate: 0, speed: 1, crack: 0.35, learn: 0.7 }
+              restart: [0.15, 0.1], trapRestart: 0.15, hesitate: 0, speed: 1, crack: 0.35, learn: 0.7, slick: 0.5 }
 };
 
 // ---------- Le cerveau ----------
@@ -94,6 +94,9 @@ function brainSee(b, type, now, data) {
         b.imp = p.impatience[0] > 0 && r() < p.impatientP ? Math.max(0.3, sample(b, p.impatience)) : Infinity;
       }
       if (!wantsRun(b)) break;
+      // v2.6 : sur la glace ou dans la descente, on freine mal : on s'arrête dès le « 3 » (sauf les têtes brûlées)
+      // (il s'est arrêté exprès : il ne repart pas par impatience pendant ce « 3… »)
+      if (data && data.n === 2 && data.slick && r() < (p.slick == null ? 0.9 : p.slick)) { release(b, now + reactT(b), 'slick'); b.impDone = true; break; }
       if (data && data.n === 2 && r() < p.on3 * (b.wary ? p.waryK : 1)) release(b, now + reactT(b), '3');   // prudent : stop dès « 3 »
       else if (r() < p.hesitate) { const t1 = now + reactT(b); release(b, t1, 'hes'); go(b, t1 + 0.2 + 0.3 * r()); }
       break;
@@ -128,6 +131,9 @@ function brainSee(b, type, now, data) {
       break;
     }
     case 'cloud': b.cloudy = true; break;             // v2.5 : le nuage cache le soleil jusqu'au vrai retour
+    case 'slick':                                     // v2.6 : le « 3… » dure et le sol glissant arrive : on s'arrête avant
+      if (wantsRun(b) && r() < (p.slick == null ? 0.9 : p.slick)) { release(b, now + reactT(b), 'slick'); b.impDone = true; }
+      break;
   }
 }
 

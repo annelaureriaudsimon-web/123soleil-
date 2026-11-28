@@ -74,9 +74,9 @@ function drawStrike(tw, size, k, a) {               // piège démasqué : le mo
 function drawGrille() {                              // gros « GRILLÉ ! »
   if (!(S.state === 'caught' || S.state === 'over' || S.lvCaught)) return;
   const t = S.caughtT - 0.3; if (t < 0) return;
-  // v2.5.1 : la nuit ou les transats, ce n'est pas « GRILLÉ ! » : on n'a pas bougé devant lui
+  // v2.5.1 : la nuit ou les transats (les luges à la montagne), ce n'est pas « GRILLÉ ! » : on n'a pas bougé devant lui
   const lost = S.lvCaught && S.Levels && S.Levels.noBurn && S.Levels.m && S.Levels.m.result;
-  const word = !lost ? L.caught : lost.why === 'night' ? L.nightFall : L.chairsWhy.toLocaleUpperCase(S.LANG);
+  const word = !lost ? L.caught : lost.why === 'night' ? L.nightFall : (S.Levels.sleds ? L.sledsWhy : L.chairsWhy).toLocaleUpperCase(S.LANG);   // v2.6 : les luges
   const size = fit(word, Lt.chantSize * 1.2, S.W * 0.76);
   const sc = 1 + 1.5 * Math.exp(-t * 12);
   S.ctx.save(); S.ctx.translate(Lt.cx, Lt.chantY); S.ctx.rotate(-0.08); S.ctx.scale(sc, sc);

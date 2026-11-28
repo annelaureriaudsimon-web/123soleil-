@@ -202,5 +202,27 @@ Object.assign(TXT.fr, { lieTitle: { recount: 'IL RECOMPTE !', planeGo: 'L’AVIO
   lieSub: { recount: 'Il compte en te regardant : il ment !', planeGo: 'Ce n’est pas le soleil qui parle ☀️' } });
 Object.assign(TXT.en, { lieTitle: { recount: 'HE’S RECOUNTING!', planeGo: 'THE PLANE IS LYING!' },
   lieSub: { recount: 'He counts while looking at you: he’s lying!', planeGo: 'The sun isn’t the one talking ☀️' } });
+// v2.6 — le monde 4 « La montagne » : la descente et le verglas (bannières de la 1re fois), les luges à l'arrivée,
+// le reflet sur le lac gelé, et son boss, le Soleil des Neiges (bonnet à pompon et masque de ski)
+Object.assign(TXT.fr, {
+  slopeTitle: 'DESCENTE !', slopeSub: 'Tu vas plus vite… et tu freines mal : lâche dès le « 3 » !',
+  iceTitle: 'VERGLAS !', iceSub: 'Ça glisse longtemps : lâche dès le « 3 » !',
+  sledsWhy: 'Plus de luge !', sledsTip: 'Arrive avant que toutes les luges soient prises !',
+  sledTaken: (n, f) => `🛷 ${n} s’assoit${f ? ` · encore ${f}` : ' · plus aucune !'}`,
+  refletSubIce: 'Sur le lac gelé, tu vois s’il te regarde', refletTipIce: 'Derrière le nuage, regarde son reflet sur le lac gelé ❄️',
+  bossTaunt4: 'Attention, ça glisse !', bossDown4: 'Mon bonnet !!', bossWin4: 'SOLEIL DES NEIGES BATTU ! ⛄', bossBar4: 'Soleil des Neiges',
+  worldDone3: 'Monde 3 terminé ! La montagne t’attend ⛰️', worldDone4: 'Monde 4 terminé ! La suite arrive bientôt 🎉',
+  worldUnlockedSub4: 'La montagne t’attend ⛰️'
+});
+Object.assign(TXT.en, {
+  slopeTitle: 'DOWNHILL!', slopeSub: 'You go faster… and brake badly: let go at “3”!',
+  iceTitle: 'SLIPPERY ICE!', iceSub: 'You slide a long way: let go at “3”!',
+  sledsWhy: 'No sled left!', sledsTip: 'Get there before all the sleds are taken!',
+  sledTaken: (n, f) => `🛷 ${n} sits down${f ? ` · ${f} left` : ' · none left!'}`,
+  refletSubIce: 'On the frozen lake, you can see if he’s looking', refletTipIce: 'Behind the cloud, watch his reflection on the frozen lake ❄️',
+  bossTaunt4: 'Careful, it’s slippery!', bossDown4: 'My bobble hat!!', bossWin4: 'SNOW SUN BEATEN! ⛄', bossBar4: 'Snow Sun',
+  worldDone3: 'World 3 complete! The mountain awaits ⛰️', worldDone4: 'World 4 complete! More coming soon 🎉',
+  worldUnlockedSub4: 'The mountain awaits ⛰️'
+});
 S.typoAll(TXT.fr);                                 // typographie française : espaces insécables (core/i18n.js)
 })(window.Soleil);
