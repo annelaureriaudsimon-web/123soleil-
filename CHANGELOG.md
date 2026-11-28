@@ -1,5 +1,74 @@
 # Journal des versions
 
+## v2.6 — le monde 4 « La montagne » ⛰️
+
+La demande : « Maintenant, crée le monde 3, ou le 4 s'il est déjà créé. » La plage existait : voici la montagne. Les
+pièges choisis par le joueur (« Pièges du jeu ») : **la descente et le verglas** (déjà dans la course infinie)
+arrivent dans les niveaux, **les luges à l'arrivée** (comme les transats), **le reflet sur le lac gelé**, et les
+pièges actuels. Rien d'autre. Le détail est dans `docs/WORLD4_DESIGN.md`.
+
+### Nouveau
+- **Le monde 4 « La montagne »**, 8 niveaux : La descente ⛷️, Le verglas 🧊, Les luges 🛷, Le lac gelé ❄️, Le slalom 🚩,
+  Le chalet 🏠, La grande course de la montagne 🏂, et le boss **le Soleil des Neiges** ❄️. Il se débloque avec 12 ★ du
+  monde 3 (« MONDE 4 DÉBLOQUÉ ! La montagne t'attend ⛰️ »). Le monde 5 reste « Bientôt ».
+- **La descente** dans les niveaux : on court 1,3 × plus vite et on freine mal (0,4 s pour s'arrêter). On la voit : le
+  sentier plus sombre avec des chevrons ▼, l'horizon qui penche, le vent. « DESCENTE ! » la 1re fois.
+- **Le verglas** dans les niveaux : on glisse longtemps (0,6 s pour s'arrêter). Des plaques bleu pâle qui brillent,
+  visibles de loin. « VERGLAS ! » la 1re fois.
+- **La nouvelle règle de la montagne : près de la glace ou dans une descente, lâche dès le « 3 ».** C'est juste et
+  vérifié : celui qui le fait (et attend le « ding ») gagne tous les niveaux de la montagne, à chaque essai. Pour ça, pas
+  de chant express ni de bégaiement là où il y a du verglas. Grillé en glissant, la carte de fin le dit : « Lâché 0,13 s
+  trop tard sur le verglas ! » et « Sur le verglas, lâche beaucoup plus tôt ».
+- **Les luges** à l'arrivée (une de moins que d'enfants, comme les transats) : dessinées en luges, 🛷 dans le HUD,
+  « 🛷 Inès s'assoit · encore 2 », « PLUS DE LUGE ! ».
+- **Le lac gelé** : le reflet du soleil derrière un nuage se lit sur un lac gelé, toujours un peu visible au bout du
+  sentier ; la glace ne bouge pas. « Sur le lac gelé, tu vois s'il te regarde ».
+- **Le Soleil des Neiges** : bonnet rayé à pompon et masque de ski (de dos, on voit la sangle ; fâché ou pendant l'œil du
+  faux dos, il remonte son masque), un air de montagne 8-bit (132 bpm), un son de pompon, et 6 coups spéciaux : « LE
+  NUAGE DE NEIGE », « L'AVALANCHE DE PIÈGES », « LE RECOMPTAGE GLACÉ », « LE TROUPEAU DE SKIEURS », « LA DESCENTE
+  EXPRESS » (son demi-tour est long : on s'arrête à temps sur la glace en lâchant dès le « 3 ») et « CACHE-CACHE ».
+- **Le décor de la montagne** (`js/render/mountain.js`, tout dessiné en code) : neige, sentier de neige tassée, sommets
+  enneigés à l'horizon (jamais devant le visage du soleil), sapins, bonshommes de neige, rochers, piquets de slalom,
+  barrières, skis plantés, un chalet qui fume, un pylône de télésiège, quelques flocons (moins en qualité basse). Et sa
+  page sur la carte : neige, sommets, lac gelé, sapins, traces de ski, chalet.
+- **6 langues** pour tout ce qui est nouveau (bannières, luges, lac gelé, boss, noms et consignes des 8 niveaux).
+
+### Changé
+- **Les cerveaux voient le sol glissant** (`js/game/rivals.js`, `js/game/match.js`) : au « 3 », sur un sol glissant ou à
+  moins de 9 m, ils lâchent tout de suite (`slick` : l'expert, le robot prudent et les rivaux « réguliers » et
+  « prudents » toujours, le moyen 3 fois sur 4, le débutant une fois sur 2, Max le Fonceur une fois sur 3 : il glisse et
+  se fait griller). Dans les mondes 1 à 3, rien ne glisse : **leurs résultats n'ont pas bougé d'un chiffre**.
+- Le texte de fin du monde 3 dit maintenant « Monde 3 terminé ! La montagne t'attend ⛰️ ».
+- Le reflet du nuage est dessiné après le sol du niveau (sinon une plaque de verglas lointaine pouvait cacher le visage
+  reflété). Rien ne change ailleurs : au parc il n'y a pas de nuage, à la plage pas de sol glissant (et la cour est
+  identique image par image).
+
+### La difficulté (simulation, 300 essais par profil)
+- Moyen : **54, 53, 49, 46, 41, 35, 31, 17 %** (le 4-1 est plus dur que le 2e niveau de la plage, 57 %, et plus facile
+  que le Soleil Vacancier, 18 % ; le Soleil des Neiges est le dernier boss : visé 10–20 %).
+- Expert : 97 à 100 %. Robot prudent : 1 à 11 %, jamais ★★★. La nuit fait perdre au plus 1 % des essais du moyen ; elle
+  laisse aussi le temps à l'expert, qui anticipe toujours sur la glace. Durées : 37 à 40 s, boss 46,5 s.
+- Le détail et les raisons (plaques courtes, rivaux qui arrivent pour que les luges comptent, pourquoi le moyen anticipe
+  3 fois sur 4) : `docs/DIFFICULTY.md`.
+
+### Tests
+- `tools/simulate.js` : le monde 4 (objectifs, durées, nuit, robot prudent, début plus dur que la plage) ; **199
+  vérifications**, toutes vertes. Les mondes 1 à 3 donnent exactement les mêmes chiffres qu'en v2.5.1.
+- `test_levels.py`, tests 28 à 32 : la montagne juste (40 essais sur 40 pour celui qui lâche dès le « 3 » sur la glace,
+  sur les 8 niveaux), la physique et l'écran de la descente et du verglas, la carte, les luges, le lac gelé, le boss, les
+  6 langues ; le test 6 attend maintenant le monde 4 verrouillé et le monde 5 « Bientôt ». **139/140** : le seul rouge
+  est le temps par image (8,3 ms pour 8 ms visées, au 1-7) ; il est rouge aussi avec la v2.5.1 sur la même machine (8,0
+  à 9,7 ms), la montagne coûte autant que la cour et la plage.
+- `test_poki.py` : **173/173** (le test des langues vérifie aussi toutes les phrases de la montagne). Le build Poki :
+  TOUT EST OK. `compare_frames.py` contre la v2.4 : 18 images identiques, 76 différences voulues, **0 non voulue**.
+
+### Pas encore vérifié
+- **Sur un vrai téléphone** : voit-on le verglas assez tôt ? Comprend-on « lâche dès le 3 » ? La simulation suppose qu'un
+  joueur moyen anticipe 3 fois sur 4 : si la montagne est trop dure ou trop facile, c'est ce chiffre qu'il faut revoir
+  (`slick` du moyen), avant les niveaux.
+- **L'air de montagne et le pompon** : écoutés seulement par les tests (ils vérifient qu'ils jouent).
+- **Les traductions** de la montagne (noms du boss, bannières, consignes) : à faire relire (`docs/POKI_SUBMISSION.md`).
+
 ## v2.5.1 — la nuit et la 2e chance, la difficulté réglée sur un vrai joueur
 
 Le retour du joueur après la v2.5 : « Quand on met la pub seconde chance, la nuit continue de descendre ; la nuit tombe

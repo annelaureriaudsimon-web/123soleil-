@@ -1,7 +1,7 @@
-# Résultats de la simulation — Mondes 1 à 3
+# Résultats de la simulation — Mondes 1 à 4
 
-Commande : `node tools/simulate.js --md docs/LEVELS.md`. Elle est rapide : environ 70 s pour 28 800 essais (3 mondes × 8 niveaux × 4 profils × 300 essais).
-Options : `--world 2` (un seul monde), `--level w2-8` (un seul niveau), `--n 1000` (plus d'essais).
+Commande : `node tools/simulate.js --md docs/LEVELS.md`. Elle est rapide : environ 90 s pour 38 400 essais (4 mondes × 8 niveaux × 4 profils × 300 essais).
+Options : `--world 4` (un seul monde), `--level w4-8` (un seul niveau), `--n 1000` (plus d'essais).
 
 La simulation charge **les mêmes fichiers que le navigateur**, sans les recopier :
 - `game/match.js` : le moteur d'un niveau ;
@@ -28,6 +28,15 @@ Les tentations existent dès le monde 1 depuis la v2.5 (le recomptage au 1-4, la
 
 Ce qui grille un joueur : être encore en mouvement quand le soleil a fini de se retourner. À 8 m/s, il faut 0,2 s pour s'arrêter. Celui qui attend « SOLEIL ! » doit donc réagir en moins de « demi-tour − 0,2 s ».
 
+**v2.6 — la montagne : le sol qui glisse.** Dans une descente, on court à 10,4 m/s et il faut 0,4 s pour s'arrêter ;
+sur le verglas, 0,6 s. Lâcher au mot ne suffit plus : il faut lâcher dès le « 3 ». Les cerveaux le font quand ils sont
+sur un sol glissant ou à moins de 9 m (champ `slick` des profils) : l'expert, le robot prudent et les rivaux
+« réguliers » et « prudents » toujours, le moyen 3 fois sur 4, le débutant une fois sur 2, Max le Fonceur une fois sur 3.
+Pendant un long « 3… », ils voient aussi la glace arriver ; après s'être arrêtés exprès, ils ne repartent pas par
+impatience pendant ce « 3 ». Dans les mondes 1 à 3, rien ne glisse : leurs résultats n'ont pas bougé d'un chiffre.
+Conséquence : à la montagne, l'expert (qui anticipe toujours) est un peu plus lent que le moyen ; la nuit de chaque
+niveau est donc réglée pour lui laisser le temps aussi (`docs/DIFFICULTY.md`).
+
 ## v2.5.1 : réglé sur un vrai joueur
 
 Le moyen lisait le mot en 0,28 s : trop vite pour un vrai joueur sur téléphone. Avec 0,36 s, les demi-tours étaient trop
@@ -43,6 +52,17 @@ Le détail et les raisons sont dans `docs/DIFFICULTY.md`.
 | Monde 2 — nuit (s) | 41,5 | 41,5 | 44 | 47 | 48,5 | 49 | 49,5 | 56,5 |
 | Monde 3 — demi-tour (s) | 0,695–0,745 | 0,615–0,665 | 0,595–0,645 | 0,615–0,665 | 0,60–0,65 | 0,59–0,64 | 0,605–0,655 | 0,61–0,66 |
 | Monde 3 — nuit (s) | 44 | 41 | 43,5 | 43,5 | 48,5 | 51 | 50 | 58 |
+
+## v2.6 : la montagne
+
+| Niveau | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Monde 4 — demi-tour (s) | 0,62–0,67 | 0,61–0,66 | 0,605–0,655 | 0,645–0,695 | 0,62–0,67 | 0,60–0,65 | 0,595–0,645 | 0,58–0,63 |
+| Monde 4 — nuit (s) | 44 | 44 | 46 | 46,5 | 47,5 | 47,5 | 49 | 57 |
+| Monde 4 — sol | 3 descentes | 4 verglas | 2 + 1 | 3 verglas | 2 + 2 | 2 + 2 | 2 + 2 | 3 + 4 |
+
+(« 2 + 1 » : 2 descentes et 1 plaque de verglas.) Les objectifs, la répartition et les raisons sont dans
+`docs/DIFFICULTY.md` et `docs/WORLD4_DESIGN.md`.
 
 ## v2.5 : ce que j'ai ajusté (avant la v2.5.1)
 
@@ -182,7 +202,7 @@ _Généré par `node tools/simulate.js --md docs/LEVELS.md` (300 essais par prof
 | 1. Les transats | Expert | 100 % | 32,8 s | 1,51 / 4 | — | 95 % | 72 % |
 | 1. Les transats | Moyen | 65 % | 35,6 s | 2,15 / 4 | craqué : étoile (26 %) | 42 % | 22 % |
 | 1. Les transats | Débutant | 10 % | 33,7 s | 2,07 / 4 | lâché trop tard (45 %) | 7 % | 5 % |
-| 1. Les transats | Prudent | 0 % | — | — | plus de transat (58 %) | 0 % | 0 % |
+| 1. Les transats | Prudent | 0 % | — | — | plus de transat (ou de luge) (58 %) | 0 % | 0 % |
 | 2. La glace qui fond | Expert | 99 % | 30,4 s | 1,26 / 4 | craqué : faux retour (100 %) | 99 % | 87 % |
 | 2. La glace qui fond | Moyen | 57 % | 33,7 s | 1,53 / 4 | lâché trop tard (64 %) | 46 % | 14 % |
 | 2. La glace qui fond | Débutant | 2 % | 32,4 s | 1,57 / 4 | lâché trop tard (80 %) | 2 % | 1 % |
@@ -212,6 +232,43 @@ _Généré par `node tools/simulate.js --md docs/LEVELS.md` (300 essais par prof
 | 8. Le Soleil Vacancier | Débutant | 0 % | — | — | lâché trop tard (71 %) | 0 % | 0 % |
 | 8. Le Soleil Vacancier | Prudent | 0 % | — | — | la nuit est tombée (77 %) | 0 % | 0 % |
 
+### Monde 4 — La montagne
+
+| Niveau | Profil | Réussite | Durée moyenne (réussites) | Position moyenne | Défaite la plus fréquente | ★★ | ★★★ |
+|---|---|---|---|---|---|---|---|
+| 1. La descente | Expert | 99 % | 35,9 s | 1,19 / 4 | la nuit est tombée (50 %) | 99 % | 54 % |
+| 1. La descente | Moyen | 54 % | 36,8 s | 1,38 / 4 | lâché trop tard (55 %) | 52 % | 25 % |
+| 1. La descente | Débutant | 5 % | 33,9 s | 1,21 / 4 | lâché trop tard (73 %) | 5 % | 3 % |
+| 1. La descente | Prudent | 2 % | 42,6 s | 2,00 / 4 | la nuit est tombée (83 %) | 2 % | 0 % |
+| 2. Le verglas | Expert | 100 % | 35,5 s | 1,19 / 4 | — | 100 % | 60 % |
+| 2. Le verglas | Moyen | 53 % | 37,3 s | 1,43 / 4 | lâché trop tard (62 %) | 50 % | 20 % |
+| 2. Le verglas | Débutant | 4 % | 35,2 s | 1,23 / 4 | lâché trop tard (76 %) | 4 % | 3 % |
+| 2. Le verglas | Prudent | 1 % | 42,8 s | 1,00 / 4 | la nuit est tombée (89 %) | 1 % | 0 % |
+| 3. Les luges | Expert | 100 % | 35,9 s | 1,53 / 4 | craqué : étoile (100 %) | 94 % | 55 % |
+| 3. Les luges | Moyen | 49 % | 37,6 s | 1,99 / 4 | lâché trop tard (56 %) | 35 % | 17 % |
+| 3. Les luges | Débutant | 2 % | 35,5 s | 1,71 / 4 | lâché trop tard (76 %) | 2 % | 1 % |
+| 3. Les luges | Prudent | 1 % | 44,3 s | 2,75 / 4 | plus de transat (ou de luge) (57 %) | 0 % | 0 % |
+| 4. Le lac gelé | Expert | 99 % | 38,0 s | 1,07 / 4 | faux dos (HOP !) (50 %) | 99 % | 50 % |
+| 4. Le lac gelé | Moyen | 46 % | 40,1 s | 1,08 / 4 | lâché trop tard (44 %) | 25 % | 11 % |
+| 4. Le lac gelé | Débutant | 0 % | 41,6 s | 1,00 / 4 | lâché trop tard (61 %) | 0 % | 0 % |
+| 4. Le lac gelé | Prudent | 3 % | 45,6 s | 1,22 / 4 | la nuit est tombée (88 %) | 3 % | 0 % |
+| 5. Le slalom | Expert | 99 % | 38,2 s | 1,73 / 5 | craqué : étoile (50 %) | 99 % | 60 % |
+| 5. Le slalom | Moyen | 41 % | 39,2 s | 2,19 / 5 | lâché trop tard (48 %) | 39 % | 20 % |
+| 5. Le slalom | Débutant | 2 % | 35,8 s | 1,20 / 5 | lâché trop tard (55 %) | 2 % | 1 % |
+| 5. Le slalom | Prudent | 6 % | 45,5 s | 2,74 / 5 | la nuit est tombée (68 %) | 5 % | 0 % |
+| 6. Le chalet | Expert | 98 % | 38,9 s | 1,09 / 4 | craqué : faux retour (33 %) | 98 % | 50 % |
+| 6. Le chalet | Moyen | 35 % | 39,6 s | 1,28 / 4 | lâché trop tard (55 %) | 34 % | 15 % |
+| 6. Le chalet | Débutant | 0 % | — | — | lâché trop tard (67 %) | 0 % | 0 % |
+| 6. Le chalet | Prudent | 7 % | 46,1 s | 1,90 / 4 | la nuit est tombée (82 %) | 6 % | 0 % |
+| 7. La grande course de la montagne | Expert | 99 % | 39,1 s | 1,71 / 6 | craqué : troupeau (33 %) | 99 % | 64 % |
+| 7. La grande course de la montagne | Moyen | 31 % | 40,4 s | 1,73 / 6 | lâché trop tard (61 %) | 31 % | 15 % |
+| 7. La grande course de la montagne | Débutant | 1 % | 35,9 s | 2,50 / 6 | lâché trop tard (66 %) | 1 % | 1 % |
+| 7. La grande course de la montagne | Prudent | 11 % | 47,4 s | 2,06 / 6 | la nuit est tombée (79 %) | 11 % | 0 % |
+| 8. Le Soleil des Neiges | Expert | 97 % | 49,0 s | 1,03 / 4 | faux dos (HOP !) (44 %) | 97 % | 36 % |
+| 8. Le Soleil des Neiges | Moyen | 17 % | 46,5 s | 1,13 / 4 | lâché trop tard (43 %) | 17 % | 9 % |
+| 8. Le Soleil des Neiges | Débutant | 0 % | 28,9 s | 1,00 / 4 | lâché trop tard (56 %) | 0 % | 0 % |
+| 8. Le Soleil des Neiges | Prudent | 11 % | 55,5 s | 1,62 / 4 | la nuit est tombée (79 %) | 11 % | 0 % |
+
 Objectifs vérifiés :
 
 - ✅ niveau 1-1 : l'expert réussit au moins 95 % (100 %)
@@ -238,6 +295,14 @@ Objectifs vérifiés :
 - ✅ niveau 3-6 : l'expert réussit au moins 95 % (100 %)
 - ✅ niveau 3-7 : l'expert réussit au moins 95 % (100 %)
 - ✅ niveau 3-8 : l'expert réussit au moins 95 % (100 %)
+- ✅ niveau 4-1 : l'expert réussit au moins 95 % (99 %)
+- ✅ niveau 4-2 : l'expert réussit au moins 95 % (100 %)
+- ✅ niveau 4-3 : l'expert réussit au moins 95 % (100 %)
+- ✅ niveau 4-4 : l'expert réussit au moins 95 % (99 %)
+- ✅ niveau 4-5 : l'expert réussit au moins 95 % (99 %)
+- ✅ niveau 4-6 : l'expert réussit au moins 95 % (98 %)
+- ✅ niveau 4-7 : l'expert réussit au moins 95 % (99 %)
+- ✅ niveau 4-8 : l'expert réussit au moins 95 % (97 %)
 - ✅ niveau 1-1 : menace dans les 10 premières secondes (1er SOLEIL ≤ 3.5 s)
 - ✅ niveau 1-2 : menace dans les 10 premières secondes (1er SOLEIL ≤ 6.2 s)
 - ✅ niveau 1-3 : menace dans les 10 premières secondes (1er SOLEIL ≤ 5.9 s)
@@ -262,6 +327,14 @@ Objectifs vérifiés :
 - ✅ niveau 3-6 : menace dans les 10 premières secondes (1er SOLEIL ≤ 7.1 s)
 - ✅ niveau 3-7 : menace dans les 10 premières secondes (1er SOLEIL ≤ 6.6 s)
 - ✅ niveau 3-8 : menace dans les 10 premières secondes (1er SOLEIL ≤ 6.4 s)
+- ✅ niveau 4-1 : menace dans les 10 premières secondes (1er SOLEIL ≤ 6.8 s)
+- ✅ niveau 4-2 : menace dans les 10 premières secondes (1er SOLEIL ≤ 7.1 s)
+- ✅ niveau 4-3 : menace dans les 10 premières secondes (1er SOLEIL ≤ 7.0 s)
+- ✅ niveau 4-4 : menace dans les 10 premières secondes (1er SOLEIL ≤ 5.5 s)
+- ✅ niveau 4-5 : menace dans les 10 premières secondes (1er SOLEIL ≤ 7.1 s)
+- ✅ niveau 4-6 : menace dans les 10 premières secondes (1er SOLEIL ≤ 6.8 s)
+- ✅ niveau 4-7 : menace dans les 10 premières secondes (1er SOLEIL ≤ 6.8 s)
+- ✅ niveau 4-8 : menace dans les 10 premières secondes (1er SOLEIL ≤ 6.5 s)
 - ✅ niveau 1-1 : durée (moyen) entre 25 et 35 s (29,7 s)
 - ✅ niveau 1-2 : durée (moyen) entre 25 et 35 s (28,8 s)
 - ✅ niveau 1-3 : durée (moyen) entre 25 et 35 s (31,0 s)
@@ -286,12 +359,22 @@ Objectifs vérifiés :
 - ✅ niveau 3-6 : durée (moyen) entre 30 et 42 s (40,3 s)
 - ✅ niveau 3-7 : durée (moyen) entre 30 et 42 s (40,6 s)
 - ✅ niveau 3-8 : durée (moyen) ≤ 50 s (46,2 s)
+- ✅ niveau 4-1 : durée (moyen) entre 30 et 42 s (36,8 s)
+- ✅ niveau 4-2 : durée (moyen) entre 30 et 42 s (37,3 s)
+- ✅ niveau 4-3 : durée (moyen) entre 30 et 42 s (37,6 s)
+- ✅ niveau 4-4 : durée (moyen) entre 30 et 42 s (40,1 s)
+- ✅ niveau 4-5 : durée (moyen) entre 30 et 42 s (39,2 s)
+- ✅ niveau 4-6 : durée (moyen) entre 30 et 42 s (39,6 s)
+- ✅ niveau 4-7 : durée (moyen) entre 30 et 42 s (40,4 s)
+- ✅ niveau 4-8 : durée (moyen) ≤ 50 s (46,5 s)
 - ✅ monde 1 : le moyen réussit le boss 15 à 35 % (32 %)
 - ✅ monde 1 : la difficulté monte régulièrement (moyen : jamais plus de 20 points d’écart, jamais plus facile) (plus gros saut 19 points)
 - ✅ monde 2 : le moyen réussit le boss 10 à 30 % (28 %)
 - ✅ monde 2 : la difficulté monte régulièrement (moyen : jamais plus de 20 points d’écart, jamais plus facile) (plus gros saut 10 points)
 - ✅ monde 3 : le moyen réussit le boss 10 à 20 % (18 %)
 - ✅ monde 3 : la difficulté monte régulièrement (moyen : jamais plus de 20 points d’écart, jamais plus facile) (plus gros saut 14 points)
+- ✅ monde 4 : le moyen réussit le boss 10 à 20 % (17 %)
+- ✅ monde 4 : la difficulté monte régulièrement (moyen : jamais plus de 20 points d’écart, jamais plus facile) (plus gros saut 13 points)
 - ✅ niveau 1-1 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
 - ✅ niveau 1-2 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
 - ✅ niveau 1-3 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
@@ -316,6 +399,14 @@ Objectifs vérifiés :
 - ✅ niveau 3-6 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
 - ✅ niveau 3-7 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (1 %)
 - ✅ niveau 3-8 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
+- ✅ niveau 4-1 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
+- ✅ niveau 4-2 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
+- ✅ niveau 4-3 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
+- ✅ niveau 4-4 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
+- ✅ niveau 4-5 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
+- ✅ niveau 4-6 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
+- ✅ niveau 4-7 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
+- ✅ niveau 4-8 : le robot prudent n'a presque jamais ★★★ (au plus 2 %) (0 %)
 - ✅ niveau 1-3 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (0 %)
 - ✅ niveau 1-4 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (1 %)
 - ✅ niveau 1-5 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (0 %)
@@ -338,6 +429,14 @@ Objectifs vérifiés :
 - ✅ niveau 3-6 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (0 %)
 - ✅ niveau 3-7 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (0 %)
 - ✅ niveau 3-8 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (0 %)
+- ✅ niveau 4-1 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (0 %)
+- ✅ niveau 4-2 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (0 %)
+- ✅ niveau 4-3 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (1 %)
+- ✅ niveau 4-4 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (0 %)
+- ✅ niveau 4-5 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (1 %)
+- ✅ niveau 4-6 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (1 %)
+- ✅ niveau 4-7 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (1 %)
+- ✅ niveau 4-8 : la nuit ne fait presque jamais perdre le moyen (au plus 5 % des essais) (0 %)
 - ✅ niveau 1-7 : le robot prudent échoue au moins une fois sur deux (0 %)
 - ✅ niveau 1-8 : le robot prudent échoue au moins une fois sur deux (0 %)
 - ✅ niveau 2-1 : le robot prudent échoue au moins 4 fois sur 5 (2 %)
@@ -356,10 +455,19 @@ Objectifs vérifiés :
 - ✅ niveau 3-6 : le robot prudent échoue au moins 4 fois sur 5 (2 %)
 - ✅ niveau 3-7 : le robot prudent échoue au moins 4 fois sur 5 (3 %)
 - ✅ niveau 3-8 : le robot prudent échoue au moins 4 fois sur 5 (0 %)
+- ✅ niveau 4-1 : le robot prudent échoue au moins 4 fois sur 5 (2 %)
+- ✅ niveau 4-2 : le robot prudent échoue au moins 4 fois sur 5 (1 %)
+- ✅ niveau 4-3 : le robot prudent échoue au moins 4 fois sur 5 (1 %)
+- ✅ niveau 4-4 : le robot prudent échoue au moins 4 fois sur 5 (3 %)
+- ✅ niveau 4-5 : le robot prudent échoue au moins 4 fois sur 5 (6 %)
+- ✅ niveau 4-6 : le robot prudent échoue au moins 4 fois sur 5 (7 %)
+- ✅ niveau 4-7 : le robot prudent échoue au moins 4 fois sur 5 (11 %)
+- ✅ niveau 4-8 : le robot prudent échoue au moins 4 fois sur 5 (11 %)
 - ✅ monde 1, niveau 3 : le moyen réussit environ 85 % (entre 78 et 92 %) (90 %)
 - ✅ monde 1, niveau 1 (en douceur) : le débutant le finit presque à chaque fois (≥ 90 %) (100 %)
 - ✅ monde 1, niveau 1 (en douceur) : le débutant le finit en moins de 45 s (29,6 s)
 - ✅ monde 1 : mêmes résultats que la référence REF_W1 (réglée en v2.5), à 3 points près (plus gros écart 0 points)
 - ✅ monde 2, niveau 1 : plus dur que le niveau 2 du monde 1, plus facile que son boss (moyen) (73 % (niveau 2 : 100 %, boss : 32 %))
 - ✅ monde 3, niveau 1 : plus dur que le niveau 2 du monde 2, plus facile que son boss (moyen) (65 % (niveau 2 : 66 %, boss : 28 %))
+- ✅ monde 4, niveau 1 : plus dur que le niveau 2 du monde 3, plus facile que son boss (moyen) (54 % (niveau 2 : 57 %, boss : 18 %))
 <!-- tableau:fin -->
